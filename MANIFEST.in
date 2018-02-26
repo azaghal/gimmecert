@@ -1,2 +1,10 @@
+# Licensing informaiton.
 include LICENSE-*
+
+# Documentation source.
 recursive-include docs *.rst
+
+# Test configuration files.
+include pytest.ini
+include tox.ini
+include .coveragerc
