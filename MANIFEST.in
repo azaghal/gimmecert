@@ -3,6 +3,11 @@ include LICENSE-*
 
 # Documentation source.
 recursive-include docs *.rst
+include docs/conf.py
+include docs/make.bat
+include docs/Makefile
+include docs/_static/*
+include docs/_templates/*
 
 # Test configuration files.
 include pytest.ini
