@@ -82,3 +82,9 @@ def test_main_invokes_parser_function(mock_get_parser):
     gimmecert.cli.main()
 
     mock_args.func.assert_called_once_with(mock_args)
+
+
+def test_parser_help_contains_examples():
+    parser = gimmecert.cli.get_parser()
+
+    assert 'Examples' in parser.description

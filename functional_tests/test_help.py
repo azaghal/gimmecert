@@ -57,3 +57,26 @@ def test_usage_help_shown():
     assert "usage: gimmecert [-h]" in stdout
     assert stderr == ''
     assert process.returncode == 0
+
+
+def test_extended_help_shown():
+    # John is still not quite sure how the tool works. Therefore he
+    # decides to try out the -h flag to the command.
+    process = subprocess.Popen(["gimmecert", "-h"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, stderr = process.communicate()
+    stdout, stderr = stdout.decode(), stderr.decode()
+
+    # In doing so, John is presented with much more extensive
+    # instructions that provide him with better idea on how to use the
+    # tool.
+    assert stderr == ''
+    assert process.returncode == 0
+    assert "usage: gimmecert [-h]" in stdout
+    assert "Examples:" in stdout
+    assert "optional arguments" in stdout
+    # @TODO: Can't really test this without producing errors, but
+    # possibly not needed.
+    # assert "positional arguments" in stdout
+    # @TODO: Can't test at the moment, should be added once the first
+    # commands is implemented.
+    # assert "command1|command2" in stdout
