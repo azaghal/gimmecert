@@ -4,3 +4,10 @@
 
 # Ignore build artefacts.
 docs/_build/
+dist/
+
+# Ignore Python artefacts.
+.eggs/
+.pytest_cache/
+__pycache__/
+*.egg-info/
