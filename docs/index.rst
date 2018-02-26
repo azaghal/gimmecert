@@ -23,6 +23,7 @@ Contents
    :maxdepth: 2
 
    about
+   development
 
 
 Indices and tables
