@@ -43,3 +43,17 @@ def test_cli_works():
     # be on the safe side.
     assert stderr == ''
     assert process.returncode == 0
+
+
+def test_usage_help_shown():
+    # Since John feels a bit lazy, he decides to skip reading the
+    # documentation, and just run the tool to see if he gets any
+    # useful help.
+    process = subprocess.Popen(["gimmecert"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, stderr = process.communicate()
+    stdout, stderr = stdout.decode(), stderr.decode()
+
+    # John is presented with short usage instructions.
+    assert "usage: gimmecert [-h]" in stdout
+    assert stderr == ''
+    assert process.returncode == 0

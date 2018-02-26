@@ -73,7 +73,7 @@ setup(
     setup_requires=setup_requirements,
     tests_require=test_requirements,
     extras_require=extras_requirements,
-    entry_points = {
+    entry_points={
         'console_scripts': ['gimmecert=gimmecert.cli:main'],
     },
     classifiers=[

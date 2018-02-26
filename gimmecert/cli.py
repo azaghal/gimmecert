@@ -22,6 +22,12 @@
 import argparse
 
 
+DESCRIPTION = """\
+Issues server and client X.509 certificates using a local CA
+hierarchy.
+"""
+
+
 def get_parser():
     """
     Sets-up and returns a CLI argument parser.
@@ -29,7 +35,9 @@ def get_parser():
     :returns: argparse.ArgumentParser -- argument parser for CLI.
     """
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description=DESCRIPTION)
+
+    parser.set_defaults(func=lambda args: parser.print_usage())
 
     return parser
 
@@ -39,7 +47,13 @@ def main():
     This function is a CLI entry point for the tool. It is a thin
     wrapper around the argument parser, and underlying command
     implementation.
+
+    In order for this to work, the parser needs to register the
+    callback function as a default parameter for attribute
+    'func'. This attribute is then invoked by the main function,
+    passing-in all the parsed arguments while at it.
     """
 
     parser = get_parser()
-    parser.parse_args()
+    args = parser.parse_args()
+    args.func(args)
