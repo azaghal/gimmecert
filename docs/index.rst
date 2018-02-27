@@ -23,6 +23,8 @@ Contents
    :maxdepth: 2
 
    about
+   installation
+   usage
    development
 
 
