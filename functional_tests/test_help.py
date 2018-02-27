@@ -19,7 +19,7 @@
 #
 
 
-import subprocess
+from .base import run_command
 
 
 def test_cli_works():
@@ -34,43 +34,37 @@ def test_cli_works():
     # Before moving on, John decides to quickly test if the package
     # has been installed correctly. Assuming that the command is the
     # same as package name, he runs it.
-    process = subprocess.Popen(["gimmecert"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = process.communicate()
-    stdout, stderr = stdout.decode(), stderr.decode()
+    stdout, stderr, returncode = run_command("gimmecert")
 
     # John has a look at output, and notices that no error has been
     # reported. He also verifies the return code is non-zero, just to
     # be on the safe side.
     assert stderr == ''
-    assert process.returncode == 0
+    assert returncode == 0
 
 
 def test_usage_help_shown():
     # Since John feels a bit lazy, he decides to skip reading the
     # documentation, and just run the tool to see if he gets any
     # useful help.
-    process = subprocess.Popen(["gimmecert"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = process.communicate()
-    stdout, stderr = stdout.decode(), stderr.decode()
+    stdout, stderr, returncode = run_command("gimmecert")
 
     # John is presented with short usage instructions.
     assert "usage: gimmecert [-h]" in stdout
     assert stderr == ''
-    assert process.returncode == 0
+    assert returncode == 0
 
 
 def test_extended_help_shown():
     # John is still not quite sure how the tool works. Therefore he
     # decides to try out the -h flag to the command.
-    process = subprocess.Popen(["gimmecert", "-h"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout_h_flag, stderr_h_flag = process.communicate()
-    stdout_h_flag, stderr_h_flag = stdout_h_flag.decode(), stderr_h_flag.decode()
+    stdout_h_flag, stderr_h_flag, returncode_h_flag = run_command("gimmecert", "-h")
 
     # In doing so, John is presented with much more extensive
     # instructions that provide him with better idea on how to use the
     # tool.
     assert stderr_h_flag == ''
-    assert process.returncode == 0
+    assert returncode_h_flag == 0
     assert "usage: gimmecert [-h]" in stdout_h_flag
     assert "Examples:" in stdout_h_flag
     assert "optional arguments" in stdout_h_flag
@@ -82,12 +76,10 @@ def test_extended_help_shown():
 
     # John also notices the help command in the list. He tries that
     # one out as well.
-    process = subprocess.Popen(["gimmecert", "help"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout_help, stderr_help = process.communicate()
-    stdout_help, stderr_help = stdout_help.decode(), stderr_help.decode()
+    stdout_help, stderr_help, returncode_help = run_command("gimmecert", "help")
 
     # John is presented with identical results as when running just
     # with the -h flag.
-    assert process.returncode == 0
+    assert returncode_help == 0
     assert stdout_help == stdout_h_flag
     assert stderr_help == stderr_h_flag
