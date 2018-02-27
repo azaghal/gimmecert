@@ -22,6 +22,7 @@
 import argparse
 
 import gimmecert.cli
+import gimmecert.decorators
 
 from unittest import mock
 
@@ -88,3 +89,48 @@ def test_parser_help_contains_examples():
     parser = gimmecert.cli.get_parser()
 
     assert 'Examples' in parser.description
+
+
+def test_setup_help_subcommand_parser_registered():
+    registered_functions = gimmecert.decorators.get_subcommand_parser_setup_functions()
+
+    assert gimmecert.cli.setup_help_subcommand_parser in registered_functions
+
+
+@mock.patch('gimmecert.cli.get_subcommand_parser_setup_functions')
+def test_get_parser_calls_setup_subcommand_parser_functions(mock_get_subcommand_parser_setup_functions):
+    mock_setup1 = mock.Mock()
+    mock_setup2 = mock.Mock()
+    mock_get_subcommand_parser_setup_functions.return_value = [mock_setup1, mock_setup2]
+
+    gimmecert.cli.get_parser()
+
+    assert mock_setup1.called
+    assert mock_setup2.called
+
+
+def test_setup_help_subcommand_parser_adds_parser():
+    mock_parser = mock.Mock()
+    mock_subparsers = mock.Mock()
+
+    gimmecert.cli.setup_help_subcommand_parser(mock_parser, mock_subparsers)
+
+    assert mock_subparsers.add_parser.called
+
+
+def test_help_subcommand_returns_parser():
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers()
+
+    subparser = gimmecert.cli.setup_help_subcommand_parser(parser, subparsers)
+
+    assert isinstance(subparser, argparse.ArgumentParser)
+
+
+def test_help_subcommand_sets_function_callback():
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers()
+
+    subparser = gimmecert.cli.setup_help_subcommand_parser(parser, subparsers)
+
+    assert callable(subparser.get_default('func'))

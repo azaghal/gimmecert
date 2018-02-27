@@ -63,20 +63,31 @@ def test_extended_help_shown():
     # John is still not quite sure how the tool works. Therefore he
     # decides to try out the -h flag to the command.
     process = subprocess.Popen(["gimmecert", "-h"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = process.communicate()
-    stdout, stderr = stdout.decode(), stderr.decode()
+    stdout_h_flag, stderr_h_flag = process.communicate()
+    stdout_h_flag, stderr_h_flag = stdout_h_flag.decode(), stderr_h_flag.decode()
 
     # In doing so, John is presented with much more extensive
     # instructions that provide him with better idea on how to use the
     # tool.
-    assert stderr == ''
+    assert stderr_h_flag == ''
     assert process.returncode == 0
-    assert "usage: gimmecert [-h]" in stdout
-    assert "Examples:" in stdout
-    assert "optional arguments" in stdout
+    assert "usage: gimmecert [-h]" in stdout_h_flag
+    assert "Examples:" in stdout_h_flag
+    assert "optional arguments" in stdout_h_flag
+    # Subcommands listed.
+    assert "{help}" in stdout_h_flag
     # @TODO: Can't really test this without producing errors, but
     # possibly not needed.
-    # assert "positional arguments" in stdout
-    # @TODO: Can't test at the moment, should be added once the first
-    # commands is implemented.
-    # assert "command1|command2" in stdout
+    # assert "positional arguments" in stdout_h_flag
+
+    # John also notices the help command in the list. He tries that
+    # one out as well.
+    process = subprocess.Popen(["gimmecert", "help"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout_help, stderr_help = process.communicate()
+    stdout_help, stderr_help = stdout_help.decode(), stderr_help.decode()
+
+    # John is presented with identical results as when running just
+    # with the -h flag.
+    assert process.returncode == 0
+    assert stdout_help == stdout_h_flag
+    assert stderr_help == stderr_h_flag

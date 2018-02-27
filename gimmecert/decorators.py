@@ -41,7 +41,7 @@ def subcommand_parser(func):
     having multiple code paths that deal with instantion and set-up of
     subcommand parsers.
 
-    The registerd functions are expected to accept two arguments:
+    The registered functions are expected to accept two arguments:
 
     - parser (ArgumentParser), instance of parent parser to which the
       subcommand (sub)parser belongs to.
@@ -49,6 +49,9 @@ def subcommand_parser(func):
       parser.get_subparsers() method on parent parser. The function
       should instantiate a subparser through it by calling the
       standard subparsers.add_parser() method.
+
+    The registered functions are expeceted to return the subparser
+    itself.
 
     It is expected that each subcomand parser will set a default
     function to be invoked with parsed arguments by doing a call to
@@ -64,6 +67,8 @@ def subcommand_parser(func):
         subparser = subparsers.add_parser('mysubcommand', description='Does stuff!')
 
         subparser.set_defaults(func=mysubcommand)
+
+        return subparser
 
     Later on the registered setup functions should be retrieved
     through get_subcommand_parser_setup_functions() function.

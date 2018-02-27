@@ -45,7 +45,8 @@ def test_subcommand_parser_decorator_registers_function():
 
     registered_functions = gimmecert.decorators.get_subcommand_parser_setup_functions()
 
-    assert registered_functions == [myfunction1, myfunction2]
+    assert myfunction1 in registered_functions
+    assert myfunction2 in registered_functions
 
 
 def test_subcommand_parser_decorator_ensures_function_has_correct_signature():

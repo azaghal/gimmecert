@@ -21,6 +21,8 @@
 
 import argparse
 
+from .decorators import subcommand_parser, get_subcommand_parser_setup_functions
+
 
 DESCRIPTION = """\
 Issues server and client X.509 certificates using a local CA
@@ -28,6 +30,15 @@ hierarchy.
 
 Examples:
 """
+
+
+@subcommand_parser
+def setup_help_subcommand_parser(parser, subparsers):
+    subparser = subparsers.add_parser('help', description='shows help')
+
+    subparser.set_defaults(func=lambda args: parser.print_help())
+
+    return subparser
 
 
 def get_parser():
@@ -40,6 +51,11 @@ def get_parser():
     parser = argparse.ArgumentParser(description=DESCRIPTION)
 
     parser.set_defaults(func=lambda args: parser.print_usage())
+
+    subparsers = parser.add_subparsers()
+
+    for setup_subcommad_parser in get_subcommand_parser_setup_functions():
+        setup_subcommad_parser(parser, subparsers)
 
     return parser
 
