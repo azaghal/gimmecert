@@ -134,3 +134,27 @@ def test_help_subcommand_sets_function_callback():
     subparser = gimmecert.cli.setup_help_subcommand_parser(parser, subparsers)
 
     assert callable(subparser.get_default('func'))
+
+
+def test_setup_init_subcommand_parser_registered():
+    registered_functions = gimmecert.decorators.get_subcommand_parser_setup_functions()
+
+    assert gimmecert.cli.setup_init_subcommand_parser in registered_functions
+
+
+def test_setup_init_subcommand_returns_parser():
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers()
+
+    subparser = gimmecert.cli.setup_init_subcommand_parser(parser, subparsers)
+
+    assert isinstance(subparser, argparse.ArgumentParser)
+
+
+def test_setup_init_subcommand_sets_function_callback():
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers()
+
+    subparser = gimmecert.cli.setup_init_subcommand_parser(parser, subparsers)
+
+    assert callable(subparser.get_default('func'))

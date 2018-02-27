@@ -33,6 +33,18 @@ Examples:
 
 
 @subcommand_parser
+def setup_init_subcommand_parser(parser, subparsers):
+    subparser = subparsers.add_parser('init', description='Initialise CA hierarchy.')
+
+    def init(args):
+        pass
+
+    subparser.set_defaults(func=init)
+
+    return subparser
+
+
+@subcommand_parser
 def setup_help_subcommand_parser(parser, subparsers):
     subparser = subparsers.add_parser('help', description='shows help')
 

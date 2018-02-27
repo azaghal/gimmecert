@@ -69,7 +69,7 @@ def test_extended_help_shown():
     assert "Examples:" in stdout_h_flag
     assert "optional arguments" in stdout_h_flag
     # Subcommands listed.
-    assert "{help}" in stdout_h_flag
+    assert "help" in stdout_h_flag
     # @TODO: Can't really test this without producing errors, but
     # possibly not needed.
     # assert "positional arguments" in stdout_h_flag
