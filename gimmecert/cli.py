@@ -20,8 +20,11 @@
 
 
 import argparse
+import os
 
 from .decorators import subcommand_parser, get_subcommand_parser_setup_functions
+from .storage import initialise_storage, write_private_key, write_certificate
+from .crypto import generate_private_key, issue_certificate, get_dn, get_validity_range
 
 
 DESCRIPTION = """\
@@ -37,7 +40,28 @@ def setup_init_subcommand_parser(parser, subparsers):
     subparser = subparsers.add_parser('init', description='Initialise CA hierarchy.')
 
     def init(args):
-        pass
+        project_directory = os.getcwd()
+        base_directory = os.path.join(os.getcwd(), '.gimmecert')
+        ca_directory = os.path.join(base_directory, 'ca')
+        level1_private_key_path = os.path.join(ca_directory, 'level1.key.pem')
+        level1_certificate_path = os.path.join(ca_directory, 'level1.cert.pem')
+        full_chain_path = os.path.join(ca_directory, 'chain-full.cert.pem')
+        level1_dn = get_dn("%s Level 1" % os.path.basename(project_directory))
+        not_before, not_after = get_validity_range()
+
+        initialise_storage(project_directory)
+        level1_private_key = generate_private_key()
+        level1_certificate = issue_certificate(level1_dn, level1_dn, level1_private_key, level1_private_key.public_key(), not_before, not_after)
+        full_chain = level1_certificate
+
+        write_private_key(level1_private_key, level1_private_key_path)
+        write_certificate(level1_certificate, level1_certificate_path)
+        write_certificate(full_chain, full_chain_path)
+
+        print("CA hierarchy initialised. Generated artefacts:")
+        print("    CA Level 1 private key: .gimmecert/ca/level1.key.pem")
+        print("    CA Level 1 certificate: .gimmecert/ca/level1.cert.pem")
+        print("    Full certificate chain: .gimmecert/ca/chain-full.cert.pem")
 
     subparser.set_defaults(func=init)
 

@@ -20,6 +20,7 @@
 
 
 import argparse
+import os
 
 import gimmecert.cli
 import gimmecert.decorators
@@ -158,3 +159,25 @@ def test_setup_init_subcommand_sets_function_callback():
     subparser = gimmecert.cli.setup_init_subcommand_parser(parser, subparsers)
 
     assert callable(subparser.get_default('func'))
+
+
+@mock.patch('sys.argv', ['gimmecert', 'init'])
+def test_init_subcommand_generates_ca_private_key(tmpdir):
+    tmpdir.chdir()
+
+    gimmecert.cli.main()
+
+    print(tmpdir.listdir())
+
+    assert os.path.exists(tmpdir.join('.gimmecert', 'ca', 'level1.key.pem').strpath)
+
+
+@mock.patch('sys.argv', ['gimmecert', 'init'])
+def test_init_subcommand_generates_ca_certificate(tmpdir):
+    tmpdir.chdir()
+
+    gimmecert.cli.main()
+
+    print(tmpdir.listdir())
+
+    assert os.path.exists(tmpdir.join('.gimmecert', 'ca', 'level1.cert.pem').strpath)

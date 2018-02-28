@@ -25,6 +25,8 @@ from setuptools import setup, find_packages
 README = open(os.path.join(os.path.dirname(__file__), 'README.rst')).read()
 
 install_requirements = [
+    'cryptography>=2.1,<2.2',
+    'python-dateutil>=2.6,<2.7',
 ]
 
 doc_requirements = [
@@ -36,6 +38,7 @@ test_lint_requirements = [
 ]
 
 test_requirements = test_lint_requirements + [
+    'freezegun>=0.3,<0.4',
     'pytest>=3.4,<3.5',
     'pytest-cov>=2.5,<2.6',
     'pytest-flake8>=0.9,<0.10',
