@@ -27,10 +27,16 @@ from .commands import init
 
 
 DESCRIPTION = """\
-Issues server and client X.509 certificates using a local CA
-hierarchy.
+Issues server and client X.509 certificates using a local CA hierarchy.
 
 Examples:
+
+    # Set-up and switch to directory - you can switch to existing directory too.
+    mkdir myproject/
+    cd myproject/
+
+    # Initialise the local CA hierarchy and all the necessary directories.
+    gimmecert init
 """
 
 
@@ -69,7 +75,7 @@ def get_parser():
     :returns: argparse.ArgumentParser -- argument parser for CLI.
     """
 
-    parser = argparse.ArgumentParser(description=DESCRIPTION)
+    parser = argparse.ArgumentParser(description=DESCRIPTION, formatter_class=argparse.RawDescriptionHelpFormatter)
 
     parser.set_defaults(func=lambda args: parser.print_usage())
 
