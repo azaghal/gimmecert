@@ -20,7 +20,6 @@
 
 
 import argparse
-import os
 
 import gimmecert.cli
 import gimmecert.decorators
@@ -162,22 +161,10 @@ def test_setup_init_subcommand_sets_function_callback():
 
 
 @mock.patch('sys.argv', ['gimmecert', 'init'])
-def test_init_subcommand_generates_ca_private_key(tmpdir):
+@mock.patch('gimmecert.cli.init')
+def test_init_command_invoked_with_correct_parameters(mock_init, tmpdir):
     tmpdir.chdir()
 
     gimmecert.cli.main()
 
-    print(tmpdir.listdir())
-
-    assert os.path.exists(tmpdir.join('.gimmecert', 'ca', 'level1.key.pem').strpath)
-
-
-@mock.patch('sys.argv', ['gimmecert', 'init'])
-def test_init_subcommand_generates_ca_certificate(tmpdir):
-    tmpdir.chdir()
-
-    gimmecert.cli.main()
-
-    print(tmpdir.listdir())
-
-    assert os.path.exists(tmpdir.join('.gimmecert', 'ca', 'level1.cert.pem').strpath)
+    mock_init.assert_called_once_with(tmpdir.strpath)
