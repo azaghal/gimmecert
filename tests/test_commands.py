@@ -43,3 +43,40 @@ def test_init_generates_ca_artifacts(tmpdir):
     assert os.path.exists(tmpdir.join('.gimmecert', 'ca', 'level1.key.pem').strpath)
     assert os.path.exists(tmpdir.join('.gimmecert', 'ca', 'level1.cert.pem').strpath)
     assert os.path.exists(tmpdir.join('.gimmecert', 'ca', 'chain-full.cert.pem').strpath)
+
+
+def test_init_returns_true_if_directory_has_not_been_previously_initialised(tmpdir):
+    tmpdir.chdir()
+
+    initialised = gimmecert.commands.init(tmpdir.strpath)
+
+    assert initialised is True
+
+
+def test_init_returns_false_if_directory_has_been_previously_initialised(tmpdir):
+    tmpdir.chdir()
+
+    gimmecert.commands.init(tmpdir.strpath)
+    initialised = gimmecert.commands.init(tmpdir.strpath)
+
+    assert initialised is False
+
+
+def test_init_does_not_overwrite_artifcats_if_already_initialised(tmpdir):
+    tmpdir.chdir()
+
+    gimmecert.commands.init(tmpdir.strpath)
+
+    level1_private_key_before = tmpdir.join('.gimmecert', 'ca', 'level1.key.pem').read()
+    level1_certificate_before = tmpdir.join('.gimmecert', 'ca', 'level1.cert.pem').read()
+    full_chain_before = tmpdir.join('.gimmecert', 'ca', 'chain-full.cert.pem').read()
+
+    gimmecert.commands.init(tmpdir.strpath)
+
+    level1_private_key_after = tmpdir.join('.gimmecert', 'ca', 'level1.key.pem').read()
+    level1_certificate_after = tmpdir.join('.gimmecert', 'ca', 'level1.cert.pem').read()
+    full_chain_after = tmpdir.join('.gimmecert', 'ca', 'chain-full.cert.pem').read()
+
+    assert level1_private_key_before == level1_private_key_after
+    assert level1_certificate_before == level1_certificate_after
+    assert full_chain_before == full_chain_after

@@ -31,6 +31,9 @@ def init(project_directory):
 
     :param project_directory: Path to directory where the structure should be initialised. Should be top-level project directory normally.
     :type project_directory: str
+
+    :returns: False, if directory has been initialised in previous run, True if project has been initialised in this run.
+    :rtype: bool
     """
 
     # Set-up various paths.
@@ -39,6 +42,9 @@ def init(project_directory):
     level1_private_key_path = os.path.join(ca_directory, 'level1.key.pem')
     level1_certificate_path = os.path.join(ca_directory, 'level1.cert.pem')
     full_chain_path = os.path.join(ca_directory, 'chain-full.cert.pem')
+
+    if os.path.exists(base_directory):
+        return False
 
     # Initialise the directory.
     gimmecert.storage.initialise_storage(project_directory)
@@ -56,3 +62,5 @@ def init(project_directory):
     gimmecert.storage.write_private_key(level1_private_key, level1_private_key_path)
     gimmecert.storage.write_certificate(level1_certificate, level1_certificate_path)
     gimmecert.storage.write_certificate(full_chain, full_chain_path)
+
+    return True

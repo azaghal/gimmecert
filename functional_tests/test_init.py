@@ -98,3 +98,24 @@ def test_initialisation_on_fresh_directory(tmpdir):
     # to realise they are identical.
     with open(".gimmecert/ca/level1.cert.pem") as cert_file, open(".gimmecert/ca/chain-full.cert.pem") as chain_file:
         assert cert_file.read() == chain_file.read()
+
+
+def test_initialisation_on_existing_directory(tmpdir):
+    # After a wild weekend out, John comes back to the office on
+    # Monday morning, still a bit hangover. Back on Friday, John has
+    # already initialised the CA hierarchy for one of his projects.
+    tmpdir.chdir()
+    run_command('gimmecert', 'init')
+
+    # Unfortunately, John has forgot that he has done so. Therefore he
+    # switches to his project directory and runs the command again.
+    tmpdir.chdir()
+    stdout, stderr, exit_code = run_command('gimmecert', 'init')
+
+    # Instead of viewing information about his CA hierarchy
+    # initialised, John is (somewhat pleasantly) surprised to see that
+    # the tool has informed him the initialisation has already been
+    # run.
+    assert exit_code == 0
+    assert stderr == ""
+    assert "CA hierarchy has already been initialised." in stdout

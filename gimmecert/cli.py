@@ -47,12 +47,13 @@ def setup_init_subcommand_parser(parser, subparsers):
     def init_wrapper(args):
         project_directory = os.getcwd()
 
-        init(project_directory)
-
-        print("CA hierarchy initialised. Generated artefacts:")
-        print("    CA Level 1 private key: .gimmecert/ca/level1.key.pem")
-        print("    CA Level 1 certificate: .gimmecert/ca/level1.cert.pem")
-        print("    Full certificate chain: .gimmecert/ca/chain-full.cert.pem")
+        if init(project_directory):
+            print("CA hierarchy initialised. Generated artefacts:")
+            print("    CA Level 1 private key: .gimmecert/ca/level1.key.pem")
+            print("    CA Level 1 certificate: .gimmecert/ca/level1.cert.pem")
+            print("    Full certificate chain: .gimmecert/ca/chain-full.cert.pem")
+        else:
+            print("CA hierarchy has already been initialised.")
 
     subparser.set_defaults(func=init_wrapper)
 
