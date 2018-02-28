@@ -162,9 +162,31 @@ def test_setup_init_subcommand_sets_function_callback():
 
 @mock.patch('sys.argv', ['gimmecert', 'init'])
 @mock.patch('gimmecert.cli.init')
-def test_init_command_invoked_with_correct_parameters(mock_init, tmpdir):
+def test_init_command_invoked_with_correct_parameters_no_options(mock_init, tmpdir):
     tmpdir.chdir()
 
     gimmecert.cli.main()
 
-    mock_init.assert_called_once_with(tmpdir.strpath)
+    mock_init.assert_called_once_with(tmpdir.strpath, tmpdir.basename)
+
+
+@mock.patch('sys.argv', ['gimmecert', 'init', '-b', 'My Project'])
+@mock.patch('gimmecert.cli.init')
+def test_init_command_invoked_with_correct_parameters_with_options(mock_init, tmpdir):
+    tmpdir.chdir()
+
+    gimmecert.cli.main()
+
+    mock_init.assert_called_once_with(tmpdir.strpath, 'My Project')
+
+
+@mock.patch('sys.argv', ['gimmecert', 'init', '--ca-base-name', 'My Project'])
+def test_init_command_accepts_ca_base_name_option_long_form():
+
+    gimmecert.cli.main()  # Should not raise
+
+
+@mock.patch('sys.argv', ['gimmecert', 'init', '-b', 'My Project'])
+def test_init_command_accepts_ca_base_name_option_short_form():
+
+    gimmecert.cli.main()  # Should not raise

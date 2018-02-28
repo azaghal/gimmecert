@@ -24,13 +24,16 @@ import gimmecert.crypto
 import gimmecert.storage
 
 
-def init(project_directory):
+def init(project_directory, ca_base_name):
     """
     Initialises the necessary directory and CA hierarchies for use in
     the specified directory.
 
     :param project_directory: Path to directory where the structure should be initialised. Should be top-level project directory normally.
     :type project_directory: str
+
+    :param ca_base_name: Base name to use for constructing CA subject DNs.
+    :type ca_base_name: str
 
     :returns: False, if directory has been initialised in previous run, True if project has been initialised in this run.
     :rtype: bool
@@ -50,7 +53,7 @@ def init(project_directory):
     gimmecert.storage.initialise_storage(project_directory)
 
     # Generate private key and certificate.
-    level1_dn = gimmecert.crypto.get_dn("%s Level 1" % os.path.basename(project_directory))
+    level1_dn = gimmecert.crypto.get_dn("%s Level 1" % ca_base_name)
     not_before, not_after = gimmecert.crypto.get_validity_range()
     level1_private_key = gimmecert.crypto.generate_private_key()
     level1_certificate = gimmecert.crypto.issue_certificate(level1_dn, level1_dn, level1_private_key, level1_private_key.public_key(), not_before, not_after)

@@ -119,3 +119,49 @@ def test_initialisation_on_existing_directory(tmpdir):
     assert exit_code == 0
     assert stderr == ""
     assert "CA hierarchy has already been initialised." in stdout
+
+
+def test_initialisation_with_custom_base_name(tmpdir):
+    # John has been using the tool for a while now in a number of test
+    # environments. Unfortunately, he has started to mix-up
+    # certificates coming from different envioronments where the
+    # project directories have the same name. What he would like to do
+    # is to be able to specify the base name explicitly, instead of
+    # letting the tool pick it for him.
+
+    # John decides to check the command help from CLI.
+    stdout, _, _ = run_command('gimmecert', 'init', '-h')
+
+    # Amongst the different options, he notices one in particular that
+    # draws his attention. The option seems to be usable for
+    # specifying the base name for the CAs - exactly what he needed.
+    assert "--ca-base-name" in stdout
+    assert "-b" in stdout
+
+    # John switches to his project directory.
+    tmpdir.chdir()
+
+    # This time around he runs the command using the newly-found
+    # option.
+    stdout, stderr, exit_code = run_command('gimmecert', 'init', '--ca-base-name', 'My Project')
+
+    # Command finishes execution with success, and he is informed that
+    # his CA hierarchy has been initialised..
+    assert exit_code == 0
+    assert stderr == ""
+    assert "CA hierarchy initialised." in stdout
+
+    # Just before he starts using the CA certificates further, he
+    # decides to double-check the results. He runs a couple of
+    # commands to get the issuer and subject DN from generated
+    # certificate.
+    issuer_dn, _, _ = run_command('openssl', 'x509', '-noout', '-issuer', '-in', '.gimmecert/ca/level1.cert.pem')
+    subject_dn, _, _ = run_command('openssl', 'x509', '-noout', '-subject', '-in', '.gimmecert/ca/level1.cert.pem')
+    issuer_dn = issuer_dn.replace('issuer=', '', 1)
+    subject_dn = subject_dn.replace('subject=', '', 1)
+
+    # To his delight, both the issuer and subject DN are identical,
+    # and now they are based on his custom-provided name instead of
+    # project name.
+    assert issuer_dn.rstrip() == subject_dn.rstrip() == "CN = My Project Level 1"
+    assert tmpdir.basename not in issuer_dn

@@ -43,11 +43,14 @@ Examples:
 @subcommand_parser
 def setup_init_subcommand_parser(parser, subparsers):
     subparser = subparsers.add_parser('init', description='Initialise CA hierarchy.')
+    subparser.add_argument('--ca-base-name', '-b', help="Base name to use for CA naming. Default is to use the working directory base name.")
 
     def init_wrapper(args):
         project_directory = os.getcwd()
+        if args.ca_base_name is None:
+            args.ca_base_name = os.path.basename(project_directory)
 
-        if init(project_directory):
+        if init(project_directory, args.ca_base_name):
             print("CA hierarchy initialised. Generated artefacts:")
             print("    CA Level 1 private key: .gimmecert/ca/level1.key.pem")
             print("    CA Level 1 certificate: .gimmecert/ca/level1.cert.pem")
