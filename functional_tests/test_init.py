@@ -85,8 +85,8 @@ def test_initialisation_on_fresh_directory(tmpdir):
     # John runs reads the issuer and subject DN stored in certificate.
     issuer_dn, _, _ = run_command('openssl', 'x509', '-noout', '-issuer', '-in', '.gimmecert/ca/level1.cert.pem')
     subject_dn, _, _ = run_command('openssl', 'x509', '-noout', '-subject', '-in', '.gimmecert/ca/level1.cert.pem')
-    issuer_dn = issuer_dn.replace('issuer=', '', 1)
-    subject_dn = subject_dn.replace('subject=', '', 1)
+    issuer_dn = issuer_dn.replace('issuer=', '', 1).rstrip().replace(' /CN=', 'CN = ', 1)  # OpenSSL 1.0 vs 1.1 formatting
+    subject_dn = subject_dn.replace('subject=', '', 1).rstrip().replace(' /CN=', 'CN = ', 1)  # OpenSSL 1.0 vs 1.1 formatting
 
     # He notices that the issuer and subject DN are identical (since
     # it's a root CA certificate), and can also see that the subject
@@ -157,8 +157,8 @@ def test_initialisation_with_custom_base_name(tmpdir):
     # certificate.
     issuer_dn, _, _ = run_command('openssl', 'x509', '-noout', '-issuer', '-in', '.gimmecert/ca/level1.cert.pem')
     subject_dn, _, _ = run_command('openssl', 'x509', '-noout', '-subject', '-in', '.gimmecert/ca/level1.cert.pem')
-    issuer_dn = issuer_dn.replace('issuer=', '', 1)
-    subject_dn = subject_dn.replace('subject=', '', 1)
+    issuer_dn = issuer_dn.replace('issuer=', '', 1).rstrip().replace(' /CN=', 'CN = ', 1)  # OpenSSL 1.0 vs 1.1 formatting
+    subject_dn = subject_dn.replace('subject=', '', 1).rstrip().replace(' /CN=', 'CN = ', 1)  # OpenSSL 1.0 vs 1.1 formatting
 
     # To his delight, both the issuer and subject DN are identical,
     # and now they are based on his custom-provided name instead of
