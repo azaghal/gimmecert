@@ -84,7 +84,7 @@ def get_validity_range():
     return not_before, not_after
 
 
-def issue_certificate(issuer_dn, subject_dn, signing_key, public_key, not_before, not_after):
+def issue_certificate(issuer_dn, subject_dn, signing_key, public_key, not_before, not_after, extensions=None):
     """
     Issues a certificate using the passed-in data.
 
@@ -105,7 +105,16 @@ def issue_certificate(issuer_dn, subject_dn, signing_key, public_key, not_before
 
     :param not_after: End of certificate validity.
     :type datetime.datetime:
+
+    :param extensions: List of certificate extensions with their criticality to add to resulting certificate object. List of (extension, criticality) pairs.
+    :type extensions: list[(cryptography.x509.Extension, bool)]
+
+    :returns: Issued certificate with requested content.
+    :rtype: cryptography.x509.Certificate
     """
+
+    if extensions is None:
+        extensions = []
 
     builder = cryptography.x509.CertificateBuilder()
     builder = builder.subject_name(cryptography.x509.Name(subject_dn))
@@ -114,6 +123,9 @@ def issue_certificate(issuer_dn, subject_dn, signing_key, public_key, not_before
     builder = builder.not_valid_after(not_after)
     builder = builder.serial_number(cryptography.x509.random_serial_number())
     builder = builder.public_key(public_key)
+
+    for extension in extensions:
+        builder = builder.add_extension(extension[0], critical=extension[1])
 
     certificate = builder.sign(
         private_key=signing_key,
@@ -125,9 +137,24 @@ def issue_certificate(issuer_dn, subject_dn, signing_key, public_key, not_before
 
 
 def generate_ca_hierarchy(base_name, depth):
+    """
+    Generates CA hierarchy with specified depth, using the provided
+    naming as basis for the DNs.
+
+    :param base_name: Base name for constructing the CA DNs. Resulting DNs are of format 'BASE Level N'.
+    :type base_name: str
+
+    :returns: List of CA private key and certificate pairs, starting with the level 1 (root) CA, and ending with the leaf CA.
+    :rtype: list[(cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey, cryptography.x509.Certificate)]
+    """
+
     hierarchy = []
 
     not_before, not_after = get_validity_range()
+
+    extensions = [
+        (cryptography.x509.BasicConstraints(ca=True, path_length=None), True)
+    ]
 
     # We have not issued yet any certificate.
     issuer_dn = None
@@ -142,7 +169,7 @@ def generate_ca_hierarchy(base_name, depth):
         issuer_dn = issuer_dn or dn
         issuer_private_key = issuer_private_key or private_key
 
-        certificate = issue_certificate(issuer_dn, dn, issuer_private_key, private_key.public_key(), not_before, not_after)
+        certificate = issue_certificate(issuer_dn, dn, issuer_private_key, private_key.public_key(), not_before, not_after, extensions)
         hierarchy.append((private_key, certificate))
 
         # Current entity becomes issuer for next one in chain.

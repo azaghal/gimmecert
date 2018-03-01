@@ -22,6 +22,7 @@
 import datetime
 
 import cryptography.hazmat.primitives.asymmetric.rsa
+import cryptography.x509
 from dateutil.relativedelta import relativedelta
 
 import gimmecert.crypto
@@ -205,3 +206,55 @@ def test_generate_ca_hierarchy_certificates_have_same_validity():
 
     assert level1_certificate.not_valid_before == level2_certificate.not_valid_before == level3_certificate.not_valid_before
     assert level1_certificate.not_valid_after == level2_certificate.not_valid_after == level3_certificate.not_valid_after
+
+
+def test_issue_certificate_sets_extensions():
+    dn = gimmecert.crypto.get_dn('My test 1')
+    private_key = gimmecert.crypto.generate_private_key()
+    not_before, not_after = gimmecert.crypto.get_validity_range()
+    basic_constraints = cryptography.x509.BasicConstraints(ca=True, path_length=None)
+    ocsp_no_check = cryptography.x509.OCSPNoCheck()
+    extensions = [
+        (basic_constraints, True),
+        (ocsp_no_check, False),
+    ]
+
+    certificate = gimmecert.crypto.issue_certificate(dn, dn, private_key, private_key.public_key(), not_before, not_after, extensions)
+
+    assert len(certificate.extensions) == 2
+
+    stored_extension = certificate.extensions.get_extension_for_class(cryptography.x509.BasicConstraints)
+    assert stored_extension.value == basic_constraints
+    assert stored_extension.critical is True
+
+    stored_extension = certificate.extensions.get_extension_for_class(cryptography.x509.OCSPNoCheck)
+    assert stored_extension.critical is False
+    assert isinstance(stored_extension.value, cryptography.x509.OCSPNoCheck)
+
+
+def test_issue_certificate_sets_no_extensions_if_none_are_passed():
+    dn = gimmecert.crypto.get_dn('My test 1')
+    private_key = gimmecert.crypto.generate_private_key()
+    not_before, not_after = gimmecert.crypto.get_validity_range()
+
+    certificate1 = gimmecert.crypto.issue_certificate(dn, dn, private_key, private_key.public_key(), not_before, not_after, None)
+    certificate2 = gimmecert.crypto.issue_certificate(dn, dn, private_key, private_key.public_key(), not_before, not_after, [])
+
+    assert len(certificate1.extensions) == 0
+    assert len(certificate2.extensions) == 0
+
+
+def test_generate_ca_hierarchy_produces_certificates_with_ca_basic_constraints():
+    base_name = 'My test'
+    depth = 3
+
+    hierarchy = gimmecert.crypto.generate_ca_hierarchy(base_name, depth)
+
+    for _, certificate in hierarchy:
+        stored_extension = certificate.extensions.get_extension_for_class(cryptography.x509.BasicConstraints)
+        value, critical = stored_extension.value, stored_extension.critical
+
+        assert isinstance(value, cryptography.x509.BasicConstraints)
+        assert critical is True
+        assert value.ca is True
+        assert value.path_length is None

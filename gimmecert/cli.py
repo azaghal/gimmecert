@@ -44,16 +44,18 @@ Examples:
 def setup_init_subcommand_parser(parser, subparsers):
     subparser = subparsers.add_parser('init', description='Initialise CA hierarchy.')
     subparser.add_argument('--ca-base-name', '-b', help="Base name to use for CA naming. Default is to use the working directory base name.")
+    subparser.add_argument('--ca-hierarchy-depth', '-d', type=int, help="Depth of CA hierarchy to generate. Default is 1", default=1)
 
     def init_wrapper(args):
         project_directory = os.getcwd()
         if args.ca_base_name is None:
             args.ca_base_name = os.path.basename(project_directory)
 
-        if init(project_directory, args.ca_base_name):
+        if init(project_directory, args.ca_base_name, args.ca_hierarchy_depth):
             print("CA hierarchy initialised. Generated artefacts:")
-            print("    CA Level 1 private key: .gimmecert/ca/level1.key.pem")
-            print("    CA Level 1 certificate: .gimmecert/ca/level1.cert.pem")
+            for level in range(1, args.ca_hierarchy_depth+1):
+                print("    CA Level %d private key: .gimmecert/ca/level%d.key.pem" % (level, level))
+                print("    CA Level %d certificate: .gimmecert/ca/level%d.cert.pem" % (level, level))
             print("    Full certificate chain: .gimmecert/ca/chain-full.cert.pem")
         else:
             print("CA hierarchy has already been initialised.")

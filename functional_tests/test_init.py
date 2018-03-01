@@ -136,7 +136,7 @@ def test_initialisation_with_custom_base_name(tmpdir):
     # draws his attention. The option seems to be usable for
     # specifying the base name for the CAs - exactly what he needed.
     assert "--ca-base-name" in stdout
-    assert "-b" in stdout
+    assert " -b " in stdout
 
     # John switches to his project directory.
     tmpdir.chdir()
@@ -165,3 +165,122 @@ def test_initialisation_with_custom_base_name(tmpdir):
     # project name.
     assert issuer_dn.rstrip() == subject_dn.rstrip() == "CN = My Project Level 1"
     assert tmpdir.basename not in issuer_dn
+
+
+def test_initialisation_with_custom_hierarchy_depth(tmpdir):
+    # John is now involved in a project where the CA hierarchy used
+    # for issuing certificates is supposed to be deeper than 1. In
+    # other words, he needs Level 1 CA -> Level 2 CA -> Level 3 CA ->
+    # end entity certificates.
+
+    # He hopes that the Gimmecert tool can still help him with this
+    # scenario as well. At first, he runs the tool with a help flag.
+    stdout, _, _ = run_command('gimmecert', 'init', '-h')
+
+    # John notices there is an option to specify hierarchy depth.
+    assert "--ca-hierarchy-depth" in stdout
+    assert " -d " in stdout
+
+    # John switches to his project directory.
+    tmpdir.chdir()
+
+    # He runs the command, specifying this time around the desired CA
+    # hierarchy depth.
+    stdout, stderr, exit_code = run_command('gimmecert', 'init', '--ca-hierarchy-depth', '3')
+
+    # Command finishes execution with success, and he is informed that
+    # his CA hierarchy has been initialised. He notices there are many
+    # more CA artifacts listed now.
+    assert exit_code == 0
+    assert stderr == ""
+    assert "CA hierarchy initialised." in stdout
+    assert ".gimmecert/ca/level1.key.pem" in stdout
+    assert ".gimmecert/ca/level1.cert.pem" in stdout
+    assert ".gimmecert/ca/level2.key.pem" in stdout
+    assert ".gimmecert/ca/level2.cert.pem" in stdout
+    assert ".gimmecert/ca/level3.key.pem" in stdout
+    assert ".gimmecert/ca/level3.cert.pem" in stdout
+    assert ".gimmecert/ca/chain-full.cert.pem" in stdout
+
+    # John goes ahead and inspects the CA keys first.
+    stdout1, stderr1, exit_code1 = run_command('openssl', 'rsa', '-noout', '-text', '-in', '.gimmecert/ca/level1.key.pem')
+    stdout2, stderr2, exit_code2 = run_command('openssl', 'rsa', '-noout', '-text', '-in', '.gimmecert/ca/level2.key.pem')
+    stdout3, stderr3, exit_code3 = run_command('openssl', 'rsa', '-noout', '-text', '-in', '.gimmecert/ca/level3.key.pem')
+
+    assert exit_code1 == 0
+    assert stderr1 == ""
+    assert "Private-Key: (2048 bit)" in stdout1
+
+    assert exit_code2 == 0
+    assert stderr2 == ""
+    assert "Private-Key: (2048 bit)" in stdout2
+
+    assert exit_code3 == 0
+    assert stderr3 == ""
+    assert "Private-Key: (2048 bit)" in stdout3
+
+    # John then has a look at the generated CA certificate files.
+    stdout1, stderr1, exit_code1 = run_command('openssl', 'x509', '-noout', '-text', '-in', '.gimmecert/ca/level1.cert.pem')
+    stdout2, stderr2, exit_code2 = run_command('openssl', 'x509', '-noout', '-text', '-in', '.gimmecert/ca/level2.cert.pem')
+    stdout3, stderr3, exit_code3 = run_command('openssl', 'x509', '-noout', '-text', '-in', '.gimmecert/ca/level3.cert.pem')
+
+    # John observes that there are no errors, and that certificate
+    # details are being shown.
+    assert 'Certificate:' in stdout1
+    assert 'Certificate:' in stdout2
+    assert 'Certificate:' in stdout3
+
+    # John then runs a bunch of commands to get the subject and issuer
+    # DNs of certificates.
+    issuer_dn1, _, _ = run_command('openssl', 'x509', '-noout', '-issuer', '-in', '.gimmecert/ca/level1.cert.pem')
+    subject_dn1, _, _ = run_command('openssl', 'x509', '-noout', '-subject', '-in', '.gimmecert/ca/level1.cert.pem')
+    issuer_dn1 = issuer_dn1.replace('issuer=', '', 1).rstrip().replace(' /CN=', 'CN = ', 1)  # OpenSSL 1.0 vs 1.1 formatting
+    subject_dn1 = subject_dn1.replace('subject=', '', 1).rstrip().replace(' /CN=', 'CN = ', 1)  # OpenSSL 1.0 vs 1.1 formatting
+
+    issuer_dn2, _, _ = run_command('openssl', 'x509', '-noout', '-issuer', '-in', '.gimmecert/ca/level2.cert.pem')
+    subject_dn2, _, _ = run_command('openssl', 'x509', '-noout', '-subject', '-in', '.gimmecert/ca/level2.cert.pem')
+    issuer_dn2 = issuer_dn2.replace('issuer=', '', 2).rstrip().replace(' /CN=', 'CN = ', 2)  # OpenSSL 1.0 vs 1.2 formatting
+    subject_dn2 = subject_dn2.replace('subject=', '', 2).rstrip().replace(' /CN=', 'CN = ', 2)  # OpenSSL 1.0 vs 1.2 formatting
+
+    issuer_dn3, _, _ = run_command('openssl', 'x509', '-noout', '-issuer', '-in', '.gimmecert/ca/level3.cert.pem')
+    subject_dn3, _, _ = run_command('openssl', 'x509', '-noout', '-subject', '-in', '.gimmecert/ca/level3.cert.pem')
+    issuer_dn3 = issuer_dn3.replace('issuer=', '', 1).rstrip().replace(' /CN=', 'CN = ', 1)  # OpenSSL 1.0 vs 1.1 formatting
+    subject_dn3 = subject_dn3.replace('subject=', '', 1).rstrip().replace(' /CN=', 'CN = ', 1)  # OpenSSL 1.0 vs 1.1 formatting
+
+    # He notices that the all certificates seem to be have been issued
+    # by correct entity.
+    assert issuer_dn1 == subject_dn1
+    assert issuer_dn2 == subject_dn1
+    assert issuer_dn3 == subject_dn2
+    assert subject_dn1 == 'CN = %s Level 1' % tmpdir.basename
+    assert subject_dn2 == 'CN = %s Level 2' % tmpdir.basename
+    assert subject_dn3 == 'CN = %s Level 3' % tmpdir.basename
+
+    # John opens-up the chain file, and observes that all certificates
+    # seem to be contained within.
+    with open(".gimmecert/ca/level1.cert.pem", "r") as level1_cert_file:
+        level1_cert = level1_cert_file.read()
+    with open(".gimmecert/ca/level2.cert.pem", "r") as level2_cert_file:
+        level2_cert = level2_cert_file.read()
+    with open(".gimmecert/ca/level3.cert.pem", "r") as level3_cert_file:
+        level3_cert = level3_cert_file.read()
+    with open(".gimmecert/ca/chain-full.cert.pem", "r") as chain_full_file:
+        chain_full = chain_full_file.read()
+
+    assert level1_cert in chain_full
+    assert level2_cert in chain_full
+    assert level3_cert in chain_full
+
+    # Just to make sure, John goes ahead and runs a command that
+    # should verify the certificate signatures.
+    _, _, error_code = run_command(
+        "openssl", "verify",
+        "-CAfile",
+        ".gimmecert/ca/chain-full.cert.pem",
+        ".gimmecert/ca/level1.cert.pem",
+        ".gimmecert/ca/level2.cert.pem",
+        ".gimmecert/ca/level3.cert.pem"
+    )
+
+    # He is happy to see that verification succeeds.
+    assert error_code == 0

@@ -163,21 +163,25 @@ def test_setup_init_subcommand_sets_function_callback():
 @mock.patch('sys.argv', ['gimmecert', 'init'])
 @mock.patch('gimmecert.cli.init')
 def test_init_command_invoked_with_correct_parameters_no_options(mock_init, tmpdir):
+    default_depth = 1
+
     tmpdir.chdir()
 
     gimmecert.cli.main()
 
-    mock_init.assert_called_once_with(tmpdir.strpath, tmpdir.basename)
+    mock_init.assert_called_once_with(tmpdir.strpath, tmpdir.basename, default_depth)
 
 
 @mock.patch('sys.argv', ['gimmecert', 'init', '-b', 'My Project'])
 @mock.patch('gimmecert.cli.init')
 def test_init_command_invoked_with_correct_parameters_with_options(mock_init, tmpdir):
+    default_depth = 1
+
     tmpdir.chdir()
 
     gimmecert.cli.main()
 
-    mock_init.assert_called_once_with(tmpdir.strpath, 'My Project')
+    mock_init.assert_called_once_with(tmpdir.strpath, 'My Project', default_depth)
 
 
 @mock.patch('sys.argv', ['gimmecert', 'init', '--ca-base-name', 'My Project'])
@@ -188,5 +192,17 @@ def test_init_command_accepts_ca_base_name_option_long_form():
 
 @mock.patch('sys.argv', ['gimmecert', 'init', '-b', 'My Project'])
 def test_init_command_accepts_ca_base_name_option_short_form():
+
+    gimmecert.cli.main()  # Should not raise
+
+
+@mock.patch('sys.argv', ['gimmecert', 'init', '--ca-hierarchy-depth', '3'])
+def test_init_command_accepts_ca_hierarchy_depth_option_long_form():
+
+    gimmecert.cli.main()  # Should not raise
+
+
+@mock.patch('sys.argv', ['gimmecert', 'init', '-d', '3'])
+def test_init_command_accepts_ca_hierarchy_depth_option_short_form():
 
     gimmecert.cli.main()  # Should not raise
