@@ -140,9 +140,9 @@ def test_generate_ca_hierarchy_subject_dns_have_correct_value():
 
     level1, level2, level3 = [certificate for _, certificate in gimmecert.crypto.generate_ca_hierarchy(base_name, depth)]
 
-    assert level1.subject == cryptography.x509.Name(gimmecert.crypto.get_dn('My Project Level 1'))
-    assert level2.subject == cryptography.x509.Name(gimmecert.crypto.get_dn('My Project Level 2'))
-    assert level3.subject == cryptography.x509.Name(gimmecert.crypto.get_dn('My Project Level 3'))
+    assert level1.subject == cryptography.x509.Name(gimmecert.crypto.get_dn('My Project Level 1 CA'))
+    assert level2.subject == cryptography.x509.Name(gimmecert.crypto.get_dn('My Project Level 2 CA'))
+    assert level3.subject == cryptography.x509.Name(gimmecert.crypto.get_dn('My Project Level 3 CA'))
 
 
 def test_generate_ca_hierarchy_issuer_dns_have_correct_value():
@@ -155,9 +155,9 @@ def test_generate_ca_hierarchy_issuer_dns_have_correct_value():
     level2_key, level2_certificate = hierarchy[1]
     level3_key, level3_certificate = hierarchy[2]
 
-    assert level1_certificate.issuer == cryptography.x509.Name(gimmecert.crypto.get_dn('My Project Level 1'))
-    assert level2_certificate.issuer == cryptography.x509.Name(gimmecert.crypto.get_dn('My Project Level 1'))
-    assert level3_certificate.issuer == cryptography.x509.Name(gimmecert.crypto.get_dn('My Project Level 2'))
+    assert level1_certificate.issuer == cryptography.x509.Name(gimmecert.crypto.get_dn('My Project Level 1 CA'))
+    assert level2_certificate.issuer == cryptography.x509.Name(gimmecert.crypto.get_dn('My Project Level 1 CA'))
+    assert level3_certificate.issuer == cryptography.x509.Name(gimmecert.crypto.get_dn('My Project Level 2 CA'))
 
 
 def test_generate_ca_hierarchy_private_keys_match_with_public_keys_in_certificates():

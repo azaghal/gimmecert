@@ -92,7 +92,7 @@ def test_initialisation_on_fresh_directory(tmpdir):
     # it's a root CA certificate), and can also see that the subject
     # DN has just the CN with working directory's name in it.
     assert issuer_dn == subject_dn
-    assert subject_dn.rstrip() == 'CN = %s Level 1' % tmpdir.basename
+    assert subject_dn.rstrip() == 'CN = %s Level 1 CA' % tmpdir.basename
 
     # John has a quick look at generated certificate and chain, only
     # to realise they are identical.
@@ -163,7 +163,7 @@ def test_initialisation_with_custom_base_name(tmpdir):
     # To his delight, both the issuer and subject DN are identical,
     # and now they are based on his custom-provided name instead of
     # project name.
-    assert issuer_dn.rstrip() == subject_dn.rstrip() == "CN = My Project Level 1"
+    assert issuer_dn.rstrip() == subject_dn.rstrip() == "CN = My Project Level 1 CA"
     assert tmpdir.basename not in issuer_dn
 
 
@@ -252,9 +252,9 @@ def test_initialisation_with_custom_hierarchy_depth(tmpdir):
     assert issuer_dn1 == subject_dn1
     assert issuer_dn2 == subject_dn1
     assert issuer_dn3 == subject_dn2
-    assert subject_dn1 == 'CN = %s Level 1' % tmpdir.basename
-    assert subject_dn2 == 'CN = %s Level 2' % tmpdir.basename
-    assert subject_dn3 == 'CN = %s Level 3' % tmpdir.basename
+    assert subject_dn1 == 'CN = %s Level 1 CA' % tmpdir.basename
+    assert subject_dn2 == 'CN = %s Level 2 CA' % tmpdir.basename
+    assert subject_dn3 == 'CN = %s Level 3 CA' % tmpdir.basename
 
     # John opens-up the chain file, and observes that all certificates
     # seem to be contained within.

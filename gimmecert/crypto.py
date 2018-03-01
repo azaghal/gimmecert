@@ -162,7 +162,7 @@ def generate_ca_hierarchy(base_name, depth):
 
     for level in range(1, depth+1):
         # Generate info for the new CA.
-        dn = get_dn("%s Level %d" % (base_name, level))
+        dn = get_dn("%s Level %d CA" % (base_name, level))
         private_key = generate_private_key()
 
         # First certificate issued needs to be self-signed.
