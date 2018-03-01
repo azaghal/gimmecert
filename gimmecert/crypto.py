@@ -122,3 +122,30 @@ def issue_certificate(issuer_dn, subject_dn, signing_key, public_key, not_before
     )
 
     return certificate
+
+
+def generate_ca_hierarchy(base_name, depth):
+    hierarchy = []
+
+    not_before, not_after = get_validity_range()
+
+    # We have not issued yet any certificate.
+    issuer_dn = None
+    issuer_private_key = None
+
+    for level in range(1, depth+1):
+        # Generate info for the new CA.
+        dn = get_dn("%s Level %d" % (base_name, level))
+        private_key = generate_private_key()
+
+        # First certificate issued needs to be self-signed.
+        issuer_dn = issuer_dn or dn
+        issuer_private_key = issuer_private_key or private_key
+
+        certificate = issue_certificate(issuer_dn, dn, issuer_private_key, private_key.public_key(), not_before, not_after)
+        hierarchy.append((private_key, certificate))
+
+        # Current entity becomes issuer for next one in chain.
+        issuer_dn, issuer_private_key = dn, private_key
+
+    return hierarchy

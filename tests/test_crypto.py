@@ -100,3 +100,108 @@ def test_issue_certificate_has_correct_content():
     assert certificate.subject == subject_dn
     assert certificate.not_valid_before == not_before
     assert certificate.not_valid_after == not_after
+
+
+def test_generate_ca_hierarchy_returns_list_with_3_elements_for_depth_3():
+    base_name = 'My Project'
+    depth = 3
+
+    hierarchy = gimmecert.crypto.generate_ca_hierarchy(base_name, depth)
+
+    assert isinstance(hierarchy, list)
+    assert len(hierarchy) == depth
+
+
+def test_generate_ca_hierarchy_returns_list_with_1_element_for_depth_1():
+    base_name = 'My Project'
+    depth = 1
+
+    hierarchy = gimmecert.crypto.generate_ca_hierarchy(base_name, depth)
+
+    assert isinstance(hierarchy, list)
+    assert len(hierarchy) == depth
+
+
+def test_generate_ca_hierarchy_returns_list_of_private_key_certificate_pairs():
+    base_name = 'My Project'
+    depth = 3
+
+    hierarchy = gimmecert.crypto.generate_ca_hierarchy(base_name, depth)
+
+    for private_key, certificate in hierarchy:
+        assert isinstance(private_key, cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey)
+        assert isinstance(certificate, cryptography.x509.Certificate)
+
+
+def test_generate_ca_hierarchy_subject_dns_have_correct_value():
+    base_name = 'My Project'
+    depth = 3
+
+    level1, level2, level3 = [certificate for _, certificate in gimmecert.crypto.generate_ca_hierarchy(base_name, depth)]
+
+    assert level1.subject == cryptography.x509.Name(gimmecert.crypto.get_dn('My Project Level 1'))
+    assert level2.subject == cryptography.x509.Name(gimmecert.crypto.get_dn('My Project Level 2'))
+    assert level3.subject == cryptography.x509.Name(gimmecert.crypto.get_dn('My Project Level 3'))
+
+
+def test_generate_ca_hierarchy_issuer_dns_have_correct_value():
+    base_name = 'My Project'
+    depth = 3
+
+    hierarchy = gimmecert.crypto.generate_ca_hierarchy(base_name, depth)
+
+    level1_key, level1_certificate = hierarchy[0]
+    level2_key, level2_certificate = hierarchy[1]
+    level3_key, level3_certificate = hierarchy[2]
+
+    assert level1_certificate.issuer == cryptography.x509.Name(gimmecert.crypto.get_dn('My Project Level 1'))
+    assert level2_certificate.issuer == cryptography.x509.Name(gimmecert.crypto.get_dn('My Project Level 1'))
+    assert level3_certificate.issuer == cryptography.x509.Name(gimmecert.crypto.get_dn('My Project Level 2'))
+
+
+def test_generate_ca_hierarchy_private_keys_match_with_public_keys_in_certificates():
+    base_name = 'My Project'
+    depth = 3
+
+    hierarchy = gimmecert.crypto.generate_ca_hierarchy(base_name, depth)
+
+    level1_private_key, level1_certificate = hierarchy[0]
+    level2_private_key, level2_certificate = hierarchy[1]
+    level3_private_key, level3_certificate = hierarchy[2]
+
+    assert level1_private_key.public_key().public_numbers() == level1_certificate.public_key().public_numbers()
+    assert level2_private_key.public_key().public_numbers() == level2_certificate.public_key().public_numbers()
+    assert level3_private_key.public_key().public_numbers() == level3_certificate.public_key().public_numbers()
+
+
+def test_generate_ca_hierarchy_cas_have_differing_keys():
+    base_name = 'My Project'
+    depth = 3
+
+    hierarchy = gimmecert.crypto.generate_ca_hierarchy(base_name, depth)
+
+    level1_private_key, _ = hierarchy[0]
+    level2_private_key, _ = hierarchy[1]
+    level3_private_key, _ = hierarchy[2]
+
+    level1_public_numbers = level1_private_key.public_key().public_numbers()
+    level2_public_numbers = level2_private_key.public_key().public_numbers()
+    level3_public_numbers = level3_private_key.public_key().public_numbers()
+
+    assert level1_public_numbers != level2_public_numbers
+    assert level1_public_numbers != level3_public_numbers
+    assert level2_public_numbers != level3_public_numbers
+
+
+def test_generate_ca_hierarchy_certificates_have_same_validity():
+    base_name = 'My Project'
+    depth = 3
+
+    hierarchy = gimmecert.crypto.generate_ca_hierarchy(base_name, depth)
+
+    _, level1_certificate = hierarchy[0]
+    _, level2_certificate = hierarchy[1]
+    _, level3_certificate = hierarchy[2]
+
+    assert level1_certificate.not_valid_before == level2_certificate.not_valid_before == level3_certificate.not_valid_before
+    assert level1_certificate.not_valid_after == level2_certificate.not_valid_after == level3_certificate.not_valid_after
