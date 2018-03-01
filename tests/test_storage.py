@@ -22,6 +22,7 @@ import os
 
 import gimmecert.crypto
 import gimmecert.storage
+import gimmecert.utils
 
 
 def test_initialise_storage(tmpdir):
@@ -69,3 +70,15 @@ def test_write_certificate(tmpdir):
         content = certificate_file.read()
         assert 'BEGIN CERTIFICATE' in content
         assert 'END CERTIFICATE' in content
+
+
+def test_write_certificate_chain(tmpdir):
+    output_file = tmpdir.join('chain.cert.pem')
+    certificate_chain = [certificate for _, certificate in gimmecert.crypto.generate_ca_hierarchy('My Project', 3)]
+    level1_pem, level2_pem, level3_pem = [gimmecert.utils.certificate_to_pem(certificate) for certificate in certificate_chain]
+
+    gimmecert.storage.write_certificate_chain(certificate_chain, output_file.strpath)
+    content = output_file.read(mode='rb')
+    expected_content = b"%s\n%s\n%s" % (level1_pem, level2_pem, level3_pem)
+
+    assert content == expected_content

@@ -23,6 +23,8 @@ import os
 
 import cryptography.hazmat.primitives.serialization
 
+import gimmecert.utils
+
 
 def initialise_storage(project_directory):
     """
@@ -83,3 +85,24 @@ def write_certificate(certificate, path):
 
     with open(path, 'wb') as certificate_file:
         certificate_file.write(certificate_pem)
+
+
+def write_certificate_chain(certificate_chain, path):
+    """
+    Writes the passed-in certificate chain to designated path in
+    OpenSSL-style PEM format. Certificates are separated with
+    newlines.
+
+    :param certificate_chain: List of certificates to output to the file.
+    :type certificate_chain: list[cryptography.x509.Certificate]
+
+    :param path: File path where the chain should be written.
+    :type path: str
+    """
+
+    chain_pem = b"\n".join(
+        [gimmecert.utils.certificate_to_pem(certificate) for certificate in certificate_chain]
+    )
+
+    with open(path, 'wb') as certificate_chain_file:
+        certificate_chain_file.write(chain_pem)
