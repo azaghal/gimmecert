@@ -74,6 +74,14 @@ def setup_help_subcommand_parser(parser, subparsers):
     return subparser
 
 
+@subcommand_parser
+def setup_server_subcommand_parser(parser, subparsers):
+    subparser = subparsers.add_parser('server', description='Issues server certificate.')
+    subparser.add_argument('entity_name', help='Name of the server entity.')
+    subparser.add_argument('dns_name', nargs='*', help='Additional DNS names to include in subject alternative name.')
+
+    return subparser
+
 def get_parser():
     """
     Sets-up and returns a CLI argument parser.

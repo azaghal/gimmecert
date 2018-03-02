@@ -24,6 +24,7 @@ import argparse
 import gimmecert.cli
 import gimmecert.decorators
 
+import pytest
 from unittest import mock
 
 
@@ -206,3 +207,52 @@ def test_init_command_accepts_ca_hierarchy_depth_option_long_form():
 def test_init_command_accepts_ca_hierarchy_depth_option_short_form():
 
     gimmecert.cli.main()  # Should not raise
+
+
+@mock.patch('sys.argv', ['gimmecert', 'server', '-h'])
+def test_server_command_exists_and_accepts_help_flag():
+    with pytest.raises(SystemExit) as e_info:
+        gimmecert.cli.main()
+
+    assert e_info.value.code == 0
+
+
+def test_setup_server_subcommand_parser_registered():
+    registered_functions = gimmecert.decorators.get_subcommand_parser_setup_functions()
+
+    assert gimmecert.cli.setup_server_subcommand_parser in registered_functions
+
+
+def test_setup_server_subcommand_parser_returns_parser():
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers()
+
+    subparser = gimmecert.cli.setup_server_subcommand_parser(parser, subparsers)
+
+    assert isinstance(subparser, argparse.ArgumentParser)
+
+
+@mock.patch('sys.argv', ['gimmecert', 'server'])
+def test_setup_server_subcommand_fails_without_arguments():
+    with pytest.raises(SystemExit) as e_info:
+        gimmecert.cli.main()
+
+    assert e_info.value.code != 0
+
+
+@mock.patch('sys.argv', ['gimmecert', 'server', 'myserver'])
+def test_setup_server_subcommand_succeeds_with_just_entity_name_argument():
+
+    gimmecert.cli.main()  # Should not raise.
+
+
+@mock.patch('sys.argv', ['gimmecert', 'server', 'myserver', 'myserver.example.com'])
+def test_setup_server_subcommand_succeeds_with_entity_name_argument_and_one_dns_name():
+
+    gimmecert.cli.main()  # Should not raise.
+
+
+@mock.patch('sys.argv', ['gimmecert', 'server', 'myserver', 'myserver1.example.com', 'myserver2.example.com', 'myserver3.example.com', 'myserver4.example.com'])
+def test_setup_server_subcommand_succeeds_with_entity_name_argument_and_four_dns_names():
+
+    gimmecert.cli.main()  # Should not raise.
