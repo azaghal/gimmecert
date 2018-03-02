@@ -1,2 +1,5 @@
 [run]
 include = gimmecert/*
+
+[report]
+fail_under = 100

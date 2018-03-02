@@ -37,11 +37,10 @@ test_lint_requirements = [
     'flake8>=3.5,<3.6',
 ]
 
-test_requirements = test_lint_requirements + [
+test_requirements = [
     'freezegun>=0.3,<0.4',
     'pytest>=3.4,<3.5',
     'pytest-cov>=2.5,<2.6',
-    'pytest-flake8>=0.9,<0.10',
     'tox>=2.9,<2.10',
 ]
 

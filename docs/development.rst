@@ -67,9 +67,6 @@ Testing
 Project includes both unit tests (within ``tests/`` directory) , and
 functional tests (within ``functional_tests/`` directory).
 
-Running the tests will also generate coverage report in HTML format,
-stored within directory ``coverage/``.
-
 Tests can be run in a number of different ways, depending on what you
 want to test and how.
 
@@ -83,21 +80,47 @@ repository root::
 
   pytest
 
+Tests can be also run with coverage checks. By default coverage is
+configured to report to standard output. Report will only list files
+which lack coverage. For each file a percentage will be shown, as well
+as line numbers that were not covered by tests. To include coverage
+checks, run tests with::
+
+  pytest --cov
+
+.. warning::
+   Gimmecert project has 100% coverage requirement. Anything below
+   will trigger failures when coverage checks are run.
+
+Should you desire to generate coverage report in HTML format, run
+(coverage report will be put into directory ``coverage/``)::
+
+  pytest --cov --cov-report=html:coverage/
+
 Functional tests must be run explicitly (since they tend to take more
 time), with::
 
   pytest functional_tests/
 
-Linting checks are performed as part of testing. Linting checks can
-easily be run with command::
+In addition to proper linting, implemented code should be pruned of
+unused imports and variables. Linting should be conformant to PEP8,
+with the exception of line length, which is allowed to be up to 160
+characters. Linting and code sanity checks are not executed
+automatically, but can easily be run with::
 
   flake8
+
+Documentation should be buildable at all times. Documentation build
+can be triggered with a simple::
+
+  cd docs/
+  make html
 
 Tests can also be run using `tox <https://tox.readthedocs.io/>`_:
 
 .. note::
-   When running tests via ``tox``, functional tests are included as
-   well.
+   When running tests via ``tox``, functional tests and coverage
+   checks are included as well.
 
 ::
 
