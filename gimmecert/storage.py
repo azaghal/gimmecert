@@ -106,3 +106,18 @@ def write_certificate_chain(certificate_chain, path):
 
     with open(path, 'wb') as certificate_chain_file:
         certificate_chain_file.write(chain_pem)
+
+
+def is_initialised(project_directory):
+    """
+    Checks if Gimmecert has been initialised in designated project
+    directory.
+
+    :param project_directory: Path to project directory to check.
+    :type project_directory: str
+    """
+
+    if os.path.exists(os.path.join(project_directory, '.gimmecert')):
+        return True
+
+    return False

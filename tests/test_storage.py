@@ -82,3 +82,17 @@ def test_write_certificate_chain(tmpdir):
     expected_content = b"%s\n%s\n%s" % (level1_pem, level2_pem, level3_pem)
 
     assert content == expected_content
+
+
+def test_is_initialised_returns_true_if_directory_is_initialised(tmpdir):
+    tmpdir.chdir()
+
+    gimmecert.storage.initialise_storage(tmpdir.strpath)
+
+    assert gimmecert.storage.is_initialised(tmpdir.strpath) is True
+
+
+def test_is_initialised_returns_false_if_directory_is_not_initialised(tmpdir):
+    tmpdir.chdir()
+
+    assert gimmecert.storage.is_initialised(tmpdir.strpath) is False

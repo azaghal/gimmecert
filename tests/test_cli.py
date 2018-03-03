@@ -256,3 +256,24 @@ def test_setup_server_subcommand_succeeds_with_entity_name_argument_and_one_dns_
 def test_setup_server_subcommand_succeeds_with_entity_name_argument_and_four_dns_names():
 
     gimmecert.cli.main()  # Should not raise.
+
+
+def test_setup_server_subcommand_sets_function_callback():
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers()
+
+    subparser = gimmecert.cli.setup_server_subcommand_parser(parser, subparsers)
+
+    assert callable(subparser.get_default('func'))
+
+
+@mock.patch('sys.argv', ['gimmecert', 'server', 'myserver'])
+@mock.patch('gimmecert.cli.server')
+def test_server_command_invoked_with_correct_parameters(mock_server, tmpdir):
+    mock_server.return_value = True, "Bogus"
+
+    tmpdir.chdir()
+
+    gimmecert.cli.main()
+
+    mock_server.assert_called_once_with(tmpdir.strpath, 'myserver')

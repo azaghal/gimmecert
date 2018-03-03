@@ -135,3 +135,21 @@ def test_init_does_not_overwrite_artifcats_if_already_initialised(tmpdir):
     assert level1_private_key_before == level1_private_key_after
     assert level1_certificate_before == level1_certificate_after
     assert full_chain_before == full_chain_after
+
+
+def test_server_returns_status_and_message(tmpdir):
+    tmpdir.chdir()
+
+    status, message = gimmecert.commands.server(tmpdir.strpath, 'myserver')
+
+    assert isinstance(status, bool)
+    assert isinstance(message, str)
+
+
+def test_server_reports_error_if_directory_is_not_initialised(tmpdir):
+    tmpdir.chdir()
+
+    status, message = gimmecert.commands.server(tmpdir.strpath, 'myserver')
+
+    assert status is False
+    assert "must be initialised" in message

@@ -68,3 +68,24 @@ def init(project_directory, ca_base_name, ca_hierarchy_depth):
     gimmecert.storage.write_certificate_chain(full_chain, full_chain_path)
 
     return True
+
+
+def server(project_directory, entity_name):
+    """
+    Generates a server private key and issues a server certificate
+    using the CA hierarchy initialised within the specified directory.
+
+    :param project_directory: Path to project directory under which the CA artifacats etc will be looked-up.
+    :type project_directory: str
+
+    :param entity_name: Name of the server entity. Name will be used in subject DN and DNS subject alternative name.
+    :type entity_name: str
+
+    :returns: Tuple consisting out of status and message to show to user.
+    :rtype: (bool, str)
+    """
+
+    if not gimmecert.storage.is_initialised(project_directory):
+        return False, "CA hierarchy must be initialised prior to issuing server certificates. Run the gimmecert init command first."
+
+    return True, ""

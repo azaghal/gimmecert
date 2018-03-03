@@ -21,9 +21,13 @@
 
 import argparse
 import os
+import sys
 
 from .decorators import subcommand_parser, get_subcommand_parser_setup_functions
-from .commands import init
+from .commands import init, server
+
+
+ERROR_GENERIC = 10
 
 
 DESCRIPTION = """\
@@ -80,7 +84,19 @@ def setup_server_subcommand_parser(parser, subparsers):
     subparser.add_argument('entity_name', help='Name of the server entity.')
     subparser.add_argument('dns_name', nargs='*', help='Additional DNS names to include in subject alternative name.')
 
+    def server_wrapper(args):
+        project_directory = os.getcwd()
+
+        status, message = server(project_directory, args.entity_name)
+
+        if status is False:
+            print(message, file=sys.stderr)
+            exit(ERROR_GENERIC)
+
+    subparser.set_defaults(func=server_wrapper)
+
     return subparser
+
 
 def get_parser():
     """
