@@ -41,6 +41,12 @@ Examples:
 
     # Initialise the local CA hierarchy and all the necessary directories.
     gimmecert init
+
+    # Issue a TLS server certificate with only the server name in DNS subject alternative name.
+    gimmecert server myserver
+
+    # Issue a TLS server certificate with additional DNS subject alternative names.
+    gimmecert server myserver extradns1.local extradns2.example.com
 """
 
 

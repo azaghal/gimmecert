@@ -68,6 +68,8 @@ def test_extended_help_shown():
     assert "usage: gimmecert [-h]" in stdout_h_flag
     assert "Examples:" in stdout_h_flag
     assert "gimmecert init" in stdout_h_flag
+    assert "gimmecert server myserver" in stdout_h_flag
+    assert "gimmecert server myserver extradns1.local extradns2.example.com" in stdout_h_flag
     assert "optional arguments" in stdout_h_flag
     # Subcommands listed.
     assert "help" in stdout_h_flag
