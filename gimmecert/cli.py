@@ -92,6 +92,8 @@ def setup_server_subcommand_parser(parser, subparsers):
         if status is False:
             print(message, file=sys.stderr)
             exit(ERROR_GENERIC)
+        else:
+            print(message)
 
     subparser.set_defaults(func=server_wrapper)
 

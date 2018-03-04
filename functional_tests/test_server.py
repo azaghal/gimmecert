@@ -59,3 +59,79 @@ def test_server_command_requires_initialised_hierarchy(tmpdir):
     assert stdout == ""
     assert stderr == "CA hierarchy must be initialised prior to issuing server certificates. Run the gimmecert init command first.\n"
     assert exit_code != 0
+
+
+def test_server_command_issues_server_certificate(tmpdir):
+    # John is about to issue a server certificate. He switches to his
+    # project directory, and initialises the CA hierarchy there.
+    tmpdir.chdir()
+    run_command("gimmecert", "init")
+
+    # He then runs command for issuing a server certificate.
+    stdout, stderr, exit_code = run_command('gimmecert', 'server', 'myserver')
+
+    # John notices that the command has run without an error, and that
+    # it has printed out path to the private key and certificate.
+    assert stderr == ""
+    assert exit_code == 0
+    assert "Server certificate issued." in stdout
+    assert ".gimmecert/server/myserver.key.pem" in stdout
+    assert ".gimmecert/server/myserver.cert.pem" in stdout
+
+    # John has a look at the generated private key using the OpenSSL
+    # CLI.
+    stdout, stderr, exit_code = run_command('openssl', 'rsa', '-noout', '-text', '-in', '.gimmecert/server/myserver.key.pem')
+
+    # No errors are reported, and John is able to see some details
+    # about the generated key.
+    assert exit_code == 0
+    assert stderr == ""
+    assert "Private-Key: (2048 bit)" in stdout
+
+    # John then has a look at the generated certificate file.
+    stdout, stderr, exit_code = run_command('openssl', 'x509', '-noout', '-text', '-in', '.gimmecert/server/myserver.cert.pem')
+
+    # Once again, there are no errors, and he can see some details
+    # about the certificate.
+    assert exit_code == 0
+    assert stderr == ""
+    assert 'Certificate:' in stdout
+
+    # He notices that the certificate includes the provided entity
+    # name as DNS subject alternative name.
+    assert "DNS:myserver\n" in stdout
+
+    # John has a quick look at issuer and subject DN stored in
+    # certificate.
+    issuer_dn, _, _ = run_command('openssl', 'x509', '-noout', '-issuer', '-in', '.gimmecert/server/myserver.cert.pem')
+    subject_dn, _, _ = run_command('openssl', 'x509', '-noout', '-subject', '-in', '.gimmecert/server/myserver.cert.pem')
+    issuer_dn = issuer_dn.replace('issuer=', '', 1).rstrip().replace(' /CN=', 'CN = ', 1)  # OpenSSL 1.0 vs 1.1 formatting
+    subject_dn = subject_dn.replace('subject=', '', 1).rstrip().replace(' /CN=', 'CN = ', 1)  # OpenSSL 1.0 vs 1.1 formatting
+
+    # He notices the issuer DN is as expected based on the directory
+    # name, and that server certificate subject DN simply has CN field
+    # with the name he provided earlier.
+    assert issuer_dn == "CN = %s Level 1 CA" % tmpdir.basename
+    assert subject_dn == "CN = myserver"
+
+    # John takes a look at certificate purpose, since he wants to
+    # ensure it is a proper TLS server certificate.
+    stdout, stderr, exit_code = run_command('openssl', 'x509', '-noout', '-purpose', '-in', '.gimmecert/server/myserver.cert.pem')
+
+    # He verifies that the provided certificate has correct purpose.
+    assert "SSL server : Yes" in stdout
+    assert "SSL server CA : No" in stdout
+    assert "SSL client : No" in stdout
+    assert "SSL client CA : No" in stdout
+
+    # Finally, he decides to check if the certificate can be verified
+    # using the CA certificate chain.
+    _, _, error_code = run_command(
+        "openssl", "verify",
+        "-CAfile",
+        ".gimmecert/ca/chain-full.cert.pem",
+        ".gimmecert/server/myserver.cert.pem"
+    )
+
+    # He is happy to see that verification succeeds.
+    assert error_code == 0

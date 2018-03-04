@@ -258,3 +258,82 @@ def test_generate_ca_hierarchy_produces_certificates_with_ca_basic_constraints()
         assert critical is True
         assert value.ca is True
         assert value.path_length is None
+
+
+def test_issue_server_certificate_returns_certificate():
+    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+    issuer_private_key, issuer_certificate = ca_hierarchy[0]
+
+    private_key = gimmecert.crypto.generate_private_key()
+
+    certificate = gimmecert.crypto.issue_server_certificate('myserver', private_key.public_key(), issuer_private_key, issuer_certificate)
+
+    assert isinstance(certificate, cryptography.x509.Certificate)
+
+
+def test_issue_server_certificate_sets_correct_extensions():
+    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+    issuer_private_key, issuer_certificate = ca_hierarchy[0]
+
+    private_key = gimmecert.crypto.generate_private_key()
+
+    expected_basic_constraints = cryptography.x509.BasicConstraints(ca=False, path_length=None)
+    expected_key_usage = cryptography.x509.KeyUsage(
+        digital_signature=True,
+        key_encipherment=True,
+        content_commitment=False,
+        data_encipherment=False,
+        key_agreement=False,
+        key_cert_sign=False,
+        crl_sign=False,
+        encipher_only=False,
+        decipher_only=False
+    )
+    expected_extended_key_usage = cryptography.x509.ExtendedKeyUsage(
+        [
+            cryptography.x509.oid.ExtendedKeyUsageOID.SERVER_AUTH
+        ]
+    )
+    expected_subject_alternative_name = cryptography.x509.SubjectAlternativeName(
+        [
+            cryptography.x509.DNSName('myserver')
+        ]
+    )
+
+    certificate = gimmecert.crypto.issue_server_certificate('myserver', private_key.public_key(), issuer_private_key, issuer_certificate)
+
+    assert len(certificate.extensions) == 4
+    assert certificate.extensions.get_extension_for_class(cryptography.x509.BasicConstraints).critical is True
+    assert certificate.extensions.get_extension_for_class(cryptography.x509.BasicConstraints).value == expected_basic_constraints
+
+    assert certificate.extensions.get_extension_for_class(cryptography.x509.KeyUsage).critical is True
+    assert certificate.extensions.get_extension_for_class(cryptography.x509.KeyUsage).value == expected_key_usage
+
+    assert certificate.extensions.get_extension_for_class(cryptography.x509.ExtendedKeyUsage).critical is True
+    assert certificate.extensions.get_extension_for_class(cryptography.x509.ExtendedKeyUsage).value == expected_extended_key_usage
+
+    assert certificate.extensions.get_extension_for_class(cryptography.x509.SubjectAlternativeName).critical is False
+    assert certificate.extensions.get_extension_for_class(cryptography.x509.SubjectAlternativeName).value == expected_subject_alternative_name
+
+
+def test_issue_server_certificate_has_correct_issuer_and_subject():
+    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+    issuer_private_key, issuer_certificate = ca_hierarchy[0]
+
+    private_key = gimmecert.crypto.generate_private_key()
+
+    certificate = gimmecert.crypto.issue_server_certificate('myserver', private_key.public_key(), issuer_private_key, issuer_certificate)
+
+    assert certificate.issuer == issuer_certificate.subject
+    assert certificate.subject == gimmecert.crypto.get_dn('myserver')
+
+
+def test_issue_server_certificate_has_correct_public_key():
+    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+    issuer_private_key, issuer_certificate = ca_hierarchy[0]
+
+    private_key = gimmecert.crypto.generate_private_key()
+
+    certificate = gimmecert.crypto.issue_server_certificate('myserver', private_key.public_key(), issuer_private_key, issuer_certificate)
+
+    assert certificate.public_key().public_numbers() == private_key.public_key().public_numbers()

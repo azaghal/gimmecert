@@ -277,3 +277,13 @@ def test_server_command_invoked_with_correct_parameters(mock_server, tmpdir):
     gimmecert.cli.main()
 
     mock_server.assert_called_once_with(tmpdir.strpath, 'myserver')
+
+
+@mock.patch('sys.argv', ['gimmecert', 'server', 'myserver'])
+def test_server_command_exists_with_error_if_hierarchy_not_initialised(tmpdir):
+    tmpdir.chdir()
+
+    with pytest.raises(SystemExit) as e_info:
+        gimmecert.cli.main()
+
+    assert e_info.value.code != 0

@@ -25,7 +25,8 @@ import gimmecert.commands
 
 def test_init_sets_up_directory_structure(tmpdir):
     base_dir = tmpdir.join('.gimmecert')
-    ca_dir = tmpdir.join('.gimmecert')
+    ca_dir = tmpdir.join('.gimmecert', 'ca')
+    server_dir = tmpdir.join('.gimmecert', 'server')
     depth = 1
 
     tmpdir.chdir()
@@ -34,6 +35,7 @@ def test_init_sets_up_directory_structure(tmpdir):
 
     assert os.path.exists(base_dir.strpath)
     assert os.path.exists(ca_dir.strpath)
+    assert os.path.exists(server_dir.strpath)
 
 
 def test_init_generates_single_ca_artifact_for_depth_1(tmpdir):
@@ -153,3 +155,50 @@ def test_server_reports_error_if_directory_is_not_initialised(tmpdir):
 
     assert status is False
     assert "must be initialised" in message
+
+
+def test_server_reports_paths_to_generated_artifacts(tmpdir):
+    depth = 1
+
+    tmpdir.chdir()
+    gimmecert.commands.init(tmpdir.strpath, tmpdir.basename, depth)
+
+    status, message = gimmecert.commands.server(tmpdir.strpath, 'myserver')
+
+    assert status is True
+    assert ".gimmecert/server/myserver.key.pem" in message
+    assert ".gimmecert/server/myserver.cert.pem" in message
+
+
+def test_server_outputs_private_key_to_file(tmpdir):
+    depth = 1
+    private_key_file = tmpdir.join('.gimmecert', 'server', 'myserver.key.pem')
+
+    tmpdir.chdir()
+    gimmecert.commands.init(tmpdir.strpath, tmpdir.basename, depth)
+
+    gimmecert.commands.server(tmpdir.strpath, 'myserver')
+
+    assert private_key_file.check(file=1)
+
+    private_key_file_content = private_key_file.read()
+
+    assert private_key_file_content.startswith('-----BEGIN RSA PRIVATE KEY')
+    assert private_key_file_content.endswith('END RSA PRIVATE KEY-----\n')
+
+
+def test_server_outputs_certificate_to_file(tmpdir):
+    depth = 1
+    certificate_file = tmpdir.join('.gimmecert', 'server', 'myserver.cert.pem')
+
+    tmpdir.chdir()
+    gimmecert.commands.init(tmpdir.strpath, tmpdir.basename, depth)
+
+    gimmecert.commands.server(tmpdir.strpath, 'myserver')
+
+    assert certificate_file.check(file=1)
+
+    certificate_file_content = certificate_file.read()
+
+    assert certificate_file_content.startswith('-----BEGIN CERTIFICATE')
+    assert certificate_file_content.endswith('END CERTIFICATE-----\n')

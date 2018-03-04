@@ -43,6 +43,7 @@ def initialise_storage(project_directory):
 
     os.mkdir(os.path.join(project_directory, '.gimmecert'))
     os.mkdir(os.path.join(project_directory, '.gimmecert', 'ca'))
+    os.mkdir(os.path.join(project_directory, '.gimmecert', 'server'))
 
 
 def write_private_key(private_key, path):
@@ -121,3 +122,73 @@ def is_initialised(project_directory):
         return True
 
     return False
+
+
+def read_ca_hierarchy(ca_directory):
+    """
+    Reads an entirye CA hierarchy from the directory, and returns the
+    CA private key/certificate pairs in hierarchy order.
+
+    Only private key and certificate files that conform to naming
+    pattern 'levelN.key.pem' and 'levelN.cert.pem' will be read.
+
+    :param ca_directory: Path to directory containing the CA artifacts (private keys and certificates).
+    :type ca_directory: str
+
+    :returns: List of private key/certificate pairs, starting with the level 1 CA and moving down the chain to leaf CA.
+    :rtype: list[(cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey, cryptography.x509.Certificate)]
+    """
+
+    ca_hierarchy = []
+
+    level = 1
+    while os.path.exists(os.path.join(ca_directory, "level%d.key.pem" % level)) and os.path.exists(os.path.join(ca_directory, "level%d.cert.pem" % level)):
+        private_key = read_private_key(os.path.join(ca_directory, 'level%d.key.pem' % level))
+        certificate = read_certificate(os.path.join(ca_directory, 'level%d.cert.pem' % level))
+        ca_hierarchy.append((private_key, certificate))
+        level = level + 1
+
+    return ca_hierarchy
+
+
+def read_private_key(private_key_path):
+    """
+    Reads RSA private key from the designated path. The key should be
+    provided in OpenSSL-style PEM format, unencrypted.
+
+    :param private_key_path: Path to private key to read.
+    :type private_key_path: str
+
+    :returns: Private key object read from the specified file.
+    :rtype: cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey
+    """
+
+    with open(private_key_path, 'rb') as private_key_file:
+        private_key = cryptography.hazmat.primitives.serialization.load_pem_private_key(
+            private_key_file.read(),
+            None,  # no password
+            cryptography.hazmat.backends.default_backend()
+        )
+
+    return private_key
+
+
+def read_certificate(certificate_path):
+    """
+    Reads X.509 certificate from the designated file path. The
+    certificate is expected to be provided in OpenSSL-style PEM
+    format.
+
+    :param certificate_path: Path to certificate file.
+    :type certificate_path: str
+
+    :returns: Certificate object read from the specified file.
+    :rtype: cryptography.x509.Certificate
+    """
+    with open(certificate_path, 'rb') as certificate_file:
+        certificate = cryptography.x509.load_pem_x509_certificate(
+            certificate_file.read(),
+            cryptography.hazmat.backends.default_backend()
+        )
+
+    return certificate

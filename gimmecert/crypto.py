@@ -98,7 +98,7 @@ def issue_certificate(issuer_dn, subject_dn, signing_key, public_key, not_before
     :type signing_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey
 
     :param public_key: Public key belonging to entity associated with passed-in subject_dn. Used as part of certificate to denote its owner.
-    :type cryptography.hazmat.primitives.asymmetric.rsa.RSAPublicKey:
+    :type public_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPublicKey
 
     :param not_before: Beginning of certifiate validity.
     :type datetime.datetime.:
@@ -176,3 +176,55 @@ def generate_ca_hierarchy(base_name, depth):
         issuer_dn, issuer_private_key = dn, private_key
 
     return hierarchy
+
+
+def issue_server_certificate(name, public_key, issuer_private_key, issuer_certificate):
+    """
+    Issues a server certificate. The resulting certificate will use
+    the passed-in name for subject DN, as well as DNS subject
+    alternative name.
+
+    The server certificate key usages and extended key usages are set
+    to comply with requirements for using such certificates as TLS
+    server certificates.
+
+    :param name: Name of the server end entity. Name will be part of subject DN CN field.
+    :type name: str
+
+    :param public_key: Public key of the server end entity.
+    :type public_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPublicKey
+
+    :param issuer_private_key: Private key of the issuer to use for signing the server certificate structure.
+    :type issuer_private_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey
+
+    :param issuer_certificate: Certificate of certificate issuer. Naming and validity constraints will be applied based on its content.
+    :type issuer_certificate: cryptography.x509.Certificate
+
+    :returns: Server certificate issued by designated issuer.
+    :rtype: cryptography.x509.Certificate
+    """
+
+    dn = get_dn(name)
+    not_before, not_after = get_validity_range()
+    extensions = [
+        (cryptography.x509.BasicConstraints(ca=False, path_length=None), True),
+        (
+            cryptography.x509.KeyUsage(
+                digital_signature=True,
+                key_encipherment=True,
+                content_commitment=False,
+                data_encipherment=False,
+                key_agreement=False,
+                key_cert_sign=False,
+                crl_sign=False,
+                encipher_only=False,
+                decipher_only=False
+            ), True
+        ),
+        (cryptography.x509.ExtendedKeyUsage([cryptography.x509.oid.ExtendedKeyUsageOID.SERVER_AUTH]), True),
+        (cryptography.x509.SubjectAlternativeName([cryptography.x509.DNSName('myserver')]), False)
+    ]
+
+    certificate = issue_certificate(issuer_certificate.issuer, dn, issuer_private_key, public_key, not_before, not_after, extensions)
+
+    return certificate

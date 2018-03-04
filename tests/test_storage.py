@@ -20,6 +20,9 @@
 
 import os
 
+import cryptography
+
+import gimmecert.commands
 import gimmecert.crypto
 import gimmecert.storage
 import gimmecert.utils
@@ -32,6 +35,7 @@ def test_initialise_storage(tmpdir):
 
     assert os.path.exists(tmpdir.join('.gimmecert').strpath)
     assert os.path.exists(tmpdir.join('.gimmecert', 'ca').strpath)
+    assert os.path.exists(tmpdir.join('.gimmecert', 'server').strpath)
 
 
 def test_write_private_key(tmpdir):
@@ -96,3 +100,70 @@ def test_is_initialised_returns_false_if_directory_is_not_initialised(tmpdir):
     tmpdir.chdir()
 
     assert gimmecert.storage.is_initialised(tmpdir.strpath) is False
+
+
+def test_read_ca_hierarchy_returns_list_of_ca_private_key_and_certificate_pairs_for_single_ca(tmpdir):
+    tmpdir.chdir()
+    gimmecert.commands.init(tmpdir.strpath, 'My Project', 1)
+
+    ca_hierarchy = gimmecert.storage.read_ca_hierarchy(tmpdir.join('.gimmecert', 'ca').strpath)
+
+    assert len(ca_hierarchy) == 1
+
+    private_key, certificate = ca_hierarchy[0]
+
+    assert isinstance(private_key, cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey)
+    assert isinstance(certificate, cryptography.x509.Certificate)
+
+
+def test_read_private_key_returns_private_key(tmpdir):
+    private_key_path = tmpdir.join('private.key.pem').strpath
+    private_key = gimmecert.crypto.generate_private_key()
+    gimmecert.storage.write_private_key(private_key, private_key_path)
+
+    my_private_key = gimmecert.storage.read_private_key(private_key_path)
+
+    assert isinstance(my_private_key, cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey)
+    assert my_private_key.public_key().public_numbers() == private_key.public_key().public_numbers()  # Can't compare private keys directly.
+
+
+def test_read_certificate_returns_certificate(tmpdir):
+    certificate_path = tmpdir.join('certificate.cert.pem').strpath
+    dn = gimmecert.crypto.get_dn('mycertificate')
+    not_before, not_after = gimmecert.crypto.get_validity_range()
+
+    private_key = gimmecert.crypto.generate_private_key()
+    certificate = gimmecert.crypto.issue_certificate(dn, dn, private_key, private_key.public_key(), not_before, not_after)
+    gimmecert.storage.write_certificate(certificate, certificate_path)
+
+    my_certificate = gimmecert.storage.read_certificate(certificate_path)
+
+    assert isinstance(my_certificate, cryptography.x509.Certificate)
+    assert my_certificate == certificate
+
+
+def test_read_ca_hierarchy_returns_list_of_ca_private_key_and_certificate_pairs_in_hierarchy_order_for_multiple_cas(tmpdir):
+    tmpdir.chdir()
+    gimmecert.commands.init(tmpdir.strpath, 'My Project', 4)
+
+    ca_hierarchy = gimmecert.storage.read_ca_hierarchy(tmpdir.join('.gimmecert', 'ca').strpath)
+
+    assert len(ca_hierarchy) == 4
+
+    private_key_1, certificate_1 = ca_hierarchy[0]
+    private_key_2, certificate_2 = ca_hierarchy[1]
+    private_key_3, certificate_3 = ca_hierarchy[2]
+    private_key_4, certificate_4 = ca_hierarchy[3]
+
+    assert isinstance(private_key_1, cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey)
+    assert isinstance(certificate_1, cryptography.x509.Certificate)
+    assert certificate_1.subject == gimmecert.crypto.get_dn("My Project Level 1 CA")
+    assert isinstance(private_key_2, cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey)
+    assert isinstance(certificate_2, cryptography.x509.Certificate)
+    assert certificate_2.subject == gimmecert.crypto.get_dn("My Project Level 2 CA")
+    assert isinstance(private_key_3, cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey)
+    assert isinstance(certificate_3, cryptography.x509.Certificate)
+    assert certificate_3.subject == gimmecert.crypto.get_dn("My Project Level 3 CA")
+    assert isinstance(private_key_4, cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey)
+    assert isinstance(certificate_4, cryptography.x509.Certificate)
+    assert certificate_4.subject == gimmecert.crypto.get_dn("My Project Level 4 CA")
