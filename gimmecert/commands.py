@@ -70,7 +70,7 @@ def init(project_directory, ca_base_name, ca_hierarchy_depth):
     return True
 
 
-def server(project_directory, entity_name):
+def server(project_directory, entity_name, extra_dns_names):
     """
     Generates a server private key and issues a server certificate
     using the CA hierarchy initialised within the specified directory.
@@ -80,6 +80,9 @@ def server(project_directory, entity_name):
 
     :param entity_name: Name of the server entity. Name will be used in subject DN and DNS subject alternative name.
     :type entity_name: str
+
+    :param extra_dns_names: List of additional DNS names to include in the subject alternative name.
+    :type extra_dns_names: list[str]
 
     :returns: Tuple consisting out of status and message to show to user.
     :rtype: (bool, str)
@@ -99,7 +102,7 @@ def server(project_directory, entity_name):
     ca_hierarchy = gimmecert.storage.read_ca_hierarchy(os.path.join(project_directory, '.gimmecert', 'ca'))
     issuer_private_key, issuer_certificate = ca_hierarchy[-1]
     private_key = gimmecert.crypto.generate_private_key()
-    certificate = gimmecert.crypto.issue_server_certificate(entity_name, private_key.public_key(), issuer_private_key, issuer_certificate)
+    certificate = gimmecert.crypto.issue_server_certificate(entity_name, private_key.public_key(), issuer_private_key, issuer_certificate, extra_dns_names)
 
     gimmecert.storage.write_private_key(private_key, private_key_path)
     gimmecert.storage.write_certificate(certificate, certificate_path)

@@ -269,14 +269,26 @@ def test_setup_server_subcommand_sets_function_callback():
 
 @mock.patch('sys.argv', ['gimmecert', 'server', 'myserver'])
 @mock.patch('gimmecert.cli.server')
-def test_server_command_invoked_with_correct_parameters(mock_server, tmpdir):
+def test_server_command_invoked_with_correct_parameters_without_extra_dns_names(mock_server, tmpdir):
     mock_server.return_value = True, "Bogus"
 
     tmpdir.chdir()
 
     gimmecert.cli.main()
 
-    mock_server.assert_called_once_with(tmpdir.strpath, 'myserver')
+    mock_server.assert_called_once_with(tmpdir.strpath, 'myserver', [])
+
+
+@mock.patch('sys.argv', ['gimmecert', 'server', 'myserver', 'service.local', 'service.example.com'])
+@mock.patch('gimmecert.cli.server')
+def test_server_command_invoked_with_correct_parameters_with_extra_dns_names(mock_server, tmpdir):
+    mock_server.return_value = True, "Bogus"
+
+    tmpdir.chdir()
+
+    gimmecert.cli.main()
+
+    mock_server.assert_called_once_with(tmpdir.strpath, 'myserver', ['service.local', 'service.example.com'])
 
 
 @mock.patch('sys.argv', ['gimmecert', 'server', 'myserver'])

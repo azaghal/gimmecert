@@ -135,3 +135,33 @@ def test_server_command_issues_server_certificate(tmpdir):
 
     # He is happy to see that verification succeeds.
     assert error_code == 0
+
+
+def test_server_command_issues_server_certificate_with_additional_subject_alternative_names(tmpdir):
+    # John wants to issue a server certificate that will include a
+    # number of additional DNS subject alternative names. He switches
+    # to his project directory, and initialises the CA hierarchy
+    # there.
+    tmpdir.chdir()
+    run_command("gimmecert", "init")
+
+    # He then runs command for issuing a server certificate, providing
+    # additional DNS subject alternative names..
+    stdout, stderr, exit_code = run_command('gimmecert', 'server', 'myserver', 'myserver.local', 'myserver.example.com')
+
+    # The command finishes without any errors being reported.
+    assert stderr == ""
+    assert exit_code == 0
+
+    # John then a look at generated certificate file.
+    stdout, stderr, exit_code = run_command('openssl', 'x509', '-noout', '-text', '-in', '.gimmecert/server/myserver.cert.pem')
+
+    # No errors are reported, and he notices that the provided subject
+    # alternative names have been included in the certificate in
+    # addition to default one based on the server entity name.
+    assert exit_code == 0
+    assert stderr == ""
+
+    assert "DNS:myserver," in stdout
+    assert "DNS:myserver.local," in stdout
+    assert "DNS:myserver.example.com\n" in stdout

@@ -87,7 +87,7 @@ def setup_server_subcommand_parser(parser, subparsers):
     def server_wrapper(args):
         project_directory = os.getcwd()
 
-        status, message = server(project_directory, args.entity_name)
+        status, message = server(project_directory, args.entity_name, args.dns_name)
 
         if status is False:
             print(message, file=sys.stderr)

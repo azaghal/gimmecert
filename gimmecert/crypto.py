@@ -178,7 +178,7 @@ def generate_ca_hierarchy(base_name, depth):
     return hierarchy
 
 
-def issue_server_certificate(name, public_key, issuer_private_key, issuer_certificate):
+def issue_server_certificate(name, public_key, issuer_private_key, issuer_certificate, extra_dns_names=None):
     """
     Issues a server certificate. The resulting certificate will use
     the passed-in name for subject DN, as well as DNS subject
@@ -202,9 +202,17 @@ def issue_server_certificate(name, public_key, issuer_private_key, issuer_certif
     :param issuer_certificate: Certificate of certificate issuer. Naming and validity constraints will be applied based on its content.
     :type issuer_certificate: cryptography.x509.Certificate
 
+    :param extra_dns_names: Additional DNS names to include in subject alternative name. Set to None (default) to not include anything.
+    :type extra_dns_names: list[str] or None
+
     :returns: Server certificate issued by designated issuer.
     :rtype: cryptography.x509.Certificate
     """
+
+    dns_names = [name]
+
+    if extra_dns_names is not None:
+        dns_names.extend(extra_dns_names)
 
     dn = get_dn(name)
     not_before, not_after = get_validity_range()
@@ -224,7 +232,7 @@ def issue_server_certificate(name, public_key, issuer_private_key, issuer_certif
             ), True
         ),
         (cryptography.x509.ExtendedKeyUsage([cryptography.x509.oid.ExtendedKeyUsageOID.SERVER_AUTH]), True),
-        (cryptography.x509.SubjectAlternativeName([cryptography.x509.DNSName('myserver')]), False)
+        (cryptography.x509.SubjectAlternativeName([cryptography.x509.DNSName(dns_name) for dns_name in dns_names]), False)
     ]
 
     if not_before < issuer_certificate.not_valid_before:

@@ -377,3 +377,24 @@ def test_issue_server_certificate_not_after_does_not_exceed_ca_validity():
         certificate1 = gimmecert.crypto.issue_server_certificate('myserver', private_key.public_key(), issuer_private_key, issuer_certificate)
 
     assert certificate1.not_valid_after == issuer_certificate.not_valid_after
+
+
+def test_issue_server_certificate_incorporates_additional_dns_subject_alternative_names():
+    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+    issuer_private_key, issuer_certificate = ca_hierarchy[0]
+
+    private_key = gimmecert.crypto.generate_private_key()
+
+    expected_subject_alternative_name = cryptography.x509.SubjectAlternativeName(
+        [
+            cryptography.x509.DNSName('myserver'),
+            cryptography.x509.DNSName('service.local'),
+            cryptography.x509.DNSName('service.example.com')
+        ]
+    )
+
+    extra_dns_names = ['service.local', 'service.example.com']
+    certificate = gimmecert.crypto.issue_server_certificate('myserver', private_key.public_key(), issuer_private_key, issuer_certificate, extra_dns_names)
+
+    assert certificate.extensions.get_extension_for_class(cryptography.x509.SubjectAlternativeName).critical is False
+    assert certificate.extensions.get_extension_for_class(cryptography.x509.SubjectAlternativeName).value == expected_subject_alternative_name

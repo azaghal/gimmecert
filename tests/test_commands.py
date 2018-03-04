@@ -142,7 +142,7 @@ def test_init_does_not_overwrite_artifcats_if_already_initialised(tmpdir):
 def test_server_returns_status_and_message(tmpdir):
     tmpdir.chdir()
 
-    status, message = gimmecert.commands.server(tmpdir.strpath, 'myserver')
+    status, message = gimmecert.commands.server(tmpdir.strpath, 'myserver', None)
 
     assert isinstance(status, bool)
     assert isinstance(message, str)
@@ -151,7 +151,7 @@ def test_server_returns_status_and_message(tmpdir):
 def test_server_reports_error_if_directory_is_not_initialised(tmpdir):
     tmpdir.chdir()
 
-    status, message = gimmecert.commands.server(tmpdir.strpath, 'myserver')
+    status, message = gimmecert.commands.server(tmpdir.strpath, 'myserver', None)
 
     assert status is False
     assert "must be initialised" in message
@@ -163,7 +163,7 @@ def test_server_reports_paths_to_generated_artifacts(tmpdir):
     tmpdir.chdir()
     gimmecert.commands.init(tmpdir.strpath, tmpdir.basename, depth)
 
-    status, message = gimmecert.commands.server(tmpdir.strpath, 'myserver')
+    status, message = gimmecert.commands.server(tmpdir.strpath, 'myserver', None)
 
     assert status is True
     assert ".gimmecert/server/myserver.key.pem" in message
@@ -177,7 +177,7 @@ def test_server_outputs_private_key_to_file(tmpdir):
     tmpdir.chdir()
     gimmecert.commands.init(tmpdir.strpath, tmpdir.basename, depth)
 
-    gimmecert.commands.server(tmpdir.strpath, 'myserver')
+    gimmecert.commands.server(tmpdir.strpath, 'myserver', None)
 
     assert private_key_file.check(file=1)
 
@@ -194,7 +194,7 @@ def test_server_outputs_certificate_to_file(tmpdir):
     tmpdir.chdir()
     gimmecert.commands.init(tmpdir.strpath, tmpdir.basename, depth)
 
-    gimmecert.commands.server(tmpdir.strpath, 'myserver')
+    gimmecert.commands.server(tmpdir.strpath, 'myserver', None)
 
     assert certificate_file.check(file=1)
 
