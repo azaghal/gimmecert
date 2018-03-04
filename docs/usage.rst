@@ -57,6 +57,32 @@ This will create a single CA, providing the following artifacts:
 - ``.gimmecert/ca/chain-full.cert.pem`` (full CA chain, in this case
   same as ``level1.cert.pem``)
 
+Issue a server certificate::
+
+  gimmecert myserver1
+
+This will create the following artifacts for the server:
+
+- ``.gimmecert/server/myserver1.key.pem`` (private key)
+- ``.gimmecert/server/myserver1.cert.pem`` (certificate)
+
+Resulting certificate will include its own name as one of the DNS
+subject alternative names.
+
+Issue a server certificate with additional DNS subject alternative
+names::
+
+  gimmecert myserver2 myserver2.local service.example.com
+
+This will create the following artifacts for the server:
+
+- ``.gimmecert/server/myserver2.key.pem`` (private key)
+- ``.gimmecert/server/myserver2.cert.pem`` (certificate)
+
+This time around, the ``myserver2`` certificate will include
+``myserver2``, ``myserver2.local``, and ``service.example.com`` as DNS
+subject alternative names.
+
 
 Initialisation
 --------------
@@ -84,6 +110,8 @@ process:
 
 - ``.gimmecert/``, base directory.
 - ``.gimmecert/ca/``, used for storing CA private keys and
+  certificates.
+- ``.gimmecert/server/``, used for storing server private keys and
   certificates.
 
 Both CA private keys and certificates are stored as OpenSSL-style PEM
@@ -119,3 +147,41 @@ artifacts:
 - ``.gimmecert/ca/level3.key.pem``
 - ``.gimmecert/ca/level3.cert.pem`` (subject DN ``My Project Level 3 CA``)
 - ``.gimmecert/ca/chain-full.cert.pem``
+
+
+Issuing server certificates
+---------------------------
+
+Server certificates can be issued once the initialisation is
+complete. Command supports passing-in additional DNS subject
+alternative names as additional positional arguments::
+
+  gimmecert server NAME [DNS_NAME [DNS_NAME ...]]
+
+The command will:
+
+- Generate a 2048-bit RSA private key.
+- Issue a certificate associated with the generated private key using
+  the leaf CA (the one deepest in hierachy).
+
+Rerunning the command will overwrite existing private key and
+certificate without warning.
+
+Resulting private keys and certificates are stored within directory
+``.gimmecert/server/``. Private key naming convention is
+``NAME.key.pem``, while certificates are stored as
+``NAME.cert.pem``. In both cases the OpenSSL-style PEM format is used
+for storage.
+
+Subject DN naming convention for server certificates is ``CN=NAME``,
+where ``NAME`` is passed-in via positional argument.
+
+By default the certificate will include the passed-in server name as
+one of its DNS subject alternative names, but additional DNS names can
+be passed-in as well. For example::
+
+  gimmecert server myserver myserver.local service.example.com
+
+Key usage and extended key usage in certificate are set typical TLS
+server use (e.g. *digital signature* + *key encipherment* for KU, and
+*TLS WWW server authentication* for EKU).
