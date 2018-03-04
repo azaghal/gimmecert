@@ -202,3 +202,23 @@ def test_server_outputs_certificate_to_file(tmpdir):
 
     assert certificate_file_content.startswith('-----BEGIN CERTIFICATE')
     assert certificate_file_content.endswith('END CERTIFICATE-----\n')
+
+
+def test_server_errors_out_if_certificate_already_issued(tmpdir):
+    depth = 1
+
+    tmpdir.chdir()
+
+    # Previous run.
+    gimmecert.commands.init(tmpdir.strpath, tmpdir.basename, depth)
+    gimmecert.commands.server(tmpdir.strpath, 'myserver', None)
+    existing_private_key = tmpdir.join('.gimmecert', 'server', 'myserver.key.pem').read()
+    certificate = tmpdir.join('.gimmecert', 'server', 'myserver.cert.pem').read()
+
+    # New run.
+    status, message = gimmecert.commands.server(tmpdir.strpath, 'myserver', None)
+
+    assert status is False
+    assert "already been issued" in message
+    assert tmpdir.join('.gimmecert', 'server', 'myserver.key.pem').read() == existing_private_key
+    assert tmpdir.join('.gimmecert', 'server', 'myserver.cert.pem').read() == certificate

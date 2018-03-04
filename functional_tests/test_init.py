@@ -116,9 +116,9 @@ def test_initialisation_on_existing_directory(tmpdir):
     # initialised, John is (somewhat pleasantly) surprised to see that
     # the tool has informed him the initialisation has already been
     # run.
-    assert exit_code == 0
-    assert stderr == ""
-    assert "CA hierarchy has already been initialised." in stdout
+    assert exit_code != 0
+    assert stdout == ""
+    assert stderr == "CA hierarchy has already been initialised.\n"
 
 
 def test_initialisation_with_custom_base_name(tmpdir):

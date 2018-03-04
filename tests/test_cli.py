@@ -186,27 +186,42 @@ def test_init_command_invoked_with_correct_parameters_with_options(mock_init, tm
 
 
 @mock.patch('sys.argv', ['gimmecert', 'init', '--ca-base-name', 'My Project'])
-def test_init_command_accepts_ca_base_name_option_long_form():
+@mock.patch('gimmecert.cli.init')
+def test_init_command_accepts_ca_base_name_option_long_form(mock_init):
 
     gimmecert.cli.main()  # Should not raise
 
 
 @mock.patch('sys.argv', ['gimmecert', 'init', '-b', 'My Project'])
-def test_init_command_accepts_ca_base_name_option_short_form():
+@mock.patch('gimmecert.cli.init')
+def test_init_command_accepts_ca_base_name_option_short_form(mock_init):
 
     gimmecert.cli.main()  # Should not raise
 
 
 @mock.patch('sys.argv', ['gimmecert', 'init', '--ca-hierarchy-depth', '3'])
-def test_init_command_accepts_ca_hierarchy_depth_option_long_form():
+@mock.patch('gimmecert.cli.init')
+def test_init_command_accepts_ca_hierarchy_depth_option_long_form(mock_init):
 
     gimmecert.cli.main()  # Should not raise
 
 
 @mock.patch('sys.argv', ['gimmecert', 'init', '-d', '3'])
-def test_init_command_accepts_ca_hierarchy_depth_option_short_form():
+@mock.patch('gimmecert.cli.init')
+def test_init_command_accepts_ca_hierarchy_depth_option_short_form(mock_init):
 
     gimmecert.cli.main()  # Should not raise
+
+
+@mock.patch('sys.argv', ['gimmecert', 'init'])
+def test_init_command_exists_with_error_if_hierarchy_already_initialised(tmpdir):
+    tmpdir.chdir()
+    gimmecert.commands.init(tmpdir.strpath, tmpdir.basename, 1)
+
+    with pytest.raises(SystemExit) as e_info:
+        gimmecert.cli.main()
+
+    assert e_info.value.code != 0
 
 
 @mock.patch('sys.argv', ['gimmecert', 'server', '-h'])
@@ -241,19 +256,28 @@ def test_setup_server_subcommand_fails_without_arguments():
 
 
 @mock.patch('sys.argv', ['gimmecert', 'server', 'myserver'])
-def test_setup_server_subcommand_succeeds_with_just_entity_name_argument():
+@mock.patch('gimmecert.cli.server')
+def test_setup_server_subcommand_succeeds_with_just_entity_name_argument(mock_server):
+    # We are just testing the parsing here.
+    mock_server.return_value = True, "Fake message"
 
     gimmecert.cli.main()  # Should not raise.
 
 
 @mock.patch('sys.argv', ['gimmecert', 'server', 'myserver', 'myserver.example.com'])
-def test_setup_server_subcommand_succeeds_with_entity_name_argument_and_one_dns_name():
+@mock.patch('gimmecert.cli.server')
+def test_setup_server_subcommand_succeeds_with_entity_name_argument_and_one_dns_name(mock_server):
+    # We are just testing the parsing here.
+    mock_server.return_value = True, "Fake message"
 
     gimmecert.cli.main()  # Should not raise.
 
 
 @mock.patch('sys.argv', ['gimmecert', 'server', 'myserver', 'myserver1.example.com', 'myserver2.example.com', 'myserver3.example.com', 'myserver4.example.com'])
-def test_setup_server_subcommand_succeeds_with_entity_name_argument_and_four_dns_names():
+@mock.patch('gimmecert.cli.server')
+def test_setup_server_subcommand_succeeds_with_entity_name_argument_and_four_dns_names(mock_server):
+    # We are just testing the parsing here.
+    mock_server.return_value = True, "Fake message"
 
     gimmecert.cli.main()  # Should not raise.
 

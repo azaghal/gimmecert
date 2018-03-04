@@ -165,3 +165,40 @@ def test_server_command_issues_server_certificate_with_additional_subject_altern
     assert "DNS:myserver," in stdout
     assert "DNS:myserver.local," in stdout
     assert "DNS:myserver.example.com\n" in stdout
+
+
+def test_server_command_does_not_overwrite_existing_artifacts(tmpdir):
+    # John has become an avid user of Gimmecert. He uses it in a lot
+    # of projects, including one specific project which he had set-up
+    # a couple of months ago, where he has issued some server
+    # certificate.
+    tmpdir.chdir()
+    run_command("gimmecert", "init")
+    run_command("gimmecert", "server", "myserver")
+
+    private_key = tmpdir.join(".gimmecert", "server", "myserver.key.pem").read()
+    certificate = tmpdir.join(".gimmecert", "server", "myserver.cert.pem").read()
+
+    # After a couple of months of inactivity on that particular
+    # project, John is again asked to do something in relation to
+    # it. He recalls that he needed to issue a server certificate for
+    # it, so he goes ahead and tries to do it again.
+    tmpdir.chdir()
+    stdout, stderr, exit_code = run_command("gimmecert", "server", "myserver")
+
+    # John realizes in last moment, just as he presses ENTER, that he
+    # had issued certificate already. He wonders if he'd need to
+    # redeploy it again now, though. To his (small) relief, he
+    # realizes is it not necessary, since the tool has refused to
+    # overwrite the old key and certificate. Instead he is presented
+    # with an error notifying him that the certificate has already
+    # been issued.
+    assert exit_code != 0
+    assert stderr == "Refusing to overwrite existing data. Certificate has already been issued for server myserver.\n"
+    assert stdout == ""
+
+    # John double-checks (just to be on the safe side), and can see
+    # that both the private key and certificate have been left
+    # unchanged.
+    assert tmpdir.join(".gimmecert", "server", "myserver.key.pem").read() == private_key
+    assert tmpdir.join(".gimmecert", "server", "myserver.cert.pem").read() == certificate

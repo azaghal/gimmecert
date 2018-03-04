@@ -68,7 +68,8 @@ def setup_init_subcommand_parser(parser, subparsers):
                 print("    CA Level %d certificate: .gimmecert/ca/level%d.cert.pem" % (level, level))
             print("    Full certificate chain: .gimmecert/ca/chain-full.cert.pem")
         else:
-            print("CA hierarchy has already been initialised.")
+            print("CA hierarchy has already been initialised.", file=sys.stderr)
+            exit(ERROR_GENERIC)
 
     subparser.set_defaults(func=init_wrapper)
 

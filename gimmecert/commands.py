@@ -94,6 +94,9 @@ def server(project_directory, entity_name, extra_dns_names):
     if not gimmecert.storage.is_initialised(project_directory):
         return False, "CA hierarchy must be initialised prior to issuing server certificates. Run the gimmecert init command first."
 
+    if os.path.exists(private_key_path) or os.path.exists(certificate_path):
+        return False, "Refusing to overwrite existing data. Certificate has already been issued for server myserver."
+
     message = """Server certificate issued.\n
     Server private key: .gimmecert/server/%s.key.pem
     Server certificate: .gimmecert/server/%s.cert.pem
