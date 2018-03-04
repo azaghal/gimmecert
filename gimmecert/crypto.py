@@ -188,6 +188,8 @@ def issue_server_certificate(name, public_key, issuer_private_key, issuer_certif
     to comply with requirements for using such certificates as TLS
     server certificates.
 
+    Server certificate validity will not exceed the CA validity.
+
     :param name: Name of the server end entity. Name will be part of subject DN CN field.
     :type name: str
 
@@ -224,6 +226,12 @@ def issue_server_certificate(name, public_key, issuer_private_key, issuer_certif
         (cryptography.x509.ExtendedKeyUsage([cryptography.x509.oid.ExtendedKeyUsageOID.SERVER_AUTH]), True),
         (cryptography.x509.SubjectAlternativeName([cryptography.x509.DNSName('myserver')]), False)
     ]
+
+    if not_before < issuer_certificate.not_valid_before:
+        not_before = issuer_certificate.not_valid_before
+
+    if not_after > issuer_certificate.not_valid_after:
+        not_after = issuer_certificate.not_valid_after
 
     certificate = issue_certificate(issuer_certificate.issuer, dn, issuer_private_key, public_key, not_before, not_after, extensions)
 

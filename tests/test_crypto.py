@@ -337,3 +337,43 @@ def test_issue_server_certificate_has_correct_public_key():
     certificate = gimmecert.crypto.issue_server_certificate('myserver', private_key.public_key(), issuer_private_key, issuer_certificate)
 
     assert certificate.public_key().public_numbers() == private_key.public_key().public_numbers()
+
+
+@freeze_time('2018-01-01 00:15:00')
+def test_issue_server_certificate_not_before_is_15_minutes_in_past():
+    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+    issuer_private_key, issuer_certificate = ca_hierarchy[0]
+
+    private_key = gimmecert.crypto.generate_private_key()
+
+    certificate = gimmecert.crypto.issue_server_certificate('myserver', private_key.public_key(), issuer_private_key, issuer_certificate)
+
+    assert certificate.not_valid_before == datetime.datetime(2018, 1, 1, 0, 0)
+
+
+def test_issue_server_certificate_not_before_does_not_exceed_ca_validity():
+    with freeze_time('2018-01-01 00:15:00'):
+        ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+
+    issuer_private_key, issuer_certificate = ca_hierarchy[0]
+
+    private_key = gimmecert.crypto.generate_private_key()
+
+    with freeze_time(issuer_certificate.not_valid_before - datetime.timedelta(seconds=1)):
+        certificate1 = gimmecert.crypto.issue_server_certificate('myserver', private_key.public_key(), issuer_private_key, issuer_certificate)
+
+    assert certificate1.not_valid_before == issuer_certificate.not_valid_before
+
+
+def test_issue_server_certificate_not_after_does_not_exceed_ca_validity():
+    with freeze_time('2018-01-01 00:15:00'):
+        ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+
+    issuer_private_key, issuer_certificate = ca_hierarchy[0]
+
+    private_key = gimmecert.crypto.generate_private_key()
+
+    with freeze_time(issuer_certificate.not_valid_after + datetime.timedelta(seconds=1)):
+        certificate1 = gimmecert.crypto.issue_server_certificate('myserver', private_key.public_key(), issuer_private_key, issuer_certificate)
+
+    assert certificate1.not_valid_after == issuer_certificate.not_valid_after
