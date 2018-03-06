@@ -24,10 +24,25 @@ import gimmecert.crypto
 import gimmecert.storage
 
 
-def init(project_directory, ca_base_name, ca_hierarchy_depth):
+class ExitCode:
+    """
+    Convenience class for storing exit codes in central location.
+    """
+
+    SUCCESS = 0
+    ERROR_ALREADY_INITIALISED = 10
+
+
+def init(stdout, stderr, project_directory, ca_base_name, ca_hierarchy_depth):
     """
     Initialises the necessary directory and CA hierarchies for use in
     the specified directory.
+
+    :param stdout: Output stream where the informative messages should be written-out.
+    :type stdout: io.IOBase
+
+    :param stderr: Output stream where the error messages should be written-out.
+    :type stderr: io.IOBase
 
     :param project_directory: Path to directory where the structure should be initialised. Should be top-level project directory normally.
     :type project_directory: str
@@ -38,8 +53,8 @@ def init(project_directory, ca_base_name, ca_hierarchy_depth):
     :param ca_hierarchy_depth: Length/depths of CA hierarchy that should be initialised. E.g. total number of CAs in chain.
     :type ca_hierarchy_depth: int
 
-    :returns: False, if directory has been initialised in previous run, True if project has been initialised in this run.
-    :rtype: bool
+    :returns: Status code, one from gimmecert.commands.ExitCode.
+    :rtype: int
     """
 
     # Set-up various paths.
@@ -47,7 +62,8 @@ def init(project_directory, ca_base_name, ca_hierarchy_depth):
     ca_directory = os.path.join(base_directory, 'ca')
 
     if os.path.exists(base_directory):
-        return False
+        print("CA hierarchy has already been initialised.", file=stderr)
+        return ExitCode.ERROR_ALREADY_INITIALISED
 
     # Initialise the directory.
     gimmecert.storage.initialise_storage(project_directory)
@@ -67,7 +83,13 @@ def init(project_directory, ca_base_name, ca_hierarchy_depth):
     full_chain_path = os.path.join(ca_directory, 'chain-full.cert.pem')
     gimmecert.storage.write_certificate_chain(full_chain, full_chain_path)
 
-    return True
+    print("CA hierarchy initialised. Generated artefacts:", file=stdout)
+    for level in range(1, ca_hierarchy_depth+1):
+        print("    CA Level %d private key: .gimmecert/ca/level%d.key.pem" % (level, level), file=stdout)
+        print("    CA Level %d certificate: .gimmecert/ca/level%d.cert.pem" % (level, level), file=stdout)
+        print("    Full certificate chain: .gimmecert/ca/chain-full.cert.pem", file=stdout)
+
+    return ExitCode.SUCCESS
 
 
 def server(project_directory, entity_name, extra_dns_names):

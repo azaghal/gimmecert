@@ -19,6 +19,7 @@
 #
 
 import os
+import io
 
 import cryptography
 
@@ -104,7 +105,7 @@ def test_is_initialised_returns_false_if_directory_is_not_initialised(tmpdir):
 
 def test_read_ca_hierarchy_returns_list_of_ca_private_key_and_certificate_pairs_for_single_ca(tmpdir):
     tmpdir.chdir()
-    gimmecert.commands.init(tmpdir.strpath, 'My Project', 1)
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, 'My Project', 1)
 
     ca_hierarchy = gimmecert.storage.read_ca_hierarchy(tmpdir.join('.gimmecert', 'ca').strpath)
 
@@ -144,7 +145,7 @@ def test_read_certificate_returns_certificate(tmpdir):
 
 def test_read_ca_hierarchy_returns_list_of_ca_private_key_and_certificate_pairs_in_hierarchy_order_for_multiple_cas(tmpdir):
     tmpdir.chdir()
-    gimmecert.commands.init(tmpdir.strpath, 'My Project', 4)
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, 'My Project', 4)
 
     ca_hierarchy = gimmecert.storage.read_ca_hierarchy(tmpdir.join('.gimmecert', 'ca').strpath)
 

@@ -24,7 +24,7 @@ import os
 import sys
 
 from .decorators import subcommand_parser, get_subcommand_parser_setup_functions
-from .commands import init, server
+from .commands import init, server, ExitCode
 
 
 ERROR_GENERIC = 10
@@ -61,15 +61,9 @@ def setup_init_subcommand_parser(parser, subparsers):
         if args.ca_base_name is None:
             args.ca_base_name = os.path.basename(project_directory)
 
-        if init(project_directory, args.ca_base_name, args.ca_hierarchy_depth):
-            print("CA hierarchy initialised. Generated artefacts:")
-            for level in range(1, args.ca_hierarchy_depth+1):
-                print("    CA Level %d private key: .gimmecert/ca/level%d.key.pem" % (level, level))
-                print("    CA Level %d certificate: .gimmecert/ca/level%d.cert.pem" % (level, level))
-            print("    Full certificate chain: .gimmecert/ca/chain-full.cert.pem")
-        else:
-            print("CA hierarchy has already been initialised.", file=sys.stderr)
-            exit(ERROR_GENERIC)
+        status_code = init(sys.stdout, sys.stderr, project_directory, args.ca_base_name, args.ca_hierarchy_depth)
+        if status_code != ExitCode.SUCCESS:
+            exit(status_code)
 
     subparser.set_defaults(func=init_wrapper)
 

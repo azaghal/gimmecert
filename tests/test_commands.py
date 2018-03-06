@@ -18,6 +18,7 @@
 # Gimmecert.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import io
 import os
 
 import gimmecert.commands
@@ -31,7 +32,7 @@ def test_init_sets_up_directory_structure(tmpdir):
 
     tmpdir.chdir()
 
-    gimmecert.commands.init(tmpdir.strpath, tmpdir.basename, depth)
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
 
     assert os.path.exists(base_dir.strpath)
     assert os.path.exists(ca_dir.strpath)
@@ -43,7 +44,7 @@ def test_init_generates_single_ca_artifact_for_depth_1(tmpdir):
 
     tmpdir.chdir()
 
-    gimmecert.commands.init(tmpdir.strpath, tmpdir.basename, depth)
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
 
     assert os.path.exists(tmpdir.join('.gimmecert', 'ca', 'level1.key.pem').strpath)
     assert os.path.exists(tmpdir.join('.gimmecert', 'ca', 'level1.cert.pem').strpath)
@@ -55,7 +56,7 @@ def test_init_generates_three_ca_artifacts_for_depth_3(tmpdir):
 
     tmpdir.chdir()
 
-    gimmecert.commands.init(tmpdir.strpath, tmpdir.basename, depth)
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
 
     assert os.path.exists(tmpdir.join('.gimmecert', 'ca', 'level1.key.pem').strpath)
     assert os.path.exists(tmpdir.join('.gimmecert', 'ca', 'level1.cert.pem').strpath)
@@ -71,7 +72,7 @@ def test_init_outputs_full_chain_for_depth_1(tmpdir):
 
     tmpdir.chdir()
 
-    gimmecert.commands.init(tmpdir.strpath, tmpdir.basename, depth)
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
 
     level1_certificate = tmpdir.join('.gimmecert', 'ca', 'level1.cert.pem').read()
     full_chain = tmpdir.join('.gimmecert', 'ca', 'chain-full.cert.pem').read()
@@ -84,7 +85,7 @@ def test_init_outputs_full_chain_for_depth_3(tmpdir):
 
     tmpdir.chdir()
 
-    gimmecert.commands.init(tmpdir.strpath, tmpdir.basename, depth)
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
 
     level1_certificate = tmpdir.join('.gimmecert', 'ca', 'level1.cert.pem').read()
     level2_certificate = tmpdir.join('.gimmecert', 'ca', 'level2.cert.pem').read()
@@ -96,25 +97,25 @@ def test_init_outputs_full_chain_for_depth_3(tmpdir):
     assert full_chain == "%s\n%s\n%s" % (level1_certificate, level2_certificate, level3_certificate)
 
 
-def test_init_returns_true_if_directory_has_not_been_previously_initialised(tmpdir):
+def test_init_returns_success_if_directory_has_not_been_previously_initialised(tmpdir):
     depth = 1
 
     tmpdir.chdir()
 
-    initialised = gimmecert.commands.init(tmpdir.strpath, tmpdir.basename, depth)
+    status_code = gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
 
-    assert initialised is True
+    assert status_code == gimmecert.commands.ExitCode.SUCCESS
 
 
-def test_init_returns_false_if_directory_has_been_previously_initialised(tmpdir):
+def test_init_returns_error_code_if_directory_has_been_previously_initialised(tmpdir):
     depth = 1
 
     tmpdir.chdir()
 
-    gimmecert.commands.init(tmpdir.strpath, tmpdir.basename, depth)
-    initialised = gimmecert.commands.init(tmpdir.strpath, tmpdir.basename, depth)
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
+    status_code = gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
 
-    assert initialised is False
+    assert status_code == gimmecert.commands.ExitCode.ERROR_ALREADY_INITIALISED
 
 
 def test_init_does_not_overwrite_artifcats_if_already_initialised(tmpdir):
@@ -122,13 +123,13 @@ def test_init_does_not_overwrite_artifcats_if_already_initialised(tmpdir):
 
     tmpdir.chdir()
 
-    gimmecert.commands.init(tmpdir.strpath, tmpdir.basename, depth)
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
 
     level1_private_key_before = tmpdir.join('.gimmecert', 'ca', 'level1.key.pem').read()
     level1_certificate_before = tmpdir.join('.gimmecert', 'ca', 'level1.cert.pem').read()
     full_chain_before = tmpdir.join('.gimmecert', 'ca', 'chain-full.cert.pem').read()
 
-    gimmecert.commands.init(tmpdir.strpath, tmpdir.basename, depth)
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
 
     level1_private_key_after = tmpdir.join('.gimmecert', 'ca', 'level1.key.pem').read()
     level1_certificate_after = tmpdir.join('.gimmecert', 'ca', 'level1.cert.pem').read()
@@ -161,7 +162,7 @@ def test_server_reports_paths_to_generated_artifacts(tmpdir):
     depth = 1
 
     tmpdir.chdir()
-    gimmecert.commands.init(tmpdir.strpath, tmpdir.basename, depth)
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
 
     status, message = gimmecert.commands.server(tmpdir.strpath, 'myserver', None)
 
@@ -175,7 +176,7 @@ def test_server_outputs_private_key_to_file(tmpdir):
     private_key_file = tmpdir.join('.gimmecert', 'server', 'myserver.key.pem')
 
     tmpdir.chdir()
-    gimmecert.commands.init(tmpdir.strpath, tmpdir.basename, depth)
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
 
     gimmecert.commands.server(tmpdir.strpath, 'myserver', None)
 
@@ -192,7 +193,7 @@ def test_server_outputs_certificate_to_file(tmpdir):
     certificate_file = tmpdir.join('.gimmecert', 'server', 'myserver.cert.pem')
 
     tmpdir.chdir()
-    gimmecert.commands.init(tmpdir.strpath, tmpdir.basename, depth)
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
 
     gimmecert.commands.server(tmpdir.strpath, 'myserver', None)
 
@@ -210,7 +211,7 @@ def test_server_errors_out_if_certificate_already_issued(tmpdir):
     tmpdir.chdir()
 
     # Previous run.
-    gimmecert.commands.init(tmpdir.strpath, tmpdir.basename, depth)
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
     gimmecert.commands.server(tmpdir.strpath, 'myserver', None)
     existing_private_key = tmpdir.join('.gimmecert', 'server', 'myserver.key.pem').read()
     certificate = tmpdir.join('.gimmecert', 'server', 'myserver.cert.pem').read()
@@ -222,3 +223,54 @@ def test_server_errors_out_if_certificate_already_issued(tmpdir):
     assert "already been issued" in message
     assert tmpdir.join('.gimmecert', 'server', 'myserver.key.pem').read() == existing_private_key
     assert tmpdir.join('.gimmecert', 'server', 'myserver.cert.pem').read() == certificate
+
+
+def test_init_command_stdout_and_stderr_for_single_ca(tmpdir):
+    stdout_stream = io.StringIO()
+    stderr_stream = io.StringIO()
+
+    gimmecert.commands.init(stdout_stream, stderr_stream, tmpdir.strpath, "myproject", 1)
+
+    stdout = stdout_stream.getvalue()
+    stderr = stderr_stream.getvalue()
+
+    assert stderr == ""
+    assert "CA hierarchy initialised" in stdout
+    assert ".gimmecert/ca/level1.cert.pem" in stdout
+    assert ".gimmecert/ca/level1.key.pem" in stdout
+    assert ".gimmecert/ca/chain-full.cert.pem" in stdout
+
+
+def test_init_command_stdout_and_stderr_for_multiple_cas(tmpdir):
+    stdout_stream = io.StringIO()
+    stderr_stream = io.StringIO()
+
+    gimmecert.commands.init(stdout_stream, stderr_stream, tmpdir.strpath, "myproject", 3)
+
+    stdout = stdout_stream.getvalue()
+    stderr = stderr_stream.getvalue()
+
+    assert stderr == ""
+    assert "CA hierarchy initialised" in stdout
+    assert ".gimmecert/ca/level1.cert.pem" in stdout
+    assert ".gimmecert/ca/level1.key.pem" in stdout
+    assert ".gimmecert/ca/level2.cert.pem" in stdout
+    assert ".gimmecert/ca/level2.key.pem" in stdout
+    assert ".gimmecert/ca/level3.cert.pem" in stdout
+    assert ".gimmecert/ca/level3.key.pem" in stdout
+    assert ".gimmecert/ca/chain-full.cert.pem" in stdout
+
+
+def test_init_command_stdout_and_stderr_if_hierarchy_already_initialised(tmpdir):
+    stdout_stream = io.StringIO()
+    stderr_stream = io.StringIO()
+
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, "myproject", 1)
+
+    gimmecert.commands.init(stdout_stream, stderr_stream, tmpdir.strpath, "myproject", 1)
+
+    stdout = stdout_stream.getvalue()
+    stderr = stderr_stream.getvalue()
+
+    assert "CA hierarchy has already been initialised" in stderr
+    assert stdout == ""
