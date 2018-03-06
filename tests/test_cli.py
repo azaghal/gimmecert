@@ -269,7 +269,7 @@ def test_setup_server_subcommand_fails_without_arguments():
 @mock.patch('gimmecert.cli.server')
 def test_setup_server_subcommand_succeeds_with_just_entity_name_argument(mock_server):
     # We are just testing the parsing here.
-    mock_server.return_value = True, "Fake message"
+    mock_server.return_value = gimmecert.commands.ExitCode.SUCCESS
 
     gimmecert.cli.main()  # Should not raise.
 
@@ -278,7 +278,7 @@ def test_setup_server_subcommand_succeeds_with_just_entity_name_argument(mock_se
 @mock.patch('gimmecert.cli.server')
 def test_setup_server_subcommand_succeeds_with_entity_name_argument_and_one_dns_name(mock_server):
     # We are just testing the parsing here.
-    mock_server.return_value = True, "Fake message"
+    mock_server.return_value = gimmecert.commands.ExitCode.SUCCESS
 
     gimmecert.cli.main()  # Should not raise.
 
@@ -287,7 +287,7 @@ def test_setup_server_subcommand_succeeds_with_entity_name_argument_and_one_dns_
 @mock.patch('gimmecert.cli.server')
 def test_setup_server_subcommand_succeeds_with_entity_name_argument_and_four_dns_names(mock_server):
     # We are just testing the parsing here.
-    mock_server.return_value = True, "Fake message"
+    mock_server.return_value = gimmecert.commands.ExitCode.SUCCESS
 
     gimmecert.cli.main()  # Should not raise.
 
@@ -304,25 +304,25 @@ def test_setup_server_subcommand_sets_function_callback():
 @mock.patch('sys.argv', ['gimmecert', 'server', 'myserver'])
 @mock.patch('gimmecert.cli.server')
 def test_server_command_invoked_with_correct_parameters_without_extra_dns_names(mock_server, tmpdir):
-    mock_server.return_value = True, "Bogus"
+    mock_server.return_value = gimmecert.commands.ExitCode.SUCCESS
 
     tmpdir.chdir()
 
     gimmecert.cli.main()
 
-    mock_server.assert_called_once_with(tmpdir.strpath, 'myserver', [])
+    mock_server.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'myserver', [])
 
 
 @mock.patch('sys.argv', ['gimmecert', 'server', 'myserver', 'service.local', 'service.example.com'])
 @mock.patch('gimmecert.cli.server')
 def test_server_command_invoked_with_correct_parameters_with_extra_dns_names(mock_server, tmpdir):
-    mock_server.return_value = True, "Bogus"
+    mock_server.return_value = gimmecert.commands.ExitCode.SUCCESS
 
     tmpdir.chdir()
 
     gimmecert.cli.main()
 
-    mock_server.assert_called_once_with(tmpdir.strpath, 'myserver', ['service.local', 'service.example.com'])
+    mock_server.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'myserver', ['service.local', 'service.example.com'])
 
 
 @mock.patch('sys.argv', ['gimmecert', 'server', 'myserver'])

@@ -31,6 +31,8 @@ class ExitCode:
 
     SUCCESS = 0
     ERROR_ALREADY_INITIALISED = 10
+    ERROR_NOT_INITIALISED = 11
+    ERROR_CERTIFICATE_ALREADY_ISSUED = 12
 
 
 def init(stdout, stderr, project_directory, ca_base_name, ca_hierarchy_depth):
@@ -92,10 +94,16 @@ def init(stdout, stderr, project_directory, ca_base_name, ca_hierarchy_depth):
     return ExitCode.SUCCESS
 
 
-def server(project_directory, entity_name, extra_dns_names):
+def server(stdout, stderr, project_directory, entity_name, extra_dns_names):
     """
     Generates a server private key and issues a server certificate
     using the CA hierarchy initialised within the specified directory.
+
+    :param stdout: Output stream where the informative messages should be written-out.
+    :type stdout: io.IOBase
+
+    :param stderr: Output stream where the error messages should be written-out.
+    :type stderr: io.IOBase
 
     :param project_directory: Path to project directory under which the CA artifacats etc will be looked-up.
     :type project_directory: str
@@ -106,23 +114,24 @@ def server(project_directory, entity_name, extra_dns_names):
     :param extra_dns_names: List of additional DNS names to include in the subject alternative name.
     :type extra_dns_names: list[str]
 
-    :returns: Tuple consisting out of status and message to show to user.
-    :rtype: (bool, str)
+    :returns: Status code, one from gimmecert.commands.ExitCode.
+    :rtype: int
     """
 
     private_key_path = os.path.join('.gimmecert', 'server', '%s.key.pem' % entity_name)
     certificate_path = os.path.join('.gimmecert', 'server', '%s.cert.pem' % entity_name)
 
     if not gimmecert.storage.is_initialised(project_directory):
-        return False, "CA hierarchy must be initialised prior to issuing server certificates. Run the gimmecert init command first."
+        print("CA hierarchy must be initialised prior to issuing server certificates. Run the gimmecert init command first.", file=stderr)
+        return ExitCode.ERROR_NOT_INITIALISED
 
     if os.path.exists(private_key_path) or os.path.exists(certificate_path):
-        return False, "Refusing to overwrite existing data. Certificate has already been issued for server myserver."
+        print("Refusing to overwrite existing data. Certificate has already been issued for server myserver.", file=stderr)
+        return ExitCode.ERROR_CERTIFICATE_ALREADY_ISSUED
 
-    message = """Server certificate issued.\n
+    print("""Server certificate issued.\n
     Server private key: .gimmecert/server/%s.key.pem
-    Server certificate: .gimmecert/server/%s.cert.pem
-""" % (entity_name, entity_name)
+    Server certificate: .gimmecert/server/%s.cert.pem""" % (entity_name, entity_name), file=stdout)
 
     ca_hierarchy = gimmecert.storage.read_ca_hierarchy(os.path.join(project_directory, '.gimmecert', 'ca'))
     issuer_private_key, issuer_certificate = ca_hierarchy[-1]
@@ -132,4 +141,4 @@ def server(project_directory, entity_name, extra_dns_names):
     gimmecert.storage.write_private_key(private_key, private_key_path)
     gimmecert.storage.write_certificate(certificate, certificate_path)
 
-    return True, message
+    return ExitCode.SUCCESS

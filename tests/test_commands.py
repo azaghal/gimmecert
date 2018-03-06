@@ -140,35 +140,48 @@ def test_init_does_not_overwrite_artifcats_if_already_initialised(tmpdir):
     assert full_chain_before == full_chain_after
 
 
-def test_server_returns_status_and_message(tmpdir):
+def test_server_returns_status_code(tmpdir):
     tmpdir.chdir()
 
-    status, message = gimmecert.commands.server(tmpdir.strpath, 'myserver', None)
+    status_code = gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None)
 
-    assert isinstance(status, bool)
-    assert isinstance(message, str)
+    assert isinstance(status_code, int)
 
 
 def test_server_reports_error_if_directory_is_not_initialised(tmpdir):
     tmpdir.chdir()
 
-    status, message = gimmecert.commands.server(tmpdir.strpath, 'myserver', None)
+    stdout_stream = io.StringIO()
+    stderr_stream = io.StringIO()
 
-    assert status is False
-    assert "must be initialised" in message
+    status_code = gimmecert.commands.server(stdout_stream, stderr_stream, tmpdir.strpath, 'myserver', None)
+
+    stdout = stdout_stream.getvalue()
+    stderr = stderr_stream.getvalue()
+
+    assert "must be initialised" in stderr
+    assert stdout == ""
+    assert status_code == gimmecert.commands.ExitCode.ERROR_NOT_INITIALISED
 
 
-def test_server_reports_paths_to_generated_artifacts(tmpdir):
+def test_server_reports_success_and_paths_to_generated_artifacts(tmpdir):
     depth = 1
+
+    stdout_stream = io.StringIO()
+    stderr_stream = io.StringIO()
 
     tmpdir.chdir()
     gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
 
-    status, message = gimmecert.commands.server(tmpdir.strpath, 'myserver', None)
+    status_code = gimmecert.commands.server(stdout_stream, stderr_stream, tmpdir.strpath, 'myserver', None)
 
-    assert status is True
-    assert ".gimmecert/server/myserver.key.pem" in message
-    assert ".gimmecert/server/myserver.cert.pem" in message
+    stdout = stdout_stream.getvalue()
+    stderr = stderr_stream.getvalue()
+
+    assert status_code == gimmecert.commands.ExitCode.SUCCESS
+    assert ".gimmecert/server/myserver.key.pem" in stdout
+    assert ".gimmecert/server/myserver.cert.pem" in stdout
+    assert stderr == ""
 
 
 def test_server_outputs_private_key_to_file(tmpdir):
@@ -178,7 +191,7 @@ def test_server_outputs_private_key_to_file(tmpdir):
     tmpdir.chdir()
     gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
 
-    gimmecert.commands.server(tmpdir.strpath, 'myserver', None)
+    gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None)
 
     assert private_key_file.check(file=1)
 
@@ -195,7 +208,7 @@ def test_server_outputs_certificate_to_file(tmpdir):
     tmpdir.chdir()
     gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
 
-    gimmecert.commands.server(tmpdir.strpath, 'myserver', None)
+    gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None)
 
     assert certificate_file.check(file=1)
 
@@ -206,21 +219,28 @@ def test_server_outputs_certificate_to_file(tmpdir):
 
 
 def test_server_errors_out_if_certificate_already_issued(tmpdir):
+    tmpdir.chdir()
+
     depth = 1
 
-    tmpdir.chdir()
+    stdout_stream = io.StringIO()
+    stderr_stream = io.StringIO()
 
     # Previous run.
     gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
-    gimmecert.commands.server(tmpdir.strpath, 'myserver', None)
+    gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None)
     existing_private_key = tmpdir.join('.gimmecert', 'server', 'myserver.key.pem').read()
     certificate = tmpdir.join('.gimmecert', 'server', 'myserver.cert.pem').read()
 
     # New run.
-    status, message = gimmecert.commands.server(tmpdir.strpath, 'myserver', None)
+    status_code = gimmecert.commands.server(stdout_stream, stderr_stream, tmpdir.strpath, 'myserver', None)
 
-    assert status is False
-    assert "already been issued" in message
+    stdout = stdout_stream.getvalue()
+    stderr = stderr_stream.getvalue()
+
+    assert status_code == gimmecert.commands.ExitCode.ERROR_CERTIFICATE_ALREADY_ISSUED
+    assert "already been issued" in stderr
+    assert stdout == ""
     assert tmpdir.join('.gimmecert', 'server', 'myserver.key.pem').read() == existing_private_key
     assert tmpdir.join('.gimmecert', 'server', 'myserver.cert.pem').read() == certificate
 

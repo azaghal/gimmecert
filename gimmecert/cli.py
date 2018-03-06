@@ -88,13 +88,10 @@ def setup_server_subcommand_parser(parser, subparsers):
     def server_wrapper(args):
         project_directory = os.getcwd()
 
-        status, message = server(project_directory, args.entity_name, args.dns_name)
+        status_code = server(sys.stdout, sys.stderr, project_directory, args.entity_name, args.dns_name)
 
-        if status is False:
-            print(message, file=sys.stderr)
-            exit(ERROR_GENERIC)
-        else:
-            print(message)
+        if status_code != ExitCode.SUCCESS:
+            exit(status_code)
 
     subparser.set_defaults(func=server_wrapper)
 
