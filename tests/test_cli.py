@@ -39,7 +39,12 @@ def test_get_parser_returns_parser():
 @mock.patch('gimmecert.cli.get_parser')
 def test_main_invokes_get_parser(mock_get_parser):
 
-    gimmecert.cli.main()
+    # Ignore system exit. Dirty hack to avoid mocking the default
+    # function. We care only about whether the get_parser is invoked.
+    try:
+        gimmecert.cli.main()
+    except SystemExit:
+        pass
 
     mock_get_parser.assert_called_once_with()
 
@@ -49,7 +54,13 @@ def test_main_invokes_argument_parsing(mock_get_parser):
     mock_parser = mock.Mock()
     mock_get_parser.return_value = mock_parser
 
-    gimmecert.cli.main()
+    # Ignore system exit. Dirty hack to avoid mocking the default
+    # function. We care only about whether the parsing of arguments
+    # got called.x
+    try:
+        gimmecert.cli.main()
+    except SystemExit:
+        pass
 
     mock_parser.parse_args.assert_called_once_with()
 
@@ -79,6 +90,9 @@ def test_parser_default_callback_function_calls_print_usage(mock_print_usage):
 def test_main_invokes_parser_function(mock_get_parser):
     mock_parser = mock.Mock()
     mock_args = mock.Mock()
+
+    # Avoid throws of SystemExit exception.
+    mock_args.func.return_value = gimmecert.commands.ExitCode.SUCCESS
 
     mock_parser.parse_args.return_value = mock_args
     mock_get_parser.return_value = mock_parser
@@ -358,3 +372,42 @@ def test_usage_command_invoked_with_correct_parameters(mock_usage):
     # what-not.
     assert mock_usage.called
     assert mock_usage.call_count == 1
+
+
+@mock.patch('sys.argv', ['gimmecert', 'testcommand'])
+def test_main_does_not_exit_if_it_calls_function_that_returns_success():
+
+    @gimmecert.decorators.subcommand_parser
+    def setup_testcommand_parser(parser, subparsers):
+        subparser = subparsers.add_parser('testcommand', description='test command')
+
+        def testcommand_wrapper(args):
+
+            return gimmecert.commands.ExitCode.SUCCESS
+
+        subparser.set_defaults(func=testcommand_wrapper)
+
+        return subparser
+
+    gimmecert.cli.main()  # Should not raise
+
+
+@mock.patch('sys.argv', ['gimmecert', 'testcommand'])
+def test_main_exits_if_it_calls_function_that_returns_success():
+
+    @gimmecert.decorators.subcommand_parser
+    def setup_testcommand_parser(parser, subparsers):
+        subparser = subparsers.add_parser('testcommand', description='test command')
+
+        def testcommand_wrapper(args):
+
+            return gimmecert.commands.ExitCode.ERROR_ALREADY_INITIALISED
+
+        subparser.set_defaults(func=testcommand_wrapper)
+
+        return subparser
+
+    with pytest.raises(SystemExit) as e_info:
+        gimmecert.cli.main()
+
+    assert e_info.value.code == gimmecert.commands.ExitCode.ERROR_ALREADY_INITIALISED

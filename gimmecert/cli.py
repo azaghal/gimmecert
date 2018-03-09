@@ -61,9 +61,7 @@ def setup_init_subcommand_parser(parser, subparsers):
         if args.ca_base_name is None:
             args.ca_base_name = os.path.basename(project_directory)
 
-        status_code = init(sys.stdout, sys.stderr, project_directory, args.ca_base_name, args.ca_hierarchy_depth)
-        if status_code != ExitCode.SUCCESS:
-            exit(status_code)
+        return init(sys.stdout, sys.stderr, project_directory, args.ca_base_name, args.ca_hierarchy_depth)
 
     subparser.set_defaults(func=init_wrapper)
 
@@ -75,10 +73,7 @@ def setup_help_subcommand_parser(parser, subparsers):
     subparser = subparsers.add_parser('help', description='shows help')
 
     def help_wrapper(args):
-        status_code = help_(sys.stdout, sys.stderr, parser)
-
-        if status_code != ExitCode.SUCCESS:
-            exit(status_code)
+        return help_(sys.stdout, sys.stderr, parser)
 
     subparser.set_defaults(func=help_wrapper)
 
@@ -94,10 +89,7 @@ def setup_server_subcommand_parser(parser, subparsers):
     def server_wrapper(args):
         project_directory = os.getcwd()
 
-        status_code = server(sys.stdout, sys.stderr, project_directory, args.entity_name, args.dns_name)
-
-        if status_code != ExitCode.SUCCESS:
-            exit(status_code)
+        return server(sys.stdout, sys.stderr, project_directory, args.entity_name, args.dns_name)
 
     subparser.set_defaults(func=server_wrapper)
 
@@ -114,10 +106,7 @@ def get_parser():
     parser = argparse.ArgumentParser(description=DESCRIPTION, formatter_class=argparse.RawDescriptionHelpFormatter)
 
     def usage_wrapper(args):
-        status_code = usage(sys.stdout, sys.stderr, parser)
-
-        if status_code != ExitCode.SUCCESS:
-            exit(status_code)
+        return usage(sys.stdout, sys.stderr, parser)
 
     parser.set_defaults(func=usage_wrapper)
 
@@ -143,4 +132,8 @@ def main():
 
     parser = get_parser()
     args = parser.parse_args()
-    args.func(args)
+
+    status_code = args.func(args)
+
+    if status_code != ExitCode.SUCCESS:
+        exit(status_code)
