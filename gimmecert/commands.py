@@ -118,8 +118,8 @@ def server(stdout, stderr, project_directory, entity_name, extra_dns_names):
     :rtype: int
     """
 
-    private_key_path = os.path.join('.gimmecert', 'server', '%s.key.pem' % entity_name)
-    certificate_path = os.path.join('.gimmecert', 'server', '%s.cert.pem' % entity_name)
+    private_key_path = os.path.join(project_directory, '.gimmecert', 'server', '%s.key.pem' % entity_name)
+    certificate_path = os.path.join(project_directory, '.gimmecert', 'server', '%s.cert.pem' % entity_name)
 
     if not gimmecert.storage.is_initialised(project_directory):
         print("CA hierarchy must be initialised prior to issuing server certificates. Run the gimmecert init command first.", file=stderr)

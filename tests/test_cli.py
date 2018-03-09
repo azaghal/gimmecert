@@ -20,7 +20,6 @@
 
 
 import argparse
-import io
 import sys
 
 import gimmecert.cli
@@ -237,17 +236,6 @@ def test_init_command_accepts_ca_hierarchy_depth_option_short_form(mock_init):
     gimmecert.cli.main()  # Should not raise
 
 
-@mock.patch('sys.argv', ['gimmecert', 'init'])
-def test_init_command_exists_with_error_if_hierarchy_already_initialised(tmpdir):
-    tmpdir.chdir()
-    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 1)
-
-    with pytest.raises(SystemExit) as e_info:
-        gimmecert.cli.main()
-
-    assert e_info.value.code != 0
-
-
 @mock.patch('sys.argv', ['gimmecert', 'server', '-h'])
 def test_server_command_exists_and_accepts_help_flag():
     with pytest.raises(SystemExit) as e_info:
@@ -337,16 +325,6 @@ def test_server_command_invoked_with_correct_parameters_with_extra_dns_names(moc
     gimmecert.cli.main()
 
     mock_server.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'myserver', ['service.local', 'service.example.com'])
-
-
-@mock.patch('sys.argv', ['gimmecert', 'server', 'myserver'])
-def test_server_command_exists_with_error_if_hierarchy_not_initialised(tmpdir):
-    tmpdir.chdir()
-
-    with pytest.raises(SystemExit) as e_info:
-        gimmecert.cli.main()
-
-    assert e_info.value.code != 0
 
 
 @mock.patch('sys.argv', ['gimmecert', 'help'])

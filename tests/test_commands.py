@@ -31,8 +31,6 @@ def test_init_sets_up_directory_structure(tmpdir):
     server_dir = tmpdir.join('.gimmecert', 'server')
     depth = 1
 
-    tmpdir.chdir()
-
     gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
 
     assert os.path.exists(base_dir.strpath)
@@ -43,8 +41,6 @@ def test_init_sets_up_directory_structure(tmpdir):
 def test_init_generates_single_ca_artifact_for_depth_1(tmpdir):
     depth = 1
 
-    tmpdir.chdir()
-
     gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
 
     assert os.path.exists(tmpdir.join('.gimmecert', 'ca', 'level1.key.pem').strpath)
@@ -54,8 +50,6 @@ def test_init_generates_single_ca_artifact_for_depth_1(tmpdir):
 
 def test_init_generates_three_ca_artifacts_for_depth_3(tmpdir):
     depth = 3
-
-    tmpdir.chdir()
 
     gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
 
@@ -71,8 +65,6 @@ def test_init_generates_three_ca_artifacts_for_depth_3(tmpdir):
 def test_init_outputs_full_chain_for_depth_1(tmpdir):
     depth = 1
 
-    tmpdir.chdir()
-
     gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
 
     level1_certificate = tmpdir.join('.gimmecert', 'ca', 'level1.cert.pem').read()
@@ -83,8 +75,6 @@ def test_init_outputs_full_chain_for_depth_1(tmpdir):
 
 def test_init_outputs_full_chain_for_depth_3(tmpdir):
     depth = 3
-
-    tmpdir.chdir()
 
     gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
 
@@ -101,8 +91,6 @@ def test_init_outputs_full_chain_for_depth_3(tmpdir):
 def test_init_returns_success_if_directory_has_not_been_previously_initialised(tmpdir):
     depth = 1
 
-    tmpdir.chdir()
-
     status_code = gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
 
     assert status_code == gimmecert.commands.ExitCode.SUCCESS
@@ -110,8 +98,6 @@ def test_init_returns_success_if_directory_has_not_been_previously_initialised(t
 
 def test_init_returns_error_code_if_directory_has_been_previously_initialised(tmpdir):
     depth = 1
-
-    tmpdir.chdir()
 
     gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
     status_code = gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
@@ -121,8 +107,6 @@ def test_init_returns_error_code_if_directory_has_been_previously_initialised(tm
 
 def test_init_does_not_overwrite_artifcats_if_already_initialised(tmpdir):
     depth = 1
-
-    tmpdir.chdir()
 
     gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
 
@@ -142,15 +126,12 @@ def test_init_does_not_overwrite_artifcats_if_already_initialised(tmpdir):
 
 
 def test_server_returns_status_code(tmpdir):
-    tmpdir.chdir()
-
     status_code = gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None)
 
     assert isinstance(status_code, int)
 
 
 def test_server_reports_error_if_directory_is_not_initialised(tmpdir):
-    tmpdir.chdir()
 
     stdout_stream = io.StringIO()
     stderr_stream = io.StringIO()
@@ -171,7 +152,6 @@ def test_server_reports_success_and_paths_to_generated_artifacts(tmpdir):
     stdout_stream = io.StringIO()
     stderr_stream = io.StringIO()
 
-    tmpdir.chdir()
     gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
 
     status_code = gimmecert.commands.server(stdout_stream, stderr_stream, tmpdir.strpath, 'myserver', None)
@@ -189,7 +169,6 @@ def test_server_outputs_private_key_to_file(tmpdir):
     depth = 1
     private_key_file = tmpdir.join('.gimmecert', 'server', 'myserver.key.pem')
 
-    tmpdir.chdir()
     gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
 
     gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None)
@@ -206,7 +185,6 @@ def test_server_outputs_certificate_to_file(tmpdir):
     depth = 1
     certificate_file = tmpdir.join('.gimmecert', 'server', 'myserver.cert.pem')
 
-    tmpdir.chdir()
     gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
 
     gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None)
@@ -220,8 +198,6 @@ def test_server_outputs_certificate_to_file(tmpdir):
 
 
 def test_server_errors_out_if_certificate_already_issued(tmpdir):
-    tmpdir.chdir()
-
     depth = 1
 
     stdout_stream = io.StringIO()
