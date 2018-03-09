@@ -36,7 +36,10 @@ def test_get_parser_returns_parser():
 
 
 @mock.patch('gimmecert.cli.get_parser')
-def test_main_invokes_get_parser(mock_get_parser):
+def test_main_invokes_get_parser(mock_get_parser, tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
 
     # Ignore system exit. Dirty hack to avoid mocking the default
     # function. We care only about whether the get_parser is invoked.
@@ -49,7 +52,11 @@ def test_main_invokes_get_parser(mock_get_parser):
 
 
 @mock.patch('gimmecert.cli.get_parser')
-def test_main_invokes_argument_parsing(mock_get_parser):
+def test_main_invokes_argument_parsing(mock_get_parser, tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
     mock_parser = mock.Mock()
     mock_get_parser.return_value = mock_parser
 
@@ -86,7 +93,11 @@ def test_parser_default_callback_function_calls_print_usage(mock_print_usage):
 
 
 @mock.patch('gimmecert.cli.get_parser')
-def test_main_invokes_parser_function(mock_get_parser):
+def test_main_invokes_parser_function(mock_get_parser, tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
     mock_parser = mock.Mock()
     mock_args = mock.Mock()
 
@@ -179,11 +190,13 @@ def test_setup_init_subcommand_sets_function_callback():
 @mock.patch('sys.argv', ['gimmecert', 'init'])
 @mock.patch('gimmecert.cli.init')
 def test_init_command_invoked_with_correct_parameters_no_options(mock_init, tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
     mock_init.return_value = gimmecert.commands.ExitCode.SUCCESS
 
     default_depth = 1
-
-    tmpdir.chdir()
 
     gimmecert.cli.main()
 
@@ -193,11 +206,13 @@ def test_init_command_invoked_with_correct_parameters_no_options(mock_init, tmpd
 @mock.patch('sys.argv', ['gimmecert', 'init', '-b', 'My Project'])
 @mock.patch('gimmecert.cli.init')
 def test_init_command_invoked_with_correct_parameters_with_options(mock_init, tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
     mock_init.return_value = gimmecert.commands.ExitCode.SUCCESS
 
     default_depth = 1
-
-    tmpdir.chdir()
 
     gimmecert.cli.main()
 
@@ -206,7 +221,11 @@ def test_init_command_invoked_with_correct_parameters_with_options(mock_init, tm
 
 @mock.patch('sys.argv', ['gimmecert', 'init', '--ca-base-name', 'My Project'])
 @mock.patch('gimmecert.cli.init')
-def test_init_command_accepts_ca_base_name_option_long_form(mock_init):
+def test_init_command_accepts_ca_base_name_option_long_form(mock_init, tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
     mock_init.return_value = gimmecert.commands.ExitCode.SUCCESS
 
     gimmecert.cli.main()  # Should not raise
@@ -214,7 +233,11 @@ def test_init_command_accepts_ca_base_name_option_long_form(mock_init):
 
 @mock.patch('sys.argv', ['gimmecert', 'init', '-b', 'My Project'])
 @mock.patch('gimmecert.cli.init')
-def test_init_command_accepts_ca_base_name_option_short_form(mock_init):
+def test_init_command_accepts_ca_base_name_option_short_form(mock_init, tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
     mock_init.return_value = gimmecert.commands.ExitCode.SUCCESS
 
     gimmecert.cli.main()  # Should not raise
@@ -222,7 +245,11 @@ def test_init_command_accepts_ca_base_name_option_short_form(mock_init):
 
 @mock.patch('sys.argv', ['gimmecert', 'init', '--ca-hierarchy-depth', '3'])
 @mock.patch('gimmecert.cli.init')
-def test_init_command_accepts_ca_hierarchy_depth_option_long_form(mock_init):
+def test_init_command_accepts_ca_hierarchy_depth_option_long_form(mock_init, tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
     mock_init.return_value = gimmecert.commands.ExitCode.SUCCESS
 
     gimmecert.cli.main()  # Should not raise
@@ -230,14 +257,22 @@ def test_init_command_accepts_ca_hierarchy_depth_option_long_form(mock_init):
 
 @mock.patch('sys.argv', ['gimmecert', 'init', '-d', '3'])
 @mock.patch('gimmecert.cli.init')
-def test_init_command_accepts_ca_hierarchy_depth_option_short_form(mock_init):
+def test_init_command_accepts_ca_hierarchy_depth_option_short_form(mock_init, tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
     mock_init.return_value = gimmecert.commands.ExitCode.SUCCESS
 
     gimmecert.cli.main()  # Should not raise
 
 
 @mock.patch('sys.argv', ['gimmecert', 'server', '-h'])
-def test_server_command_exists_and_accepts_help_flag():
+def test_server_command_exists_and_accepts_help_flag(tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
     with pytest.raises(SystemExit) as e_info:
         gimmecert.cli.main()
 
@@ -260,7 +295,11 @@ def test_setup_server_subcommand_parser_returns_parser():
 
 
 @mock.patch('sys.argv', ['gimmecert', 'server'])
-def test_setup_server_subcommand_fails_without_arguments():
+def test_setup_server_subcommand_fails_without_arguments(tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
     with pytest.raises(SystemExit) as e_info:
         gimmecert.cli.main()
 
@@ -269,7 +308,11 @@ def test_setup_server_subcommand_fails_without_arguments():
 
 @mock.patch('sys.argv', ['gimmecert', 'server', 'myserver'])
 @mock.patch('gimmecert.cli.server')
-def test_setup_server_subcommand_succeeds_with_just_entity_name_argument(mock_server):
+def test_setup_server_subcommand_succeeds_with_just_entity_name_argument(mock_server, tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
     # We are just testing the parsing here.
     mock_server.return_value = gimmecert.commands.ExitCode.SUCCESS
 
@@ -278,7 +321,11 @@ def test_setup_server_subcommand_succeeds_with_just_entity_name_argument(mock_se
 
 @mock.patch('sys.argv', ['gimmecert', 'server', 'myserver', 'myserver.example.com'])
 @mock.patch('gimmecert.cli.server')
-def test_setup_server_subcommand_succeeds_with_entity_name_argument_and_one_dns_name(mock_server):
+def test_setup_server_subcommand_succeeds_with_entity_name_argument_and_one_dns_name(mock_server, tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
     # We are just testing the parsing here.
     mock_server.return_value = gimmecert.commands.ExitCode.SUCCESS
 
@@ -287,7 +334,11 @@ def test_setup_server_subcommand_succeeds_with_entity_name_argument_and_one_dns_
 
 @mock.patch('sys.argv', ['gimmecert', 'server', 'myserver', 'myserver1.example.com', 'myserver2.example.com', 'myserver3.example.com', 'myserver4.example.com'])
 @mock.patch('gimmecert.cli.server')
-def test_setup_server_subcommand_succeeds_with_entity_name_argument_and_four_dns_names(mock_server):
+def test_setup_server_subcommand_succeeds_with_entity_name_argument_and_four_dns_names(mock_server, tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
     # We are just testing the parsing here.
     mock_server.return_value = gimmecert.commands.ExitCode.SUCCESS
 
@@ -306,9 +357,11 @@ def test_setup_server_subcommand_sets_function_callback():
 @mock.patch('sys.argv', ['gimmecert', 'server', 'myserver'])
 @mock.patch('gimmecert.cli.server')
 def test_server_command_invoked_with_correct_parameters_without_extra_dns_names(mock_server, tmpdir):
-    mock_server.return_value = gimmecert.commands.ExitCode.SUCCESS
-
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
     tmpdir.chdir()
+
+    mock_server.return_value = gimmecert.commands.ExitCode.SUCCESS
 
     gimmecert.cli.main()
 
@@ -318,9 +371,11 @@ def test_server_command_invoked_with_correct_parameters_without_extra_dns_names(
 @mock.patch('sys.argv', ['gimmecert', 'server', 'myserver', 'service.local', 'service.example.com'])
 @mock.patch('gimmecert.cli.server')
 def test_server_command_invoked_with_correct_parameters_with_extra_dns_names(mock_server, tmpdir):
-    mock_server.return_value = gimmecert.commands.ExitCode.SUCCESS
-
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
     tmpdir.chdir()
+
+    mock_server.return_value = gimmecert.commands.ExitCode.SUCCESS
 
     gimmecert.cli.main()
 
@@ -329,7 +384,11 @@ def test_server_command_invoked_with_correct_parameters_with_extra_dns_names(moc
 
 @mock.patch('sys.argv', ['gimmecert', 'help'])
 @mock.patch('gimmecert.cli.help_')
-def test_help_command_invoked_with_correct_parameters(mock_help_):
+def test_help_command_invoked_with_correct_parameters(mock_help_, tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
     mock_help_.return_value = gimmecert.commands.ExitCode.SUCCESS
 
     gimmecert.cli.main()
@@ -340,7 +399,11 @@ def test_help_command_invoked_with_correct_parameters(mock_help_):
 
 @mock.patch('sys.argv', ['gimmecert'])
 @mock.patch('gimmecert.cli.usage')
-def test_usage_command_invoked_with_correct_parameters(mock_usage):
+def test_usage_command_invoked_with_correct_parameters(mock_usage, tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
     mock_usage.return_value = gimmecert.commands.ExitCode.SUCCESS
 
     gimmecert.cli.main()
@@ -353,7 +416,10 @@ def test_usage_command_invoked_with_correct_parameters(mock_usage):
 
 
 @mock.patch('sys.argv', ['gimmecert', 'testcommand'])
-def test_main_does_not_exit_if_it_calls_function_that_returns_success():
+def test_main_does_not_exit_if_it_calls_function_that_returns_success(tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
 
     @gimmecert.decorators.subcommand_parser
     def setup_testcommand_parser(parser, subparsers):
@@ -371,7 +437,10 @@ def test_main_does_not_exit_if_it_calls_function_that_returns_success():
 
 
 @mock.patch('sys.argv', ['gimmecert', 'testcommand'])
-def test_main_exits_if_it_calls_function_that_returns_success():
+def test_main_exits_if_it_calls_function_that_returns_success(tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
 
     @gimmecert.decorators.subcommand_parser
     def setup_testcommand_parser(parser, subparsers):
