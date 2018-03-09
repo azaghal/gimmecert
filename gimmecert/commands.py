@@ -142,3 +142,47 @@ def server(stdout, stderr, project_directory, entity_name, extra_dns_names):
     gimmecert.storage.write_certificate(certificate, certificate_path)
 
     return ExitCode.SUCCESS
+
+
+def help_(stdout, stderr, parser):
+    """
+    Output help for the user.
+
+    :param stdout: Output stream where the informative messages should be written-out.
+    :type stdout: io.IOBase
+
+    :param stderr: Output stream where the error messages should be written-out.
+    :type stderr: io.IOBase
+
+    :param parser: Parser used for processing the CLI positional and optional arguments.
+    :type parser: argparse.ArgumentParser
+
+    :returns: Status code, one from gimmecert.commands.ExitCode.
+    :rtype: int
+    """
+
+    parser.print_help(stdout)
+
+    return ExitCode.SUCCESS
+
+
+def usage(stdout, stderr, parser):
+    """
+    Output usage for the user.
+
+    :param stdout: Output stream where the informative messages should be written-out.
+    :type stdout: io.IOBase
+
+    :param stderr: Output stream where the error messages should be written-out.
+    :type stderr: io.IOBase
+
+    :param parser: Parser used for processing the CLI positional and optional arguments.
+    :type parser: argparse.ArgumentParser
+
+    :returns: Status code, one from gimmecert.commands.ExitCode.
+    :rtype: int
+    """
+
+    parser.print_usage(stdout)
+
+    return ExitCode.SUCCESS

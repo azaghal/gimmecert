@@ -333,3 +333,28 @@ def test_server_command_exists_with_error_if_hierarchy_not_initialised(tmpdir):
         gimmecert.cli.main()
 
     assert e_info.value.code != 0
+
+
+@mock.patch('sys.argv', ['gimmecert', 'help'])
+@mock.patch('gimmecert.cli.help_')
+def test_help_command_invoked_with_correct_parameters(mock_help_):
+    mock_help_.return_value = gimmecert.commands.ExitCode.SUCCESS
+
+    gimmecert.cli.main()
+
+    assert mock_help_.called
+    assert mock_help_.call_count == 1
+
+
+@mock.patch('sys.argv', ['gimmecert'])
+@mock.patch('gimmecert.cli.usage')
+def test_usage_command_invoked_with_correct_parameters(mock_usage):
+    mock_usage.return_value = gimmecert.commands.ExitCode.SUCCESS
+
+    gimmecert.cli.main()
+
+    # Can't test calling arguments, since we'd need to mask
+    # get_parser, and if we do that we mask the set_defaults and
+    # what-not.
+    assert mock_usage.called
+    assert mock_usage.call_count == 1

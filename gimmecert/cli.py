@@ -24,7 +24,7 @@ import os
 import sys
 
 from .decorators import subcommand_parser, get_subcommand_parser_setup_functions
-from .commands import init, server, ExitCode
+from .commands import init, server, help_, usage, ExitCode
 
 
 ERROR_GENERIC = 10
@@ -74,7 +74,13 @@ def setup_init_subcommand_parser(parser, subparsers):
 def setup_help_subcommand_parser(parser, subparsers):
     subparser = subparsers.add_parser('help', description='shows help')
 
-    subparser.set_defaults(func=lambda args: parser.print_help())
+    def help_wrapper(args):
+        status_code = help_(sys.stdout, sys.stderr, parser)
+
+        if status_code != ExitCode.SUCCESS:
+            exit(status_code)
+
+    subparser.set_defaults(func=help_wrapper)
 
     return subparser
 
@@ -107,7 +113,13 @@ def get_parser():
 
     parser = argparse.ArgumentParser(description=DESCRIPTION, formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    parser.set_defaults(func=lambda args: parser.print_usage())
+    def usage_wrapper(args):
+        status_code = usage(sys.stdout, sys.stderr, parser)
+
+        if status_code != ExitCode.SUCCESS:
+            exit(status_code)
+
+    parser.set_defaults(func=usage_wrapper)
 
     subparsers = parser.add_subparsers()
 

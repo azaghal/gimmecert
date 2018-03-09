@@ -18,6 +18,7 @@
 # Gimmecert.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import argparse
 import io
 import os
 
@@ -294,3 +295,47 @@ def test_init_command_stdout_and_stderr_if_hierarchy_already_initialised(tmpdir)
 
     assert "CA hierarchy has already been initialised" in stderr
     assert stdout == ""
+
+
+def test_help_command_returns_success_status_code():
+    status_code = gimmecert.commands.help_(io.StringIO(), io.StringIO(), argparse.ArgumentParser())
+
+    assert status_code == gimmecert.commands.ExitCode.SUCCESS
+
+
+def test_help_command_outputs_help():
+    stdout_stream = io.StringIO()
+    stderr_stream = io.StringIO()
+
+    parser = argparse.ArgumentParser(description="This is help")
+
+    gimmecert.commands.help_(stdout_stream, stderr_stream, parser)
+
+    stdout = stdout_stream.getvalue()
+    stderr = stderr_stream.getvalue()
+
+    assert stderr == ""
+    assert "usage" in stdout
+    assert "--help" in stdout
+
+
+def test_usage_command_returns_success_status_code():
+    status_code = gimmecert.commands.usage(io.StringIO(), io.StringIO(), argparse.ArgumentParser())
+
+    assert status_code == gimmecert.commands.ExitCode.SUCCESS
+
+
+def test_usage_command_outputs_usage():
+    stdout_stream = io.StringIO()
+    stderr_stream = io.StringIO()
+
+    parser = argparse.ArgumentParser(description="This is help")
+
+    gimmecert.commands.usage(stdout_stream, stderr_stream, parser)
+
+    stdout = stdout_stream.getvalue()
+    stderr = stderr_stream.getvalue()
+
+    assert stderr == ""
+    assert "usage:" in stdout
+    assert len(stdout.splitlines()) == 1
