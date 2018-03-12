@@ -315,3 +315,24 @@ def test_usage_command_outputs_usage():
     assert stderr == ""
     assert "usage:" in stdout
     assert len(stdout.splitlines()) == 1
+
+
+def test_client_reports_error_if_directory_is_not_initialised(tmpdir):
+
+    stdout_stream = io.StringIO()
+    stderr_stream = io.StringIO()
+
+    status_code = gimmecert.commands.client(stdout_stream, stderr_stream, tmpdir.strpath)
+
+    stdout = stdout_stream.getvalue()
+    stderr = stderr_stream.getvalue()
+
+    assert "must be initialised" in stderr
+    assert stdout == ""
+    assert status_code == gimmecert.commands.ExitCode.ERROR_NOT_INITIALISED
+
+
+def test_client_returns_status_code(tmpdir):
+    status_code = gimmecert.commands.client(io.StringIO(), io.StringIO(), tmpdir.strpath)
+
+    assert isinstance(status_code, int)

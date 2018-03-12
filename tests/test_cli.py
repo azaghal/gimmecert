@@ -500,10 +500,14 @@ def test_setup_client_subcommand_fails_without_arguments(tmpdir):
 
 
 @mock.patch('sys.argv', ['gimmecert', 'client', 'myclient'])
-def test_setup_client_subcommand_succeeds_with_just_entity_name_argument(tmpdir):
+@mock.patch('gimmecert.cli.client')
+def test_setup_client_subcommand_succeeds_with_entity_name_argument(mock_client, tmpdir):
     # This should ensure we don't accidentally create artifacts
     # outside of test directory.
     tmpdir.chdir()
+
+    # We are just testing the parsing here.
+    mock_client.return_value = gimmecert.commands.ExitCode.SUCCESS
 
     gimmecert.cli.main()  # Should not raise.
 
@@ -515,3 +519,17 @@ def test_setup_client_subcommand_sets_function_callback():
     subparser = gimmecert.cli.setup_client_subcommand_parser(parser, subparsers)
 
     assert callable(subparser.get_default('func'))
+
+
+@mock.patch('sys.argv', ['gimmecert', 'client', 'myclient'])
+@mock.patch('gimmecert.cli.client')
+def test_client_command_invoked_with_correct_parameters(mock_client, tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
+    mock_client.return_value = gimmecert.commands.ExitCode.SUCCESS
+
+    gimmecert.cli.main()
+
+    mock_client.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath)

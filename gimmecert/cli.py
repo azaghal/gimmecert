@@ -24,7 +24,7 @@ import os
 import sys
 
 from .decorators import subcommand_parser, get_subcommand_parser_setup_functions
-from .commands import init, server, help_, usage, ExitCode
+from .commands import client, help_, init, server, usage, ExitCode
 
 
 ERROR_GENERIC = 10
@@ -102,7 +102,9 @@ def setup_client_subcommand_parser(parser, subparsers):
     subparser.add_argument('entity_name', help='Name of the client entity.')
 
     def client_wrapper(args):
-        return ExitCode.SUCCESS
+        project_directory = os.getcwd()
+
+        return client(sys.stdout, sys.stderr, project_directory)
 
     subparser.set_defaults(func=client_wrapper)
 

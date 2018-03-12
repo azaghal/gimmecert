@@ -186,3 +186,9 @@ def usage(stdout, stderr, parser):
     parser.print_usage(stdout)
 
     return ExitCode.SUCCESS
+
+
+def client(stdout, stderr, project_directory):
+    if not gimmecert.storage.is_initialised(project_directory):
+        print("CA hierarchy must be initialised prior to issuing client certificates. Run the gimmecert init command first.", file=stderr)
+        return ExitCode.ERROR_NOT_INITIALISED

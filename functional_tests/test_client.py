@@ -45,3 +45,19 @@ def test_client_command_available_with_help():
     assert stderr == ""
     assert stdout.startswith("usage: gimmecert client")
     assert stdout.split('\n')[0].endswith(" entity_name")  # First line of help.
+
+
+def test_client_command_requires_initialised_hierarchy(tmpdir):
+    # John is about to issue a client certificate. He switches to his
+    # project directory.
+    tmpdir.chdir()
+
+    # John tries to issue a client certificate.
+    stdout, stderr, exit_code = run_command("gimmecert", "client", "myclient")
+
+    # Unfortunately, John has forgotten to initialise the CA hierarchy
+    # from within this directory, and is instead presented with an
+    # error.
+    assert stdout == ""
+    assert stderr == "CA hierarchy must be initialised prior to issuing client certificates. Run the gimmecert init command first.\n"
+    assert exit_code != 0
