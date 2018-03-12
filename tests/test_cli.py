@@ -458,3 +458,60 @@ def test_main_exits_if_it_calls_function_that_returns_success(tmpdir):
         gimmecert.cli.main()
 
     assert e_info.value.code == gimmecert.commands.ExitCode.ERROR_ALREADY_INITIALISED
+
+
+@mock.patch('sys.argv', ['gimmecert', 'client', '-h'])
+def test_client_command_exists_and_accepts_help_flag(tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
+    with pytest.raises(SystemExit) as e_info:
+        gimmecert.cli.main()
+
+    assert e_info.value.code == 0
+
+
+def test_setup_client_subcommand_parser_registered():
+    registered_functions = gimmecert.decorators.get_subcommand_parser_setup_functions()
+
+    assert gimmecert.cli.setup_client_subcommand_parser in registered_functions
+
+
+def test_setup_client_subcommand_parser_returns_parser():
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers()
+
+    subparser = gimmecert.cli.setup_client_subcommand_parser(parser, subparsers)
+
+    assert isinstance(subparser, argparse.ArgumentParser)
+
+
+@mock.patch('sys.argv', ['gimmecert', 'client'])
+def test_setup_client_subcommand_fails_without_arguments(tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
+    with pytest.raises(SystemExit) as e_info:
+        gimmecert.cli.main()
+
+    assert e_info.value.code != 0
+
+
+@mock.patch('sys.argv', ['gimmecert', 'client', 'myclient'])
+def test_setup_client_subcommand_succeeds_with_just_entity_name_argument(tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
+    gimmecert.cli.main()  # Should not raise.
+
+
+def test_setup_client_subcommand_sets_function_callback():
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers()
+
+    subparser = gimmecert.cli.setup_client_subcommand_parser(parser, subparsers)
+
+    assert callable(subparser.get_default('func'))

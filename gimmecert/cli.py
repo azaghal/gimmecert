@@ -96,6 +96,19 @@ def setup_server_subcommand_parser(parser, subparsers):
     return subparser
 
 
+@subcommand_parser
+def setup_client_subcommand_parser(parser, subparsers):
+    subparser = subparsers.add_parser('client', description='Issue client certificate.')
+    subparser.add_argument('entity_name', help='Name of the client entity.')
+
+    def client_wrapper(args):
+        return ExitCode.SUCCESS
+
+    subparser.set_defaults(func=client_wrapper)
+
+    return subparser
+
+
 def get_parser():
     """
     Sets-up and returns a CLI argument parser.
