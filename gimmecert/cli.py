@@ -47,6 +47,9 @@ Examples:
 
     # Issue a TLS server certificate with additional DNS subject alternative names.
     gimmecert server myserver extradns1.local extradns2.example.com
+
+    # Issue a TLS client certificate.
+    gimmecert client myclient
 """
 
 
