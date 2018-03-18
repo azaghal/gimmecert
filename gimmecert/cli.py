@@ -104,7 +104,7 @@ def setup_client_subcommand_parser(parser, subparsers):
     def client_wrapper(args):
         project_directory = os.getcwd()
 
-        return client(sys.stdout, sys.stderr, project_directory)
+        return client(sys.stdout, sys.stderr, project_directory, args.entity_name)
 
     subparser.set_defaults(func=client_wrapper)
 

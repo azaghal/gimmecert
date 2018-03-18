@@ -532,4 +532,4 @@ def test_client_command_invoked_with_correct_parameters(mock_client, tmpdir):
 
     gimmecert.cli.main()
 
-    mock_client.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath)
+    mock_client.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'myclient')

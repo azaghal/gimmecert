@@ -37,6 +37,7 @@ def test_initialise_storage(tmpdir):
     assert os.path.exists(tmpdir.join('.gimmecert').strpath)
     assert os.path.exists(tmpdir.join('.gimmecert', 'ca').strpath)
     assert os.path.exists(tmpdir.join('.gimmecert', 'server').strpath)
+    assert os.path.exists(tmpdir.join('.gimmecert', 'client').strpath)
 
 
 def test_write_private_key(tmpdir):

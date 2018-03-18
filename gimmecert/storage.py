@@ -44,6 +44,7 @@ def initialise_storage(project_directory):
     os.mkdir(os.path.join(project_directory, '.gimmecert'))
     os.mkdir(os.path.join(project_directory, '.gimmecert', 'ca'))
     os.mkdir(os.path.join(project_directory, '.gimmecert', 'server'))
+    os.mkdir(os.path.join(project_directory, '.gimmecert', 'client'))
 
 
 def write_private_key(private_key, path):

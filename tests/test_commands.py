@@ -322,7 +322,7 @@ def test_client_reports_error_if_directory_is_not_initialised(tmpdir):
     stdout_stream = io.StringIO()
     stderr_stream = io.StringIO()
 
-    status_code = gimmecert.commands.client(stdout_stream, stderr_stream, tmpdir.strpath)
+    status_code = gimmecert.commands.client(stdout_stream, stderr_stream, tmpdir.strpath, 'myclient')
 
     stdout = stdout_stream.getvalue()
     stderr = stderr_stream.getvalue()
@@ -333,6 +333,58 @@ def test_client_reports_error_if_directory_is_not_initialised(tmpdir):
 
 
 def test_client_returns_status_code(tmpdir):
-    status_code = gimmecert.commands.client(io.StringIO(), io.StringIO(), tmpdir.strpath)
+    status_code = gimmecert.commands.client(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myclient')
 
     assert isinstance(status_code, int)
+
+
+def test_client_reports_success_and_paths_to_generated_artifacts(tmpdir):
+    depth = 1
+
+    stdout_stream = io.StringIO()
+    stderr_stream = io.StringIO()
+
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
+
+    status_code = gimmecert.commands.client(stdout_stream, stderr_stream, tmpdir.strpath, 'myclient')
+
+    stdout = stdout_stream.getvalue()
+    stderr = stderr_stream.getvalue()
+
+    assert status_code == gimmecert.commands.ExitCode.SUCCESS
+    assert "certificate issued" in stdout
+    assert ".gimmecert/client/myclient.cert.pem" in stdout
+    assert ".gimmecert/client/myclient.key.pem" in stdout
+    assert stderr == ""
+
+
+def test_client_outputs_private_key_to_file(tmpdir):
+    depth = 1
+    private_key_file = tmpdir.join('.gimmecert', 'client', 'myclient.key.pem')
+
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
+
+    gimmecert.commands.client(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myclient')
+
+    assert private_key_file.check(file=1)
+
+    private_key_file_content = private_key_file.read()
+
+    assert private_key_file_content.startswith('-----BEGIN RSA PRIVATE KEY')
+    assert private_key_file_content.endswith('END RSA PRIVATE KEY-----\n')
+
+
+def test_client_outputs_certificate_to_file(tmpdir):
+    depth = 1
+    certificate_file = tmpdir.join('.gimmecert', 'client', 'myclient.cert.pem')
+
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
+
+    gimmecert.commands.client(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myclient')
+
+    assert certificate_file.check(file=1)
+
+    certificate_file_content = certificate_file.read()
+
+    assert certificate_file_content.startswith('-----BEGIN CERTIFICATE-----')
+    assert certificate_file_content.endswith('-----END CERTIFICATE-----\n')

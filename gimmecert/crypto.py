@@ -244,3 +244,61 @@ def issue_server_certificate(name, public_key, issuer_private_key, issuer_certif
     certificate = issue_certificate(issuer_certificate.issuer, dn, issuer_private_key, public_key, not_before, not_after, extensions)
 
     return certificate
+
+
+def issue_client_certificate(name, public_key, issuer_private_key, issuer_certificate):
+    """
+    Issues a client certificate. The resulting certificate will use
+    the passed-in name for subject DN.
+
+    The client certificate key usages and extended key usages are set
+    to comply with requirements for using such certificates as TLS
+    server certificates.
+
+    Client certificate validity will not exceed the CA validity.
+
+    :param name: Name of the client end entity. Name will be part of subject DN CN field.
+    :type name: str
+
+    :param public_key: Public key of the server end entity.
+    :type public_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPublicKey
+
+    :param issuer_private_key: Private key of the issuer to use for signing the client certificate structure.
+    :type issuer_private_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey
+
+    :param issuer_certificate: Certificate of certificate issuer. Naming and validity constraints will be applied based on its content.
+    :type issuer_certificate: cryptography.x509.Certificate
+
+    :returns: Client certificate issued by designated issuer.
+    :rtype: cryptography.x509.Certificate
+    """
+
+    dn = get_dn(name)
+    not_before, not_after = get_validity_range()
+    extensions = [
+        (cryptography.x509.BasicConstraints(ca=False, path_length=None), True),
+        (
+            cryptography.x509.KeyUsage(
+                digital_signature=True,
+                key_encipherment=True,
+                content_commitment=False,
+                data_encipherment=False,
+                key_agreement=False,
+                key_cert_sign=False,
+                crl_sign=False,
+                encipher_only=False,
+                decipher_only=False
+            ), True
+        ),
+        (cryptography.x509.ExtendedKeyUsage([cryptography.x509.oid.ExtendedKeyUsageOID.CLIENT_AUTH]), True),
+    ]
+
+    if not_before < issuer_certificate.not_valid_before:
+        not_before = issuer_certificate.not_valid_before
+
+    if not_after > issuer_certificate.not_valid_after:
+        not_after = issuer_certificate.not_valid_after
+
+    certificate = issue_certificate(issuer_certificate.issuer, dn, issuer_private_key, public_key, not_before, not_after, extensions)
+
+    return certificate

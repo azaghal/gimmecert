@@ -398,3 +398,114 @@ def test_issue_server_certificate_incorporates_additional_dns_subject_alternativ
 
     assert certificate.extensions.get_extension_for_class(cryptography.x509.SubjectAlternativeName).critical is False
     assert certificate.extensions.get_extension_for_class(cryptography.x509.SubjectAlternativeName).value == expected_subject_alternative_name
+
+
+def test_issue_client_certificate_returns_certificate():
+    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+    issuer_private_key, issuer_certificate = ca_hierarchy[0]
+
+    private_key = gimmecert.crypto.generate_private_key()
+
+    certificate = gimmecert.crypto.issue_client_certificate('myclient', private_key.public_key(), issuer_private_key, issuer_certificate)
+
+    assert isinstance(certificate, cryptography.x509.Certificate)
+
+
+def test_issue_client_certificate_has_correct_issuer_and_subject():
+    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+    issuer_private_key, issuer_certificate = ca_hierarchy[0]
+
+    private_key = gimmecert.crypto.generate_private_key()
+
+    certificate = gimmecert.crypto.issue_client_certificate('myclient', private_key.public_key(), issuer_private_key, issuer_certificate)
+
+    assert certificate.issuer == issuer_certificate.subject
+    assert certificate.subject == gimmecert.crypto.get_dn('myclient')
+
+
+def test_issue_client_certificate_sets_correct_extensions():
+    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+    issuer_private_key, issuer_certificate = ca_hierarchy[0]
+
+    private_key = gimmecert.crypto.generate_private_key()
+
+    expected_basic_constraints = cryptography.x509.BasicConstraints(ca=False, path_length=None)
+    expected_key_usage = cryptography.x509.KeyUsage(
+        digital_signature=True,
+        key_encipherment=True,
+        content_commitment=False,
+        data_encipherment=False,
+        key_agreement=False,
+        key_cert_sign=False,
+        crl_sign=False,
+        encipher_only=False,
+        decipher_only=False
+    )
+    expected_extended_key_usage = cryptography.x509.ExtendedKeyUsage(
+        [
+            cryptography.x509.oid.ExtendedKeyUsageOID.CLIENT_AUTH
+        ]
+    )
+
+    certificate = gimmecert.crypto.issue_client_certificate('myclient', private_key.public_key(), issuer_private_key, issuer_certificate)
+
+    assert len(certificate.extensions) == 3
+    assert certificate.extensions.get_extension_for_class(cryptography.x509.BasicConstraints).critical is True
+    assert certificate.extensions.get_extension_for_class(cryptography.x509.BasicConstraints).value == expected_basic_constraints
+
+    assert certificate.extensions.get_extension_for_class(cryptography.x509.KeyUsage).critical is True
+    assert certificate.extensions.get_extension_for_class(cryptography.x509.KeyUsage).value == expected_key_usage
+
+    assert certificate.extensions.get_extension_for_class(cryptography.x509.ExtendedKeyUsage).critical is True
+    assert certificate.extensions.get_extension_for_class(cryptography.x509.ExtendedKeyUsage).value == expected_extended_key_usage
+
+
+def test_issue_client_certificate_has_correct_public_key():
+    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+    issuer_private_key, issuer_certificate = ca_hierarchy[0]
+
+    private_key = gimmecert.crypto.generate_private_key()
+
+    certificate = gimmecert.crypto.issue_client_certificate('myclient', private_key.public_key(), issuer_private_key, issuer_certificate)
+
+    assert certificate.public_key().public_numbers() == private_key.public_key().public_numbers()
+
+
+@freeze_time('2018-01-01 00:15:00')
+def test_issue_client_certificate_not_before_is_15_minutes_in_past():
+    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+    issuer_private_key, issuer_certificate = ca_hierarchy[0]
+
+    private_key = gimmecert.crypto.generate_private_key()
+
+    certificate = gimmecert.crypto.issue_client_certificate('myclient', private_key.public_key(), issuer_private_key, issuer_certificate)
+
+    assert certificate.not_valid_before == datetime.datetime(2018, 1, 1, 0, 0)
+
+
+def test_issue_client_certificate_not_before_does_not_exceed_ca_validity():
+    with freeze_time('2018-01-01 00:15:00'):
+        ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+
+    issuer_private_key, issuer_certificate = ca_hierarchy[0]
+
+    private_key = gimmecert.crypto.generate_private_key()
+
+    with freeze_time(issuer_certificate.not_valid_before - datetime.timedelta(seconds=1)):
+        certificate1 = gimmecert.crypto.issue_client_certificate('myclient', private_key.public_key(), issuer_private_key, issuer_certificate)
+
+    assert certificate1.not_valid_before == issuer_certificate.not_valid_before
+
+
+def test_issue_client_certificate_not_after_does_not_exceed_ca_validity():
+    with freeze_time('2018-01-01 00:15:00'):
+        ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+
+    issuer_private_key, issuer_certificate = ca_hierarchy[0]
+
+    private_key = gimmecert.crypto.generate_private_key()
+
+    with freeze_time(issuer_certificate.not_valid_after + datetime.timedelta(seconds=1)):
+        certificate1 = gimmecert.crypto.issue_client_certificate('myclient', private_key.public_key(), issuer_private_key, issuer_certificate)
+
+    assert certificate1.not_valid_after == issuer_certificate.not_valid_after

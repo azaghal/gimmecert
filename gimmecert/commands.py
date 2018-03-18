@@ -188,7 +188,44 @@ def usage(stdout, stderr, parser):
     return ExitCode.SUCCESS
 
 
-def client(stdout, stderr, project_directory):
+def client(stdout, stderr, project_directory, entity_name):
+    """
+    Generates a client private key and issues a client certificate
+    using the CA hierarchy initialised within the specified directory.
+
+    :param stdout: Output stream where the informative messages should be written-out.
+    :type stdout: io.IOBase
+
+    :param stderr: Output stream where the error messages should be written-out.
+    :type stderr: io.IOBase
+
+    :param project_directory: Path to project directory under which the CA artifacats etc will be looked-up.
+    :type project_directory: str
+
+    :param entity_name: Name of the client entity. Name will be used in subject DN.
+    :type entity_name: str
+
+    :returns: Status code, one from gimmecert.commands.ExitCode.
+    :rtype: int
+    """
+
+    private_key_path = os.path.join(project_directory, '.gimmecert', 'client', '%s.key.pem' % entity_name)
+    certificate_path = os.path.join(project_directory, '.gimmecert', 'client', '%s.cert.pem' % entity_name)
+
     if not gimmecert.storage.is_initialised(project_directory):
         print("CA hierarchy must be initialised prior to issuing client certificates. Run the gimmecert init command first.", file=stderr)
         return ExitCode.ERROR_NOT_INITIALISED
+
+    ca_hierarchy = gimmecert.storage.read_ca_hierarchy(os.path.join(project_directory, '.gimmecert', 'ca'))
+    issuer_private_key, issuer_certificate = ca_hierarchy[-1]
+    private_key = gimmecert.crypto.generate_private_key()
+    certificate = gimmecert.crypto.issue_client_certificate(entity_name, private_key.public_key(), issuer_private_key, issuer_certificate)
+
+    gimmecert.storage.write_private_key(private_key, private_key_path)
+    gimmecert.storage.write_certificate(certificate, certificate_path)
+
+    print("""Client certificate issued.\n
+    Client private key: .gimmecert/client/%s.key.pem\n
+    Client certificate: .gimmecert/client/%s.cert.pem""" % (entity_name, entity_name), file=stdout)
+
+    return ExitCode.SUCCESS
