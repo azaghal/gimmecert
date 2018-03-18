@@ -217,6 +217,7 @@ def test_server_errors_out_if_certificate_already_issued(tmpdir):
 
     assert status_code == gimmecert.commands.ExitCode.ERROR_CERTIFICATE_ALREADY_ISSUED
     assert "already been issued" in stderr
+    assert "server myserver" in stderr
     assert stdout == ""
     assert tmpdir.join('.gimmecert', 'server', 'myserver.key.pem').read() == existing_private_key
     assert tmpdir.join('.gimmecert', 'server', 'myserver.cert.pem').read() == certificate

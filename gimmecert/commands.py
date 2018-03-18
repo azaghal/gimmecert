@@ -126,7 +126,7 @@ def server(stdout, stderr, project_directory, entity_name, extra_dns_names):
         return ExitCode.ERROR_NOT_INITIALISED
 
     if os.path.exists(private_key_path) or os.path.exists(certificate_path):
-        print("Refusing to overwrite existing data. Certificate has already been issued for server myserver.", file=stderr)
+        print("Refusing to overwrite existing data. Certificate has already been issued for server %s." % entity_name, file=stderr)
         return ExitCode.ERROR_CERTIFICATE_ALREADY_ISSUED
 
     print("""Server certificate issued.\n
