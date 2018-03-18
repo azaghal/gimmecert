@@ -51,6 +51,21 @@ away.
 Features
 --------
 
+Gimmecert provides the following features:
+
+- It is very easy to use. Commands are intuitive, and require minimal
+  input from the user.
+- Initialisation of CA hierarchy for issuing certificates. CA
+  hierarchy depth can be specified, letting you easily simulate your
+  production environment.
+- Issuance of TLS server certificates, with any number of DNS subject
+  alternative names.
+- Issuance of TLS client certificates.
+- All generated artifacts stored within a single sub-directory
+  (``.gimmecert``), relative to directory where command is
+  invoked. This allows you to easily issue per-project testing
+  certificates.
+
 
 Support
 -------

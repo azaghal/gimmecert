@@ -59,7 +59,7 @@ This will create a single CA, providing the following artifacts:
 
 Issue a server certificate::
 
-  gimmecert myserver1
+  gimmecert server myserver1
 
 This will create the following artifacts for the server:
 
@@ -69,10 +69,19 @@ This will create the following artifacts for the server:
 Resulting certificate will include its own name as one of the DNS
 subject alternative names.
 
+Issue a client certificate::
+
+  gimmecert client myclient1
+
+This will create the following artifacts for the client:
+
+- ``.gimmecert/client/myclient1.key.pem`` (private key)
+- ``.gimmecert/client/myclient1.cert.pem`` (certificate)
+
 Issue a server certificate with additional DNS subject alternative
 names::
 
-  gimmecert myserver2 myserver2.local service.example.com
+  gimmecert server myserver2 myserver2.local service.example.com
 
 This will create the following artifacts for the server:
 
@@ -112,6 +121,8 @@ process:
 - ``.gimmecert/ca/``, used for storing CA private keys and
   certificates.
 - ``.gimmecert/server/``, used for storing server private keys and
+  certificates.
+- ``.gimmecert/client/``, used for storing client private keys and
   certificates.
 
 Both CA private keys and certificates are stored as OpenSSL-style PEM
@@ -185,3 +196,34 @@ be passed-in as well. For example::
 Key usage and extended key usage in certificate are set typical TLS
 server use (e.g. *digital signature* + *key encipherment* for KU, and
 *TLS WWW server authentication* for EKU).
+
+
+Issuing client certificates
+---------------------------
+
+Client certificates can be issued once the initialisation is
+complete. Command accepts a single positional argument::
+
+  gimmecert client NAME
+
+The command will:
+
+- Generate a 2048-bit RSA private key.
+- Issue a certificate associated with the generated private key using
+  the leaf CA (the one deepest in hierachy).
+
+Rerunning the command will overwrite existing private key and
+certificate without warning.
+
+Resulting private keys and certificates are stored within directory
+``.gimmecert/client/``. Private key naming convention is
+``NAME.key.pem``, while certificates are stored as
+``NAME.cert.pem``. In both cases the OpenSSL-style PEM format is used
+for storage.
+
+Subject DN naming convention for client certificates is ``CN=NAME``,
+where ``NAME`` is passed-in via positional argument.
+
+Key usage and extended key usage in certificate are set typical TLS
+client use (e.g. *digital signature* + *key encipherment* for KU, and
+*TLS WWW client authentication* for EKU).
