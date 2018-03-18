@@ -388,3 +388,29 @@ def test_client_outputs_certificate_to_file(tmpdir):
 
     assert certificate_file_content.startswith('-----BEGIN CERTIFICATE-----')
     assert certificate_file_content.endswith('-----END CERTIFICATE-----\n')
+
+
+def test_client_errors_out_if_certificate_already_issued(tmpdir):
+    depth = 1
+
+    stdout_stream = io.StringIO()
+    stderr_stream = io.StringIO()
+
+    # Previous run.
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
+    gimmecert.commands.client(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myclient')
+    existing_private_key = tmpdir.join('.gimmecert', 'client', 'myclient.key.pem').read()
+    certificate = tmpdir.join('.gimmecert', 'client', 'myclient.cert.pem').read()
+
+    # New run.
+    status_code = gimmecert.commands.client(stdout_stream, stderr_stream, tmpdir.strpath, 'myclient')
+
+    stdout = stdout_stream.getvalue()
+    stderr = stderr_stream.getvalue()
+
+    assert status_code == gimmecert.commands.ExitCode.ERROR_CERTIFICATE_ALREADY_ISSUED
+    assert "already been issued" in stderr
+    assert "client myclient" in stderr
+    assert stdout == ""
+    assert tmpdir.join('.gimmecert', 'client', 'myclient.key.pem').read() == existing_private_key
+    assert tmpdir.join('.gimmecert', 'client', 'myclient.cert.pem').read() == certificate

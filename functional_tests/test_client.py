@@ -133,3 +133,36 @@ def test_client_command_issues_client_certificate(tmpdir):
 
     # He is happy to see that verification succeeds.
     assert error_code == 0
+
+
+def test_client_command_does_not_overwrite_existing_artifacts(tmpdir):
+    # John has used Gimmecert in one of his previous projects. In
+    # particular, he has issued some TLS client certificates for
+    # testing the TLS client authentication.
+    tmpdir.chdir()
+    run_command("gimmecert", "init")
+    run_command("gimmecert", "client", "myclient")
+
+    private_key = tmpdir.join(".gimmecert", "client", "myclient.key.pem").read()
+    certificate = tmpdir.join(".gimmecert", "client", "myclient.cert.pem").read()
+
+    # After some months of inactivity, John figures he needs to
+    # perform a quick test on the project related to TLS client
+    # certificate authentication. He goes ahead and runs a command to
+    # issue the client certificate.
+    tmpdir.chdir()
+    stdout, stderr, exit_code = run_command("gimmecert", "client", "myclient")
+
+    # John realizes in last moment, just as he presses ENTER, that he
+    # had issued certificate already. He wonders if he'd need to
+    # redeploy it again now, though. Luckily, Gimmecert detects this,
+    # and provides him with an informative warning.
+    assert exit_code != 0
+    assert stderr == "Refusing to overwrite existing data. Certificate has already been issued for client myclient.\n"
+    assert stdout == ""
+
+    # John double-checks (just to be on the safe side), and can see
+    # that both the private key and certificate have been left
+    # unchanged.
+    assert tmpdir.join(".gimmecert", "client", "myclient.key.pem").read() == private_key
+    assert tmpdir.join(".gimmecert", "client", "myclient.cert.pem").read() == certificate

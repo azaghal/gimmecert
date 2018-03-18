@@ -216,6 +216,10 @@ def client(stdout, stderr, project_directory, entity_name):
         print("CA hierarchy must be initialised prior to issuing client certificates. Run the gimmecert init command first.", file=stderr)
         return ExitCode.ERROR_NOT_INITIALISED
 
+    if os.path.exists(private_key_path) or os.path.exists(certificate_path):
+        print("Refusing to overwrite existing data. Certificate has already been issued for client %s." % entity_name, file=stderr)
+        return ExitCode.ERROR_CERTIFICATE_ALREADY_ISSUED
+
     ca_hierarchy = gimmecert.storage.read_ca_hierarchy(os.path.join(project_directory, '.gimmecert', 'ca'))
     issuer_private_key, issuer_certificate = ca_hierarchy[-1]
     private_key = gimmecert.crypto.generate_private_key()
