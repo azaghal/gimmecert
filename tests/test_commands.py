@@ -415,3 +415,49 @@ def test_client_errors_out_if_certificate_already_issued(tmpdir):
     assert stdout == ""
     assert tmpdir.join('.gimmecert', 'client', 'myclient.key.pem').read() == existing_private_key
     assert tmpdir.join('.gimmecert', 'client', 'myclient.cert.pem').read() == certificate
+
+
+def test_server_reports_success_if_certificate_already_issued_but_update_was_requested(tmpdir):
+    depth = 1
+
+    stdout_stream = io.StringIO()
+    stderr_stream = io.StringIO()
+
+    # Previous run.
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
+    gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None)
+    existing_private_key = tmpdir.join('.gimmecert', 'server', 'myserver.key.pem').read()
+    certificate = tmpdir.join('.gimmecert', 'server', 'myserver.cert.pem').read()
+
+    # New run.
+    status_code = gimmecert.commands.server(stdout_stream, stderr_stream, tmpdir.strpath, 'myserver', None, True)
+
+    stdout = stdout_stream.getvalue()
+    stderr = stderr_stream.getvalue()
+
+    assert status_code == gimmecert.commands.ExitCode.SUCCESS
+    assert ".gimmecert/server/myserver.key.pem" in stdout
+    assert ".gimmecert/server/myserver.cert.pem" in stdout
+    assert "renewed with new DNS subject alternative names" in stdout
+    assert stderr == ""
+    assert tmpdir.join('.gimmecert', 'server', 'myserver.key.pem').read() == existing_private_key
+    assert tmpdir.join('.gimmecert', 'server', 'myserver.cert.pem').read() != certificate
+
+
+def test_server_reports_success_if_certificate_not_already_issued_but_update_was_requested(tmpdir):
+    depth = 1
+
+    stdout_stream = io.StringIO()
+    stderr_stream = io.StringIO()
+
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
+
+    status_code = gimmecert.commands.server(stdout_stream, stderr_stream, tmpdir.strpath, 'myserver', None, True)
+
+    stdout = stdout_stream.getvalue()
+    stderr = stderr_stream.getvalue()
+
+    assert status_code == gimmecert.commands.ExitCode.SUCCESS
+    assert ".gimmecert/server/myserver.key.pem" in stdout
+    assert ".gimmecert/server/myserver.cert.pem" in stdout
+    assert stderr == ""

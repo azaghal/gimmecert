@@ -94,7 +94,7 @@ def init(stdout, stderr, project_directory, ca_base_name, ca_hierarchy_depth):
     return ExitCode.SUCCESS
 
 
-def server(stdout, stderr, project_directory, entity_name, extra_dns_names):
+def server(stdout, stderr, project_directory, entity_name, extra_dns_names, update_dns_names=False):
     """
     Generates a server private key and issues a server certificate
     using the CA hierarchy initialised within the specified directory.
@@ -114,9 +114,14 @@ def server(stdout, stderr, project_directory, entity_name, extra_dns_names):
     :param extra_dns_names: List of additional DNS names to include in the subject alternative name.
     :type extra_dns_names: list[str]
 
+    :param update_dns_names: Whether the certificate should be renewed using the existing private key, but with new DNS subject alternative names.
+    :type update: bool
+
     :returns: Status code, one from gimmecert.commands.ExitCode.
     :rtype: int
     """
+
+    renew_certificate_only = False
 
     private_key_path = os.path.join(project_directory, '.gimmecert', 'server', '%s.key.pem' % entity_name)
     certificate_path = os.path.join(project_directory, '.gimmecert', 'server', '%s.cert.pem' % entity_name)
@@ -125,21 +130,32 @@ def server(stdout, stderr, project_directory, entity_name, extra_dns_names):
         print("CA hierarchy must be initialised prior to issuing server certificates. Run the gimmecert init command first.", file=stderr)
         return ExitCode.ERROR_NOT_INITIALISED
 
-    if os.path.exists(private_key_path) or os.path.exists(certificate_path):
+    if not update_dns_names and (os.path.exists(private_key_path) or os.path.exists(certificate_path)):
         print("Refusing to overwrite existing data. Certificate has already been issued for server %s." % entity_name, file=stderr)
         return ExitCode.ERROR_CERTIFICATE_ALREADY_ISSUED
 
-    print("""Server certificate issued.\n
-    Server private key: .gimmecert/server/%s.key.pem
-    Server certificate: .gimmecert/server/%s.cert.pem""" % (entity_name, entity_name), file=stdout)
+    if update_dns_names and os.path.exists(private_key_path):
+        renew_certificate_only = True
+        private_key = gimmecert.storage.read_private_key(private_key_path)
+    else:
+        private_key = gimmecert.crypto.generate_private_key()
 
     ca_hierarchy = gimmecert.storage.read_ca_hierarchy(os.path.join(project_directory, '.gimmecert', 'ca'))
     issuer_private_key, issuer_certificate = ca_hierarchy[-1]
-    private_key = gimmecert.crypto.generate_private_key()
+
     certificate = gimmecert.crypto.issue_server_certificate(entity_name, private_key.public_key(), issuer_private_key, issuer_certificate, extra_dns_names)
 
     gimmecert.storage.write_private_key(private_key, private_key_path)
     gimmecert.storage.write_certificate(certificate, certificate_path)
+
+    if renew_certificate_only:
+        print("""Server certificate renewed with new DNS subject alternative names.\n
+        Server private key: .gimmecert/server/%s.key.pem
+        Server certificate: .gimmecert/server/%s.cert.pem""" % (entity_name, entity_name), file=stdout)
+    else:
+        print("""Server certificate issued.\n
+        Server private key: .gimmecert/server/%s.key.pem
+        Server certificate: .gimmecert/server/%s.cert.pem""" % (entity_name, entity_name), file=stdout)
 
     return ExitCode.SUCCESS
 

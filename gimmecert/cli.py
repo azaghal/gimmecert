@@ -88,11 +88,14 @@ def setup_server_subcommand_parser(parser, subparsers):
     subparser = subparsers.add_parser('server', description='Issues server certificate.')
     subparser.add_argument('entity_name', help='Name of the server entity.')
     subparser.add_argument('dns_name', nargs='*', help='Additional DNS names to include in subject alternative name.')
+    subparser.add_argument('--update-dns-names', '-u', action='store_true', help='''Renew certificate for an existing server entity by reusing \
+    the private key, but replacing the DNS subject alternative names with listed values (if any). \
+    If entity does not exist, this option has no effect, and a new private key/certificate will be generated as usual.''')
 
     def server_wrapper(args):
         project_directory = os.getcwd()
 
-        return server(sys.stdout, sys.stderr, project_directory, args.entity_name, args.dns_name)
+        return server(sys.stdout, sys.stderr, project_directory, args.entity_name, args.dns_name, args.update_dns_names)
 
     subparser.set_defaults(func=server_wrapper)
 
