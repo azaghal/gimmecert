@@ -50,6 +50,14 @@ Examples:
 
     # Issue a TLS client certificate.
     gimmecert client myclient
+
+    # Renew a TLS server certificate with updated DNS subject alternative names. Keeps the private key if any.
+    gimmecert server myserver wrongdns.local
+    gimmecert server --update-dns-names myserver correctdns1.local correctdns2.local
+
+    # Renew a TLS server certificate removing extra DNS subject alternative names. Keeps the private key if any.
+    gimmecert server myserver dontneedthisname.local
+    gimmecert server myserver --update-dns-names
 """
 
 

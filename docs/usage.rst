@@ -175,9 +175,6 @@ The command will:
 - Issue a certificate associated with the generated private key using
   the leaf CA (the one deepest in hierachy).
 
-Rerunning the command will overwrite existing private key and
-certificate without warning.
-
 Resulting private keys and certificates are stored within directory
 ``.gimmecert/server/``. Private key naming convention is
 ``NAME.key.pem``, while certificates are stored as
@@ -197,6 +194,22 @@ Key usage and extended key usage in certificate are set typical TLS
 server use (e.g. *digital signature* + *key encipherment* for KU, and
 *TLS WWW server authentication* for EKU).
 
+Rerunning the command will not overwrite existing data. However, if
+you made a mistake with additional DNS subject alternative names, you
+can easily fix this with the ``--update-dns-names`` option::
+
+  # Replace existing additional names.
+  gimmecert server --update-dns-names myserver correctname.example.com
+
+  # Remove additional names altogether.
+  gimmecert server --update-dns-names myserver
+
+The ``--update-dns-command`` will keep the private key intact - only
+the certificate will be renewed. If you haven't issued any certificate
+for this server entity before, though, the option is ignored, and the
+command behaves as if it was not specified (so you still get a private
+key and certificate).
+
 
 Issuing client certificates
 ---------------------------
@@ -212,8 +225,7 @@ The command will:
 - Issue a certificate associated with the generated private key using
   the leaf CA (the one deepest in hierachy).
 
-Rerunning the command will overwrite existing private key and
-certificate without warning.
+Rerunning the command will not overwrite existing data.
 
 Resulting private keys and certificates are stored within directory
 ``.gimmecert/client/``. Private key naming convention is
