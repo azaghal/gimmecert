@@ -243,9 +243,10 @@ def test_server_command_update_option(tmpdir):
 
     # He notices that no error has been reported by the command, and
     # that he is informed that the certificate has been renewed with
-    # new DNS names.
+    # new DNS names, while the private key has been preserved.
     assert exit_code == 0
     assert "renewed with new DNS subject alternative names" in stdout
+    assert "key has remained unchanged" in stdout
 
     # Being paranoid, he decides to double-check the certificate, just
     # to be on the safe side. He uses the OpenSSL CLI for this

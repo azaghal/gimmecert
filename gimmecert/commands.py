@@ -150,6 +150,7 @@ def server(stdout, stderr, project_directory, entity_name, extra_dns_names, upda
 
     if renew_certificate_only:
         print("""Server certificate renewed with new DNS subject alternative names.\n
+        Server private key has remained unchanged.\n
         Server private key: .gimmecert/server/%s.key.pem
         Server certificate: .gimmecert/server/%s.cert.pem""" % (entity_name, entity_name), file=stdout)
     else:

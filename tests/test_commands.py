@@ -439,6 +439,7 @@ def test_server_reports_success_if_certificate_already_issued_but_update_was_req
     assert ".gimmecert/server/myserver.key.pem" in stdout
     assert ".gimmecert/server/myserver.cert.pem" in stdout
     assert "renewed with new DNS subject alternative names" in stdout
+    assert "key has remained unchanged" in stdout
     assert stderr == ""
     assert tmpdir.join('.gimmecert', 'server', 'myserver.key.pem').read() == existing_private_key
     assert tmpdir.join('.gimmecert', 'server', 'myserver.cert.pem').read() != certificate
