@@ -72,3 +72,32 @@ def test_renew_command_requires_initialised_hierarchy(tmpdir):
     assert exit_code != 0
     assert stdout == ""
     assert stderr == "No CA hierarchy has been initialised yet. Run the gimmecert init command and issue some certificates first.\n"
+
+
+def test_renew_command_reports_error_if_entity_does_not_exist(tmpdir):
+    # John finally finds his way around to the project directory where
+    # Gimmecert has already been used to set-up a hierarchy, and where
+    # a couple of server and client certificates have been issued.
+    tmpdir.chdir()
+    run_command("gimmecert", "init")
+    run_command("gimmecert", "server", "someserver")
+    run_command("gimmecert", "client", "someclient")
+
+    # He runs the command for renewing a server certificate.
+    stdout, stderr, exit_code = run_command('gimmecert', 'renew', 'server', 'myserver')
+
+    # Unfortunately for him, this server certificate has not been
+    # issued before, and he is presented with an error.
+    assert exit_code != 0
+    assert stdout == ''
+    assert stderr == "Cannot renew certificate. No existing certificate found for server myserver.\n"
+
+    # This is going to be one of those days... He tries then to renew
+    # a client certificate instead.
+    stdout, stderr, exit_code = run_command('gimmecert', 'renew', 'client', 'myclient')
+
+    # To his dismay, this results in error as well. He hasn't issued
+    # such a certificate before either.
+    assert exit_code != 0
+    assert stdout == ''
+    assert stderr == "Cannot renew certificate. No existing certificate found for client myclient.\n"

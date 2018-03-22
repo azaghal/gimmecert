@@ -485,3 +485,39 @@ def test_renew_reports_error_if_directory_is_not_initialised(tmpdir):
     assert "No CA hierarchy has been initialised yet" in stderr
     assert stdout == ""
     assert status_code == gimmecert.commands.ExitCode.ERROR_NOT_INITIALISED
+
+
+def test_renew_reports_error_if_no_existing_server_certificate_is_present(tmpdir):
+    depth = 1
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
+
+    stdout_stream = io.StringIO()
+    stderr_stream = io.StringIO()
+
+    status_code = gimmecert.commands.renew(stderr_stream, stderr_stream, tmpdir.strpath, 'server', 'myserver')
+
+    stdout = stdout_stream.getvalue()
+    stderr = stderr_stream.getvalue()
+
+    assert status_code == gimmecert.commands.ExitCode.ERROR_UNKNOWN_ENTITY
+    assert "Cannot renew certificate" in stderr
+    assert "server myserver" in stderr
+    assert stdout == ""
+
+
+def test_renew_reports_error_if_no_existing_client_certificate_is_present(tmpdir):
+    depth = 1
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
+
+    stdout_stream = io.StringIO()
+    stderr_stream = io.StringIO()
+
+    status_code = gimmecert.commands.renew(stderr_stream, stderr_stream, tmpdir.strpath, 'client', 'myclient')
+
+    stdout = stdout_stream.getvalue()
+    stderr = stderr_stream.getvalue()
+
+    assert status_code == gimmecert.commands.ExitCode.ERROR_UNKNOWN_ENTITY
+    assert "Cannot renew certificate" in stderr
+    assert "client myclient" in stderr
+    assert stdout == ""

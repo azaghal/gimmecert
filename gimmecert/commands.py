@@ -33,6 +33,7 @@ class ExitCode:
     ERROR_ALREADY_INITIALISED = 10
     ERROR_NOT_INITIALISED = 11
     ERROR_CERTIFICATE_ALREADY_ISSUED = 12
+    ERROR_UNKNOWN_ENTITY = 13
 
 
 def init(stdout, stderr, project_directory, ca_base_name, ca_hierarchy_depth):
@@ -254,9 +255,16 @@ def client(stdout, stderr, project_directory, entity_name):
 
 def renew(stdout, stderr, project_directory, entity_type, entity_name):
 
+    certificate_path = os.path.join(project_directory, '.gimmecert', entity_type, '%s.cert.pem' % entity_name)
+
     if not gimmecert.storage.is_initialised(project_directory):
         print("No CA hierarchy has been initialised yet. Run the gimmecert init command and issue some certificates first.", file=stderr)
 
         return ExitCode.ERROR_NOT_INITIALISED
+
+    if not os.path.exists(certificate_path):
+        print("Cannot renew certificate. No existing certificate found for %s %s." % (entity_type, entity_name), file=stderr)
+
+        return ExitCode.ERROR_UNKNOWN_ENTITY
 
     return ExitCode.SUCCESS
