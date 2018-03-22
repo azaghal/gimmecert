@@ -47,3 +47,28 @@ def test_renew_command_available_with_help():
     assert stderr == ""
     assert stdout.startswith("usage: gimmecert renew")
     assert stdout.split('\n')[0].endswith("{server,client} entity_name")  # First line of help
+
+
+def test_renew_command_requires_initialised_hierarchy(tmpdir):
+    # John decides it's time to renew one of the certificates. He
+    # switches to his project directory.
+    tmpdir.chdir()
+
+    # John tries to renew a server certificate.
+    stdout, stderr, exit_code = run_command("gimmecert", "renew", "server", "myserver")
+
+    # John has forgotten to initialise the CA hierarchy from within
+    # this directory, and is instead presented with an error.
+    assert exit_code != 0
+    assert stdout == ""
+    assert stderr == "No CA hierarchy has been initialised yet. Run the gimmecert init command and issue some certificates first.\n"
+
+    # John gives the screen a weird look, and tries again, this time
+    # with a client certificate renewal.
+    stdout, stderr, exit_code = run_command("gimmecert", "renew", "client", "myclient")
+
+    # John gets presented with the same error yet again. Suddenly, he
+    # realizes he is in a wrong directory... Oh well...
+    assert exit_code != 0
+    assert stdout == ""
+    assert stderr == "No CA hierarchy has been initialised yet. Run the gimmecert init command and issue some certificates first.\n"

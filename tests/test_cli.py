@@ -613,18 +613,63 @@ def test_renew_command_fails_without_arguments(tmpdir):
 
 
 @mock.patch('sys.argv', ['gimmecert', 'renew', 'server', 'myserver'])
-def test_renew_command_accepts_entity_type_server_and_entity_name(tmpdir):
+@mock.patch('gimmecert.cli.renew')
+def test_renew_command_accepts_entity_type_server_and_entity_name(mock_renew, tmpdir):
     # This should ensure we don't accidentally create artifacts
     # outside of test directory.
     tmpdir.chdir()
+
+    # We are just testing the parsing here.
+    mock_renew.return_value = gimmecert.commands.ExitCode.SUCCESS
 
     gimmecert.cli.main()  # Should not raise
 
 
 @mock.patch('sys.argv', ['gimmecert', 'renew', 'client', 'myclient'])
-def test_renew_command_accepts_entity_type_client_and_entity_name(tmpdir):
+@mock.patch('gimmecert.cli.renew')
+def test_renew_command_accepts_entity_type_client_and_entity_name(mock_renew, tmpdir):
     # This should ensure we don't accidentally create artifacts
     # outside of test directory.
     tmpdir.chdir()
 
+    # We are just testing the parsing here.
+    mock_renew.return_value = gimmecert.commands.ExitCode.SUCCESS
+
     gimmecert.cli.main()  # Should not raise
+
+
+def test_setup_renew_subcommand_sets_function_callback():
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers()
+
+    subparser = gimmecert.cli.setup_renew_subcommand_parser(parser, subparsers)
+
+    assert callable(subparser.get_default('func'))
+
+
+@mock.patch('sys.argv', ['gimmecert', 'renew', 'server', 'myserver'])
+@mock.patch('gimmecert.cli.renew')
+def test_renew_command_invoked_with_correct_parameters_for_server(mock_renew, tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
+    mock_renew.return_value = gimmecert.commands.ExitCode.SUCCESS
+
+    gimmecert.cli.main()
+
+    mock_renew.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'server', 'myserver')
+
+
+@mock.patch('sys.argv', ['gimmecert', 'renew', 'client', 'myclient'])
+@mock.patch('gimmecert.cli.renew')
+def test_renew_command_invoked_with_correct_parameters_for_client(mock_renew, tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
+    mock_renew.return_value = gimmecert.commands.ExitCode.SUCCESS
+
+    gimmecert.cli.main()
+
+    mock_renew.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'client', 'myclient')

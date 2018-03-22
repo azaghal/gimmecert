@@ -24,7 +24,7 @@ import os
 import sys
 
 from .decorators import subcommand_parser, get_subcommand_parser_setup_functions
-from .commands import client, help_, init, server, usage, ExitCode
+from .commands import client, help_, init, renew, server, usage, ExitCode
 
 
 ERROR_GENERIC = 10
@@ -130,6 +130,13 @@ def setup_renew_subcommand_parser(parser, subparsers):
     subparser = subparsers.add_parser('renew', description='Renews existing certificates.')
     subparser.add_argument('entity_type', help='Type of entity to renew.', choices=['server', 'client'])
     subparser.add_argument('entity_name', help='Name of the entity')
+
+    def renew_wrapper(args):
+        project_directory = os.getcwd()
+
+        return renew(sys.stdout, sys.stderr, project_directory, args.entity_type, args.entity_name)
+
+    subparser.set_defaults(func=renew_wrapper)
 
     return subparser
 

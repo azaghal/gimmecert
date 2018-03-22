@@ -462,3 +462,26 @@ def test_server_reports_success_if_certificate_not_already_issued_but_update_was
     assert ".gimmecert/server/myserver.key.pem" in stdout
     assert ".gimmecert/server/myserver.cert.pem" in stdout
     assert stderr == ""
+
+
+def test_renew_returns_status_code(tmpdir):
+    tmpdir.chdir()
+
+    status_code = gimmecert.commands.renew(io.StringIO(), io.StringIO(), tmpdir.strpath, 'server', 'myserver')
+
+    assert isinstance(status_code, int)
+
+
+def test_renew_reports_error_if_directory_is_not_initialised(tmpdir):
+
+    stdout_stream = io.StringIO()
+    stderr_stream = io.StringIO()
+
+    status_code = gimmecert.commands.renew(stdout_stream, stderr_stream, tmpdir.strpath, 'server', 'myserver')
+
+    stdout = stdout_stream.getvalue()
+    stderr = stderr_stream.getvalue()
+
+    assert "No CA hierarchy has been initialised yet" in stderr
+    assert stdout == ""
+    assert status_code == gimmecert.commands.ExitCode.ERROR_NOT_INITIALISED

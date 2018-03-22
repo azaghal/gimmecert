@@ -250,3 +250,13 @@ def client(stdout, stderr, project_directory, entity_name):
     Client certificate: .gimmecert/client/%s.cert.pem""" % (entity_name, entity_name), file=stdout)
 
     return ExitCode.SUCCESS
+
+
+def renew(stdout, stderr, project_directory, entity_type, entity_name):
+
+    if not gimmecert.storage.is_initialised(project_directory):
+        print("No CA hierarchy has been initialised yet. Run the gimmecert init command and issue some certificates first.", file=stderr)
+
+        return ExitCode.ERROR_NOT_INITIALISED
+
+    return ExitCode.SUCCESS
