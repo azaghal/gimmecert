@@ -125,6 +125,15 @@ def setup_client_subcommand_parser(parser, subparsers):
     return subparser
 
 
+@subcommand_parser
+def setup_renew_subcommand_parser(parser, subparsers):
+    subparser = subparsers.add_parser('renew', description='Renews existing certificates.')
+    subparser.add_argument('entity_type', help='Type of entity to renew.', choices=['server', 'client'])
+    subparser.add_argument('entity_name', help='Name of the entity')
+
+    return subparser
+
+
 def get_parser():
     """
     Sets-up and returns a CLI argument parser.

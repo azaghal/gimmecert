@@ -571,3 +571,60 @@ def test_server_command_invoked_with_correct_parameters_with_update_option(mock_
     gimmecert.cli.main()
 
     mock_server.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'myserver', ['service.local'], True)
+
+
+@mock.patch('sys.argv', ['gimmecert', 'renew', '-h'])
+def test_renew_command_exists_and_accepts_help_flag(tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
+    with pytest.raises(SystemExit) as e_info:
+        gimmecert.cli.main()
+
+    assert e_info.value.code == 0
+
+
+def test_setup_renew_subcommand_parser_registered():
+    registered_functions = gimmecert.decorators.get_subcommand_parser_setup_functions()
+
+    assert gimmecert.cli.setup_renew_subcommand_parser in registered_functions
+
+
+def test_setup_renew_subcommand_parser_returns_parser():
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers()
+
+    subparser = gimmecert.cli.setup_renew_subcommand_parser(parser, subparsers)
+
+    assert isinstance(subparser, argparse.ArgumentParser)
+
+
+@mock.patch('sys.argv', ['gimmecert', 'renew'])
+def test_renew_command_fails_without_arguments(tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
+    with pytest.raises(SystemExit) as e_info:
+        gimmecert.cli.main()
+
+    assert e_info.value.code != 0
+
+
+@mock.patch('sys.argv', ['gimmecert', 'renew', 'server', 'myserver'])
+def test_renew_command_accepts_entity_type_server_and_entity_name(tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
+    gimmecert.cli.main()  # Should not raise
+
+
+@mock.patch('sys.argv', ['gimmecert', 'renew', 'client', 'myclient'])
+def test_renew_command_accepts_entity_type_client_and_entity_name(tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
+    gimmecert.cli.main()  # Should not raise
