@@ -266,6 +266,31 @@ def test_parser_commands_and_options_are_available(tmpdir, command_function, cli
         gimmecert.cli.main()  # Should not raise
 
 
+@pytest.mark.parametrize("command", ["help", "init", "server", "client", "renew"])
+@pytest.mark.parametrize("help_option", ["--help", "-h"])
+def test_command_exists_and_accepts_help_flag(tmpdir, command, help_option):
+    """
+    Tests availability of commands and whether they accept the help
+    flag.
+
+    Test is parametrised in order to avoid code duplication. The only
+    thing necessary to add a new command is to extend the command
+    parameter.
+
+    Both short and long form of help flag is tested.
+    """
+
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
+    with mock.patch('sys.argv', ['gimmecert', command, help_option]):
+        with pytest.raises(SystemExit) as e_info:
+            gimmecert.cli.main()
+
+        assert e_info.value.code == 0
+
+
 @mock.patch('sys.argv', ['gimmecert', 'init'])
 @mock.patch('gimmecert.cli.init')
 def test_init_command_invoked_with_correct_parameters_no_options(mock_init, tmpdir):
@@ -296,18 +321,6 @@ def test_init_command_invoked_with_correct_parameters_with_options(mock_init, tm
     gimmecert.cli.main()
 
     mock_init.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'My Project', default_depth)
-
-
-@mock.patch('sys.argv', ['gimmecert', 'server', '-h'])
-def test_server_command_exists_and_accepts_help_flag(tmpdir):
-    # This should ensure we don't accidentally create artifacts
-    # outside of test directory.
-    tmpdir.chdir()
-
-    with pytest.raises(SystemExit) as e_info:
-        gimmecert.cli.main()
-
-    assert e_info.value.code == 0
 
 
 def test_setup_server_subcommand_parser_registered():
@@ -452,18 +465,6 @@ def test_main_exits_if_it_calls_function_that_returns_success(tmpdir):
     assert e_info.value.code == gimmecert.commands.ExitCode.ERROR_ALREADY_INITIALISED
 
 
-@mock.patch('sys.argv', ['gimmecert', 'client', '-h'])
-def test_client_command_exists_and_accepts_help_flag(tmpdir):
-    # This should ensure we don't accidentally create artifacts
-    # outside of test directory.
-    tmpdir.chdir()
-
-    with pytest.raises(SystemExit) as e_info:
-        gimmecert.cli.main()
-
-    assert e_info.value.code == 0
-
-
 def test_setup_client_subcommand_parser_registered():
     registered_functions = gimmecert.decorators.get_subcommand_parser_setup_functions()
 
@@ -526,18 +527,6 @@ def test_server_command_invoked_with_correct_parameters_with_update_option(mock_
     gimmecert.cli.main()
 
     mock_server.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'myserver', ['service.local'], True)
-
-
-@mock.patch('sys.argv', ['gimmecert', 'renew', '-h'])
-def test_renew_command_exists_and_accepts_help_flag(tmpdir):
-    # This should ensure we don't accidentally create artifacts
-    # outside of test directory.
-    tmpdir.chdir()
-
-    with pytest.raises(SystemExit) as e_info:
-        gimmecert.cli.main()
-
-    assert e_info.value.code == 0
 
 
 def test_setup_renew_subcommand_parser_registered():
