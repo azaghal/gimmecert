@@ -187,6 +187,85 @@ def test_setup_init_subcommand_sets_function_callback():
     assert callable(subparser.get_default('func'))
 
 
+# List of valid CLI invocations to use in
+# test_parser_commands_and_options_are_available.
+#
+# Each element in this list should be a tuple where first element is
+# the command function (relative to CLI module) that should be mocked,
+# while second element is list of CLI arguments for invoking the
+# command from CLI. See test documentation for more details.
+VALID_CLI_INVOCATIONS = [
+    # help, no options
+    ("gimmecert.cli.help", ["gimmecert", "help"]),
+
+    # init, no options
+    ("gimmecert.cli.init", ["gimmecert", "init"]),
+
+    # init, CA base name long and short option
+    ("gimmecert.cli.init", ["gimmecert", "init", "--ca-base-name", "My Project"]),
+    ("gimmecert.cli.init", ["gimmecert", "init", "-b", "My Project"]),
+
+    # init, CA hierarchy depth long and short option
+    ("gimmecert.cli.init", ["gimmecert", "init", "--ca-hierarchy-depth", "3"]),
+    ("gimmecert.cli.init", ["gimmecert", "init", "-d", "3"]),
+
+    # server, no options
+    ("gimmecert.cli.server", ["gimmecert", "server", "myserver"]),
+
+    # server, multiple DNS names, no options
+    ("gimmecert.cli.server", ["gimmecert", "server", "myserver",
+                              "myserver.example.com"]),
+    ("gimmecert.cli.server", ["gimmecert", "server", "myserver",
+                              "myserver1.example.com", "myserver2.example.com",
+                              "myserver3.example.com", "myserver4.example.com"]),
+
+    # server, update DNS names long and short option
+    ("gimmecert.cli.server", ["gimmecert", "server", "--update-dns-names", "myserver"]),
+    ("gimmecert.cli.server", ["gimmecert", "server", "-u", "myserver"]),
+
+    # client, no options
+    ("gimmecert.cli.client", ["gimmecert", "client", "myclient"]),
+
+    # renew, no options
+    ("gimmecert.cli.renew", ["gimmecert", "renew", "server", "myserver"]),
+    ("gimmecert.cli.renew", ["gimmecert", "renew", "client", "myclient"]),
+
+    # renew, generate new private key long and short option
+    ("gimmecert.cli.renew", ["gimmecert", "renew", "--new-private-key", "server", "myserver"]),
+    ("gimmecert.cli.renew", ["gimmecert", "renew", "--new-private-key", "client", "myclient"]),
+    ("gimmecert.cli.renew", ["gimmecert", "renew", "-p", "server", "myserver"]),
+    ("gimmecert.cli.renew", ["gimmecert", "renew", "-p", "client", "myclient"]),
+
+]
+
+
+@pytest.mark.parametrize("command_function, cli_invocation", VALID_CLI_INVOCATIONS)
+def test_parser_commands_and_options_are_available(tmpdir, command_function, cli_invocation):
+    """
+    Tests handling of valid CLI invocations by top-level and command
+    parsers.
+
+    This test helps greatly reduce duplication of code, at the expense
+    of some flexibility.
+
+    The passed-in command_function is mocked and set-up to return a
+    success exit code, since the main point is to ensure the CLI
+    supports specific commands and parameters.
+
+    To add a new valid invocation of CLI, update the
+    VALID_CLI_INVOCATIONS variable above.
+    """
+
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
+    with mock.patch(command_function) as mock_command_function, mock.patch('sys.argv', cli_invocation):
+        mock_command_function.return_value = gimmecert.commands.ExitCode.SUCCESS
+
+        gimmecert.cli.main()  # Should not raise
+
+
 @mock.patch('sys.argv', ['gimmecert', 'init'])
 @mock.patch('gimmecert.cli.init')
 def test_init_command_invoked_with_correct_parameters_no_options(mock_init, tmpdir):
@@ -217,54 +296,6 @@ def test_init_command_invoked_with_correct_parameters_with_options(mock_init, tm
     gimmecert.cli.main()
 
     mock_init.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'My Project', default_depth)
-
-
-@mock.patch('sys.argv', ['gimmecert', 'init', '--ca-base-name', 'My Project'])
-@mock.patch('gimmecert.cli.init')
-def test_init_command_accepts_ca_base_name_option_long_form(mock_init, tmpdir):
-    # This should ensure we don't accidentally create artifacts
-    # outside of test directory.
-    tmpdir.chdir()
-
-    mock_init.return_value = gimmecert.commands.ExitCode.SUCCESS
-
-    gimmecert.cli.main()  # Should not raise
-
-
-@mock.patch('sys.argv', ['gimmecert', 'init', '-b', 'My Project'])
-@mock.patch('gimmecert.cli.init')
-def test_init_command_accepts_ca_base_name_option_short_form(mock_init, tmpdir):
-    # This should ensure we don't accidentally create artifacts
-    # outside of test directory.
-    tmpdir.chdir()
-
-    mock_init.return_value = gimmecert.commands.ExitCode.SUCCESS
-
-    gimmecert.cli.main()  # Should not raise
-
-
-@mock.patch('sys.argv', ['gimmecert', 'init', '--ca-hierarchy-depth', '3'])
-@mock.patch('gimmecert.cli.init')
-def test_init_command_accepts_ca_hierarchy_depth_option_long_form(mock_init, tmpdir):
-    # This should ensure we don't accidentally create artifacts
-    # outside of test directory.
-    tmpdir.chdir()
-
-    mock_init.return_value = gimmecert.commands.ExitCode.SUCCESS
-
-    gimmecert.cli.main()  # Should not raise
-
-
-@mock.patch('sys.argv', ['gimmecert', 'init', '-d', '3'])
-@mock.patch('gimmecert.cli.init')
-def test_init_command_accepts_ca_hierarchy_depth_option_short_form(mock_init, tmpdir):
-    # This should ensure we don't accidentally create artifacts
-    # outside of test directory.
-    tmpdir.chdir()
-
-    mock_init.return_value = gimmecert.commands.ExitCode.SUCCESS
-
-    gimmecert.cli.main()  # Should not raise
 
 
 @mock.patch('sys.argv', ['gimmecert', 'server', '-h'])
@@ -304,45 +335,6 @@ def test_setup_server_subcommand_fails_without_arguments(tmpdir):
         gimmecert.cli.main()
 
     assert e_info.value.code != 0
-
-
-@mock.patch('sys.argv', ['gimmecert', 'server', 'myserver'])
-@mock.patch('gimmecert.cli.server')
-def test_setup_server_subcommand_succeeds_with_just_entity_name_argument(mock_server, tmpdir):
-    # This should ensure we don't accidentally create artifacts
-    # outside of test directory.
-    tmpdir.chdir()
-
-    # We are just testing the parsing here.
-    mock_server.return_value = gimmecert.commands.ExitCode.SUCCESS
-
-    gimmecert.cli.main()  # Should not raise.
-
-
-@mock.patch('sys.argv', ['gimmecert', 'server', 'myserver', 'myserver.example.com'])
-@mock.patch('gimmecert.cli.server')
-def test_setup_server_subcommand_succeeds_with_entity_name_argument_and_one_dns_name(mock_server, tmpdir):
-    # This should ensure we don't accidentally create artifacts
-    # outside of test directory.
-    tmpdir.chdir()
-
-    # We are just testing the parsing here.
-    mock_server.return_value = gimmecert.commands.ExitCode.SUCCESS
-
-    gimmecert.cli.main()  # Should not raise.
-
-
-@mock.patch('sys.argv', ['gimmecert', 'server', 'myserver', 'myserver1.example.com', 'myserver2.example.com', 'myserver3.example.com', 'myserver4.example.com'])
-@mock.patch('gimmecert.cli.server')
-def test_setup_server_subcommand_succeeds_with_entity_name_argument_and_four_dns_names(mock_server, tmpdir):
-    # This should ensure we don't accidentally create artifacts
-    # outside of test directory.
-    tmpdir.chdir()
-
-    # We are just testing the parsing here.
-    mock_server.return_value = gimmecert.commands.ExitCode.SUCCESS
-
-    gimmecert.cli.main()  # Should not raise.
 
 
 def test_setup_server_subcommand_sets_function_callback():
@@ -499,19 +491,6 @@ def test_setup_client_subcommand_fails_without_arguments(tmpdir):
     assert e_info.value.code != 0
 
 
-@mock.patch('sys.argv', ['gimmecert', 'client', 'myclient'])
-@mock.patch('gimmecert.cli.client')
-def test_setup_client_subcommand_succeeds_with_entity_name_argument(mock_client, tmpdir):
-    # This should ensure we don't accidentally create artifacts
-    # outside of test directory.
-    tmpdir.chdir()
-
-    # We are just testing the parsing here.
-    mock_client.return_value = gimmecert.commands.ExitCode.SUCCESS
-
-    gimmecert.cli.main()  # Should not raise.
-
-
 def test_setup_client_subcommand_sets_function_callback():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers()
@@ -533,30 +512,6 @@ def test_client_command_invoked_with_correct_parameters(mock_client, tmpdir):
     gimmecert.cli.main()
 
     mock_client.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'myclient')
-
-
-@mock.patch('sys.argv', ['gimmecert', 'server', '--update-dns-names', 'myserver'])
-@mock.patch('gimmecert.cli.server')
-def test_server_command_accepts_update_option_long_form(mock_server, tmpdir):
-    # This should ensure we don't accidentally create artifacts
-    # outside of test directory.
-    tmpdir.chdir()
-
-    mock_server.return_value = gimmecert.commands.ExitCode.SUCCESS
-
-    gimmecert.cli.main()  # Should not raise
-
-
-@mock.patch('sys.argv', ['gimmecert', 'server', '-u', 'myserver'])
-@mock.patch('gimmecert.cli.server')
-def test_server_command_accepts_update_option_short_form(mock_server, tmpdir):
-    # This should ensure we don't accidentally create artifacts
-    # outside of test directory.
-    tmpdir.chdir()
-
-    mock_server.return_value = gimmecert.commands.ExitCode.SUCCESS
-
-    gimmecert.cli.main()  # Should not raise
 
 
 @mock.patch('sys.argv', ['gimmecert', 'server', '--update-dns-names', 'myserver', 'service.local'])
@@ -610,32 +565,6 @@ def test_renew_command_fails_without_arguments(tmpdir):
         gimmecert.cli.main()
 
     assert e_info.value.code != 0
-
-
-@mock.patch('sys.argv', ['gimmecert', 'renew', 'server', 'myserver'])
-@mock.patch('gimmecert.cli.renew')
-def test_renew_command_accepts_entity_type_server_and_entity_name(mock_renew, tmpdir):
-    # This should ensure we don't accidentally create artifacts
-    # outside of test directory.
-    tmpdir.chdir()
-
-    # We are just testing the parsing here.
-    mock_renew.return_value = gimmecert.commands.ExitCode.SUCCESS
-
-    gimmecert.cli.main()  # Should not raise
-
-
-@mock.patch('sys.argv', ['gimmecert', 'renew', 'client', 'myclient'])
-@mock.patch('gimmecert.cli.renew')
-def test_renew_command_accepts_entity_type_client_and_entity_name(mock_renew, tmpdir):
-    # This should ensure we don't accidentally create artifacts
-    # outside of test directory.
-    tmpdir.chdir()
-
-    # We are just testing the parsing here.
-    mock_renew.return_value = gimmecert.commands.ExitCode.SUCCESS
-
-    gimmecert.cli.main()  # Should not raise
 
 
 def test_setup_renew_subcommand_sets_function_callback():
@@ -701,27 +630,3 @@ def test_renew_command_invoked_with_correct_parameters_for_client_with_new_priva
     gimmecert.cli.main()
 
     mock_renew.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'client', 'myclient', True)
-
-
-@mock.patch('sys.argv', ['gimmecert', 'renew', 'server', '--new-private-key', 'myserver'])
-@mock.patch('gimmecert.cli.renew')
-def test_renew_command_accepts_renew_private_key_option_long_form(mock_renew, tmpdir):
-    # This should ensure we don't accidentally create artifacts
-    # outside of test directory.
-    tmpdir.chdir()
-
-    mock_renew.return_value = gimmecert.commands.ExitCode.SUCCESS
-
-    gimmecert.cli.main()  # Should not raise
-
-
-@mock.patch('sys.argv', ['gimmecert', 'renew', 'server', '-p', 'myserver'])
-@mock.patch('gimmecert.cli.renew')
-def test_renew_command_accepts_renew_private_key_option_short_form(mock_renew, tmpdir):
-    # This should ensure we don't accidentally create artifacts
-    # outside of test directory.
-    tmpdir.chdir()
-
-    mock_renew.return_value = gimmecert.commands.ExitCode.SUCCESS
-
-    gimmecert.cli.main()  # Should not raise
