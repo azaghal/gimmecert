@@ -302,3 +302,41 @@ def issue_client_certificate(name, public_key, issuer_private_key, issuer_certif
     certificate = issue_certificate(issuer_certificate.issuer, dn, issuer_private_key, public_key, not_before, not_after, extensions)
 
     return certificate
+
+
+def renew_certificate(old_certificate, issuer_private_key, issuer_certificate):
+    """
+    Renews an existing certificate, while preserving issuer and
+    subject DNs, as well as public key and all extensions from the old
+    certificate.
+
+    :param old_certificate: Previously issued certificate.
+    :type old_certificate: cryptography.x509.Certificate
+
+    :param issuer_private_key: Private key of the issuer to use for signing the certificate structure.
+    :type issuer_private_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey
+
+    :param issuer_certificate: Certificate of certificate issuer. Naming and validity constraints will be applied based on its content.
+    :type issuer_certificate: cryptography.x509.Certificate
+
+    :returns: New certificate, which preserves naming, extensions, and public key of the old one.
+    :rtype: cryptography.x509.Certificate
+    """
+
+    not_before, not_after = get_validity_range()
+
+    if not_before < issuer_certificate.not_valid_before:
+        not_before = issuer_certificate.not_valid_before
+
+    if not_after > issuer_certificate.not_valid_after:
+        not_after = issuer_certificate.not_valid_after
+
+    new_certificate = issue_certificate(issuer_certificate.subject,
+                                        old_certificate.subject,
+                                        issuer_private_key,
+                                        old_certificate.public_key(),
+                                        not_before,
+                                        not_after,
+                                        [(e.value, e.critical) for e in old_certificate.extensions])
+
+    return new_certificate

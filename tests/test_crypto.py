@@ -509,3 +509,82 @@ def test_issue_client_certificate_not_after_does_not_exceed_ca_validity():
         certificate1 = gimmecert.crypto.issue_client_certificate('myclient', private_key.public_key(), issuer_private_key, issuer_certificate)
 
     assert certificate1.not_valid_after == issuer_certificate.not_valid_after
+
+
+def test_renew_certificate_returns_certificate():
+    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+    issuer_private_key, issuer_certificate = ca_hierarchy[0]
+
+    private_key = gimmecert.crypto.generate_private_key()
+    old_certificate = gimmecert.crypto.issue_server_certificate('myserver', private_key.public_key(), issuer_private_key, issuer_certificate)
+
+    new_certificate = gimmecert.crypto.renew_certificate(old_certificate, issuer_private_key, issuer_certificate)
+
+    assert isinstance(new_certificate, cryptography.x509.Certificate)
+
+
+def test_renew_certificate_has_correct_content():
+    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+    issuer_private_key, issuer_certificate = ca_hierarchy[0]
+
+    private_key = gimmecert.crypto.generate_private_key()
+    old_certificate = gimmecert.crypto.issue_server_certificate('myserver', private_key.public_key(), issuer_private_key, issuer_certificate)
+
+    new_certificate = gimmecert.crypto.renew_certificate(old_certificate, issuer_private_key, issuer_certificate)
+
+    assert old_certificate != new_certificate  # make sure we didn't get identical certificate.
+    assert old_certificate.issuer == new_certificate.issuer
+    assert old_certificate.subject == new_certificate.subject
+    assert old_certificate.public_key().public_numbers() == new_certificate.public_key().public_numbers()
+    assert [e for e in old_certificate.extensions] == [e for e in new_certificate.extensions]
+
+
+def test_renew_certificate_not_before_is_15_minutes_in_past():
+
+    # Initial server certificate.
+    with freeze_time('2018-01-01 00:15:00'):
+        ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+        issuer_private_key, issuer_certificate = ca_hierarchy[0]
+
+        private_key = gimmecert.crypto.generate_private_key()
+        old_certificate = gimmecert.crypto.issue_server_certificate('myserver', private_key.public_key(), issuer_private_key, issuer_certificate)
+
+    # Renew certificate.
+    with freeze_time('2018-06-01 00:15:00'):
+        certificate = gimmecert.crypto.renew_certificate(old_certificate, issuer_private_key, issuer_certificate)
+
+    assert certificate.not_valid_before == datetime.datetime(2018, 6, 1, 0, 0)
+
+
+def test_renew_certificate_not_before_does_not_exceed_ca_validity():
+
+    # Initial server certificate.
+    with freeze_time('2018-01-01 00:15:00'):
+        ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+        issuer_private_key, issuer_certificate = ca_hierarchy[0]
+
+        private_key = gimmecert.crypto.generate_private_key()
+        old_certificate = gimmecert.crypto.issue_server_certificate('myserver', private_key.public_key(), issuer_private_key, issuer_certificate)
+
+    # Renew certificate.
+    with freeze_time(issuer_certificate.not_valid_before - datetime.timedelta(seconds=1)):
+        certificate = gimmecert.crypto.renew_certificate(old_certificate, issuer_private_key, issuer_certificate)
+
+    assert certificate.not_valid_before == issuer_certificate.not_valid_before
+
+
+def test_renew_certificate_not_after_does_not_exceed_ca_validity():
+
+    # Initial server certificate.
+    with freeze_time('2018-01-01 00:15:00'):
+        ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+        issuer_private_key, issuer_certificate = ca_hierarchy[0]
+
+        private_key = gimmecert.crypto.generate_private_key()
+        old_certificate = gimmecert.crypto.issue_server_certificate('myserver', private_key.public_key(), issuer_private_key, issuer_certificate)
+
+    # Renew certificate.
+    with freeze_time(issuer_certificate.not_valid_after + datetime.timedelta(seconds=1)):
+        certificate = gimmecert.crypto.renew_certificate(old_certificate, issuer_private_key, issuer_certificate)
+
+    assert certificate.not_valid_after == issuer_certificate.not_valid_after

@@ -267,4 +267,19 @@ def renew(stdout, stderr, project_directory, entity_type, entity_name):
 
         return ExitCode.ERROR_UNKNOWN_ENTITY
 
+    ca_hierarchy = gimmecert.storage.read_ca_hierarchy(os.path.join(project_directory, '.gimmecert', 'ca'))
+    issuer_private_key, issuer_certificate = ca_hierarchy[-1]
+
+    old_certificate = gimmecert.storage.read_certificate(certificate_path)
+
+    certificate = gimmecert.crypto.renew_certificate(old_certificate, issuer_private_key, issuer_certificate)
+    gimmecert.storage.write_certificate(certificate, certificate_path)
+
+    print("Renewed certificate for %s %s.\n" % (entity_type, entity_name), file=stdout)
+    print("""{entity_type_titled} private key: .gimmecert/{entity_type}/{entity_name}.key.pem\n
+    {entity_type_titled} certificate: .gimmecert/{entity_type}/{entity_name}.cert.pem""".format(entity_type_titled=entity_type.title(),
+                                                                                                entity_type=entity_type,
+                                                                                                entity_name=entity_name),
+          file=stdout)
+
     return ExitCode.SUCCESS

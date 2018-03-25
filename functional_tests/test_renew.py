@@ -101,3 +101,108 @@ def test_renew_command_reports_error_if_entity_does_not_exist(tmpdir):
     assert exit_code != 0
     assert stdout == ''
     assert stderr == "Cannot renew certificate. No existing certificate found for client myclient.\n"
+
+
+def test_renew_command_renews_certificate(tmpdir):
+    # At the end of his wits, John finally finds the correct project
+    # directory where he has previuosly set-up the CA hierarchy and
+    # issued a couple of certificates.
+    tmpdir.chdir()
+    run_command("gimmecert", "init")
+    run_command("gimmecert", "server", "myserver", "myserver.local")
+    run_command("gimmecert", "client", "myclient")
+
+    # He fetches some information about the existing certificates.
+    old_server_private_key = tmpdir.join(".gimmecert", "server", "myserver.key.pem").read()
+    old_server_issuer_dn, _, _ = run_command('openssl', 'x509', '-noout', '-issuer', '-in', '.gimmecert/server/myserver.cert.pem')
+    old_server_subject_dn, _, _ = run_command('openssl', 'x509', '-noout', '-subject', '-in', '.gimmecert/server/myserver.cert.pem')
+    old_server_public_key, _, _ = run_command('openssl', 'x509', '-noout', '-pubkey', '-in', '.gimmecert/server/myserver.cert.pem')
+    old_server_certificate_info, _, _ = run_command('openssl', 'x509', '-noout', '-text', '-in', '.gimmecert/server/myserver.cert.pem')
+    old_server_issuer_dn = old_server_issuer_dn.replace('issuer=', '', 1).rstrip().replace(' /CN=', 'CN = ', 1)  # OpenSSL 1.0 vs 1.1 formatting
+    old_server_subject_dn = old_server_subject_dn.replace('subject=', '', 1).rstrip().replace(' /CN=', 'CN = ', 1)  # OpenSSL 1.0 vs 1.1 formatting
+
+    old_client_private_key = tmpdir.join(".gimmecert", "client", "myclient.key.pem").read()
+    old_client_issuer_dn, _, _ = run_command('openssl', 'x509', '-noout', '-issuer', '-in', '.gimmecert/client/myclient.cert.pem')
+    old_client_subject_dn, _, _ = run_command('openssl', 'x509', '-noout', '-subject', '-in', '.gimmecert/client/myclient.cert.pem')
+    old_client_public_key, _, _ = run_command('openssl', 'x509', '-noout', '-pubkey', '-in', '.gimmecert/client/myclient.cert.pem')
+    old_client_certificate_info, _, _ = run_command('openssl', 'x509', '-noout', '-text', '-in', '.gimmecert/client/myclient.cert.pem')
+    old_client_issuer_dn = old_client_issuer_dn.replace('issuer=', '', 1).rstrip().replace(' /CN=', 'CN = ', 1)  # OpenSSL 1.0 vs 1.1 formatting
+    old_client_subject_dn = old_client_subject_dn.replace('subject=', '', 1).rstrip().replace(' /CN=', 'CN = ', 1)  # OpenSSL 1.0 vs 1.1 formatting
+
+    # He runs the renewal command for server certificate.
+    stdout, stderr, exit_code = run_command('gimmecert', 'renew', 'server', 'myserver')
+
+    # No errors are reported, and he is presented with a nice
+    # informative message about certificate being renewed, as well as
+    # paths to artifacts.
+    assert exit_code == 0
+    assert stderr == ""
+    assert "Renewed certificate for server myserver." in stdout
+    assert ".gimmecert/server/myserver.key.pem" in stdout
+    assert ".gimmecert/server/myserver.cert.pem" in stdout
+
+    # He does the same for the client certificate.
+    stdout, stderr, exit_code = run_command('gimmecert', 'renew', 'client', 'myclient')
+
+    # No errors are reported, and he is presented with a nice
+    # informative message about certificate being renewed, as well as
+    # paths to artifacts.
+    assert exit_code == 0
+    assert stderr == ""
+    assert "Renewed certificate for client myclient." in stdout
+    assert ".gimmecert/client/myclient.key.pem" in stdout
+    assert ".gimmecert/client/myclient.cert.pem" in stdout
+
+    # John has a look at generated certificates.
+    new_server_private_key = tmpdir.join(".gimmecert", "server", "myserver.key.pem").read()
+    new_server_issuer_dn, _, _ = run_command('openssl', 'x509', '-noout', '-issuer', '-in', '.gimmecert/server/myserver.cert.pem')
+    new_server_subject_dn, _, _ = run_command('openssl', 'x509', '-noout', '-subject', '-in', '.gimmecert/server/myserver.cert.pem')
+    new_server_public_key, _, _ = run_command('openssl', 'x509', '-noout', '-pubkey', '-in', '.gimmecert/server/myserver.cert.pem')
+    new_server_certificate_info, _, _ = run_command('openssl', 'x509', '-noout', '-text', '-in', '.gimmecert/server/myserver.cert.pem')
+    new_server_issuer_dn = new_server_issuer_dn.replace('issuer=', '', 1).rstrip().replace(' /CN=', 'CN = ', 1)  # OpenSSL 1.0 vs 1.1 formatting
+    new_server_subject_dn = new_server_subject_dn.replace('subject=', '', 1).rstrip().replace(' /CN=', 'CN = ', 1)  # OpenSSL 1.0 vs 1.1 formatting
+
+    new_client_private_key = tmpdir.join(".gimmecert", "client", "myclient.key.pem").read()
+    new_client_issuer_dn, _, _ = run_command('openssl', 'x509', '-noout', '-issuer', '-in', '.gimmecert/client/myclient.cert.pem')
+    new_client_subject_dn, _, _ = run_command('openssl', 'x509', '-noout', '-subject', '-in', '.gimmecert/client/myclient.cert.pem')
+    new_client_public_key, _, _ = run_command('openssl', 'x509', '-noout', '-pubkey', '-in', '.gimmecert/client/myclient.cert.pem')
+    new_client_certificate_info, _, _ = run_command('openssl', 'x509', '-noout', '-text', '-in', '.gimmecert/client/myclient.cert.pem')
+    new_client_issuer_dn = new_client_issuer_dn.replace('issuer=', '', 1).rstrip().replace(' /CN=', 'CN = ', 1)  # OpenSSL 1.0 vs 1.1 formatting
+    new_client_subject_dn = new_client_subject_dn.replace('subject=', '', 1).rstrip().replace(' /CN=', 'CN = ', 1)  # OpenSSL 1.0 vs 1.1 formatting
+
+    # John compares the values from old certificates and new
+    # certificates. To his delight, the same private key and naming
+    # have been reused, but the certificates have definitively been
+    # replaced.
+    assert new_server_private_key == old_server_private_key
+    assert new_server_issuer_dn == old_server_issuer_dn
+    assert new_server_subject_dn == old_server_subject_dn
+    assert new_server_public_key == old_server_public_key
+    assert "DNS:myserver, DNS:myserver.local\n" in new_server_certificate_info
+    assert new_server_certificate_info != old_server_certificate_info
+
+    assert new_client_private_key == old_client_private_key
+    assert new_client_issuer_dn == old_client_issuer_dn
+    assert new_client_subject_dn == old_client_subject_dn
+    assert new_client_public_key == old_client_public_key
+    assert new_client_certificate_info != old_client_certificate_info
+
+    # Finally, he runs a check to ensure the certificates can be
+    # verified using the CA certificate chain.
+    _, _, verify_server_error_code = run_command(
+        "openssl", "verify",
+        "-CAfile",
+        ".gimmecert/ca/chain-full.cert.pem",
+        ".gimmecert/server/myserver.cert.pem"
+    )
+
+    _, _, verify_client_error_code = run_command(
+        "openssl", "verify",
+        "-CAfile",
+        ".gimmecert/ca/chain-full.cert.pem",
+        ".gimmecert/server/myserver.cert.pem"
+    )
+
+    # He is happy to see that verification succeeds.
+    assert verify_server_error_code == 0
+    assert verify_client_error_code == 0
