@@ -58,6 +58,12 @@ Examples:
     # Renew a TLS server certificate removing extra DNS subject alternative names. Keeps the private key if any.
     gimmecert server myserver dontneedthisname.local
     gimmecert server myserver --update-dns-names
+
+    # Renew a TLS server certificate, preserving naming and private key.
+    gimmecert renew server myserver
+
+    # Renew a TLS client certificate, preserving naming and private key.
+    gimmecert renew client myclient
 """
 
 

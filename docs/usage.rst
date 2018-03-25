@@ -92,6 +92,11 @@ This time around, the ``myserver2`` certificate will include
 ``myserver2``, ``myserver2.local``, and ``service.example.com`` as DNS
 subject alternative names.
 
+Renew existing certificates, keeping the same private key and naming::
+
+  gimmecert renew server myserver1
+  gimmecert renew server myclient1
+
 
 Initialisation
 --------------
@@ -239,3 +244,27 @@ where ``NAME`` is passed-in via positional argument.
 Key usage and extended key usage in certificate are set typical TLS
 client use (e.g. *digital signature* + *key encipherment* for KU, and
 *TLS WWW client authentication* for EKU).
+
+
+Renewing certificates
+---------------------
+
+Both client and server certificates can be renewed by simply providing
+the type and name. This is useful when a certificate has expired, and
+it should be renewed with identical naming and private key. Command
+requires two positional argumensts::
+
+  gimmecert renew (server|client) NAME
+
+The command will:
+
+- Keep the existing private key generated for end entity.
+- Re-use naming, public key, and any extensions stored in existing
+  certificate.
+- Overwrite the existing certificate with a new one.
+- Show information where the artifacts can be grabbed from.
+
+.. note::
+   For changing the list of additional subject alternative names
+   included in server certificates, see the ``--update-dns-names`` for
+   the ``gimmecert server`` command.
