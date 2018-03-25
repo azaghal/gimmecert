@@ -103,7 +103,7 @@ def test_renew_command_reports_error_if_entity_does_not_exist(tmpdir):
     assert stderr == "Cannot renew certificate. No existing certificate found for client myclient.\n"
 
 
-def test_renew_command_renews_certificate(tmpdir):
+def test_renew_only_certificate(tmpdir):
     # At the end of his wits, John finally finds the correct project
     # directory where he has previuosly set-up the CA hierarchy and
     # issued a couple of certificates.
@@ -200,7 +200,87 @@ def test_renew_command_renews_certificate(tmpdir):
         "openssl", "verify",
         "-CAfile",
         ".gimmecert/ca/chain-full.cert.pem",
+        ".gimmecert/client/myclient.cert.pem"
+    )
+
+    # He is happy to see that verification succeeds.
+    assert verify_server_error_code == 0
+    assert verify_client_error_code == 0
+
+
+def test_renew_both_certificate_and_private_key(tmpdir):
+    # John wants to replace private keys in one of his projects for
+    # testing purposes to ensure the service is capable of reloading a
+    # new key on the fly. He switches to project directory (where he
+    # had previously set-up the CA hierarchy and issued some
+    # certificates).
+    tmpdir.chdir()
+    run_command("gimmecert", "init")
+    run_command("gimmecert", "server", "myserver", "myserver.local")
+    run_command("gimmecert", "client", "myclient")
+
+    # He is curious if there might be some built-in option to perform
+    # this action. He has a look at the renew command CLI help.
+    stdout, stderr, exit_code = run_command("gimmecert", "renew", "-h")
+
+    # He notices the option for generating a new private key.
+    assert exit_code == 0
+    assert stderr == ""
+    assert "--new-private-key, -p\n" in stdout
+
+    # Before proceeding, John has a quick look at the existing private
+    # keys and certificats.
+    old_server_private_key = tmpdir.join(".gimmecert", "server", "myserver.key.pem").read()
+    old_server_certificate = tmpdir.join(".gimmecert", "server", "myserver.cert.pem").read()
+    old_client_private_key = tmpdir.join(".gimmecert", "client", "myclient.key.pem").read()
+    old_client_certificate = tmpdir.join(".gimmecert", "client", "myclient.cert.pem").read()
+
+    # He runs the renewal command for server certificate, requesting
+    # the private key to be regenerated.
+    stdout, stderrr, exit_code = run_command("gimmecert", "renew", "--new-private-key", "server", "myserver")
+
+    # No errors are reported, and he is informed that both private key
+    # and certificate have been renewed.
+    assert exit_code == 0
+    assert stderr == ""
+    assert "Generated new private key and renewed certificate for server myserver." in stdout
+
+    # He runs the same command for the client entity.
+    stdout, stderrr, exit_code = run_command("gimmecert", "renew", "--new-private-key", "client", "myclient")
+
+    # No errors are reported, and he is informed that both private key
+    # and certificate have been renewed.
+    assert exit_code == 0
+    assert stderr == ""
+    assert "Generated new private key and renewed certificate for client myclient." in stdout
+
+    # John has a quick peek at the newly generated artifacts.
+    new_server_private_key = tmpdir.join(".gimmecert", "server", "myserver.key.pem").read()
+    new_server_certificate = tmpdir.join(".gimmecert", "server", "myserver.cert.pem").read()
+    new_client_private_key = tmpdir.join(".gimmecert", "client", "myclient.key.pem").read()
+    new_client_certificate = tmpdir.join(".gimmecert", "client", "myclient.cert.pem").read()
+
+    # Seems like both private key and certificate have been replaced
+    # for both server and client.
+    assert old_server_private_key != new_server_private_key
+    assert old_server_certificate != new_server_certificate
+    assert old_client_private_key != new_client_private_key
+    assert old_client_certificate != new_client_certificate
+
+    # Finally, he runs a check to ensure the certificates can be
+    # verified using the CA certificate chain.
+    _, _, verify_server_error_code = run_command(
+        "openssl", "verify",
+        "-CAfile",
+        ".gimmecert/ca/chain-full.cert.pem",
         ".gimmecert/server/myserver.cert.pem"
+    )
+
+    _, _, verify_client_error_code = run_command(
+        "openssl", "verify",
+        "-CAfile",
+        ".gimmecert/ca/chain-full.cert.pem",
+        ".gimmecert/client/myclient.cert.pem"
     )
 
     # He is happy to see that verification succeeds.

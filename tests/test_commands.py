@@ -467,7 +467,7 @@ def test_server_reports_success_if_certificate_not_already_issued_but_update_was
 def test_renew_returns_status_code(tmpdir):
     tmpdir.chdir()
 
-    status_code = gimmecert.commands.renew(io.StringIO(), io.StringIO(), tmpdir.strpath, 'server', 'myserver')
+    status_code = gimmecert.commands.renew(io.StringIO(), io.StringIO(), tmpdir.strpath, 'server', 'myserver', False)
 
     assert isinstance(status_code, int)
 
@@ -477,7 +477,7 @@ def test_renew_reports_error_if_directory_is_not_initialised(tmpdir):
     stdout_stream = io.StringIO()
     stderr_stream = io.StringIO()
 
-    status_code = gimmecert.commands.renew(stdout_stream, stderr_stream, tmpdir.strpath, 'server', 'myserver')
+    status_code = gimmecert.commands.renew(stdout_stream, stderr_stream, tmpdir.strpath, 'server', 'myserver', False)
 
     stdout = stdout_stream.getvalue()
     stderr = stderr_stream.getvalue()
@@ -494,7 +494,7 @@ def test_renew_reports_error_if_no_existing_server_certificate_is_present(tmpdir
     stdout_stream = io.StringIO()
     stderr_stream = io.StringIO()
 
-    status_code = gimmecert.commands.renew(stdout_stream, stderr_stream, tmpdir.strpath, 'server', 'myserver')
+    status_code = gimmecert.commands.renew(stdout_stream, stderr_stream, tmpdir.strpath, 'server', 'myserver', False)
 
     stdout = stdout_stream.getvalue()
     stderr = stderr_stream.getvalue()
@@ -512,7 +512,7 @@ def test_renew_reports_error_if_no_existing_client_certificate_is_present(tmpdir
     stdout_stream = io.StringIO()
     stderr_stream = io.StringIO()
 
-    status_code = gimmecert.commands.renew(stdout_stream, stderr_stream, tmpdir.strpath, 'client', 'myclient')
+    status_code = gimmecert.commands.renew(stdout_stream, stderr_stream, tmpdir.strpath, 'client', 'myclient', False)
 
     stdout = stdout_stream.getvalue()
     stderr = stderr_stream.getvalue()
@@ -532,7 +532,7 @@ def test_renew_reports_success_and_paths_to_server_artifacts(tmpdir):
     gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
     gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None)
 
-    status_code = gimmecert.commands.renew(stdout_stream, stderr_stream, tmpdir.strpath, 'server', 'myserver')
+    status_code = gimmecert.commands.renew(stdout_stream, stderr_stream, tmpdir.strpath, 'server', 'myserver', False)
 
     stdout = stdout_stream.getvalue()
     stderr = stderr_stream.getvalue()
@@ -553,7 +553,7 @@ def test_renew_reports_success_and_paths_to_client_artifacts(tmpdir):
     gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
     gimmecert.commands.client(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myclient')
 
-    status_code = gimmecert.commands.renew(stdout_stream, stderr_stream, tmpdir.strpath, 'client', 'myclient')
+    status_code = gimmecert.commands.renew(stdout_stream, stderr_stream, tmpdir.strpath, 'client', 'myclient', False)
 
     stdout = stdout_stream.getvalue()
     stderr = stderr_stream.getvalue()
@@ -574,7 +574,7 @@ def test_renew_keeps_server_private_key(tmpdir):
     gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None)
     private_key_after_issuance = private_key_file.read()
 
-    gimmecert.commands.renew(io.StringIO(), io.StringIO(), tmpdir.strpath, 'server', 'myserver')
+    gimmecert.commands.renew(io.StringIO(), io.StringIO(), tmpdir.strpath, 'server', 'myserver', False)
     private_key_after_renewal = private_key_file.read()
 
     assert private_key_after_issuance == private_key_after_renewal
@@ -589,7 +589,7 @@ def test_renew_keeps_client_private_key(tmpdir):
     gimmecert.commands.client(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myclient')
     private_key_after_issuance = private_key_file.read()
 
-    gimmecert.commands.renew(io.StringIO(), io.StringIO(), tmpdir.strpath, 'client', 'myclient')
+    gimmecert.commands.renew(io.StringIO(), io.StringIO(), tmpdir.strpath, 'client', 'myclient', False)
     private_key_after_renewal = private_key_file.read()
 
     assert private_key_after_issuance == private_key_after_renewal
@@ -604,7 +604,7 @@ def test_renew_replaces_server_certificate(tmpdir):
     gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None)
     certificate_after_issuance = certificate_file.read()
 
-    gimmecert.commands.renew(io.StringIO(), io.StringIO(), tmpdir.strpath, 'server', 'myserver')
+    gimmecert.commands.renew(io.StringIO(), io.StringIO(), tmpdir.strpath, 'server', 'myserver', False)
     certificate_after_renewal = certificate_file.read()
 
     assert certificate_after_issuance != certificate_after_renewal
@@ -621,9 +621,45 @@ def test_renew_replaces_client_certificate(tmpdir):
     gimmecert.commands.client(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myclient')
     certificate_after_issuance = certificate_file.read()
 
-    gimmecert.commands.renew(io.StringIO(), io.StringIO(), tmpdir.strpath, 'client', 'myclient')
+    gimmecert.commands.renew(io.StringIO(), io.StringIO(), tmpdir.strpath, 'client', 'myclient', False)
     certificate_after_renewal = certificate_file.read()
 
     assert certificate_after_issuance != certificate_after_renewal
     assert certificate_after_renewal.startswith('-----BEGIN CERTIFICATE')
     assert certificate_after_renewal.endswith('END CERTIFICATE-----\n')
+
+
+def test_renew_reports_success_and_paths_to_server_artifacts_with_new_key(tmpdir):
+    depth = 1
+
+    stdout_stream = io.StringIO()
+    stderr_stream = io.StringIO()
+
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
+    gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None)
+
+    status_code = gimmecert.commands.renew(stdout_stream, stderr_stream, tmpdir.strpath, 'server', 'myserver', True)
+
+    stdout = stdout_stream.getvalue()
+    stderr = stderr_stream.getvalue()
+
+    assert status_code == gimmecert.commands.ExitCode.SUCCESS
+    assert "Generated new private key and renewed certificate for server myserver." in stdout
+    assert ".gimmecert/server/myserver.key.pem" in stdout
+    assert ".gimmecert/server/myserver.cert.pem" in stdout
+    assert stderr == ""
+
+
+def test_renew_generates_new_private_key_if_requested(tmpdir):
+    depth = 1
+    private_key_file = tmpdir.join('.gimmecert', 'server', 'myserver.key.pem')
+
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
+
+    gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None)
+    private_key_after_issuance = private_key_file.read()
+
+    gimmecert.commands.renew(io.StringIO(), io.StringIO(), tmpdir.strpath, 'server', 'myserver', True)
+    private_key_after_renewal = private_key_file.read()
+
+    assert private_key_after_issuance != private_key_after_renewal

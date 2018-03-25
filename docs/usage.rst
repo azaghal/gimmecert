@@ -258,9 +258,9 @@ requires two positional argumensts::
 
 The command will:
 
-- Keep the existing private key generated for end entity.
-- Re-use naming, public key, and any extensions stored in existing
-  certificate.
+- By default keep the existing private key generated for end entity
+  (new one can be requested as well).
+- Re-use naming and any extensions stored in existing certificate.
 - Overwrite the existing certificate with a new one.
 - Show information where the artifacts can be grabbed from.
 
@@ -268,3 +268,9 @@ The command will:
    For changing the list of additional subject alternative names
    included in server certificates, see the ``--update-dns-names`` for
    the ``gimmecert server`` command.
+
+To also generate a new private key during renewal, use the
+``--new-private-key`` or ``-p`` option. For example::
+
+  gimmecert renew --new-private-key server myserver
+  gimmecert renew -p server my server

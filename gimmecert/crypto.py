@@ -304,14 +304,16 @@ def issue_client_certificate(name, public_key, issuer_private_key, issuer_certif
     return certificate
 
 
-def renew_certificate(old_certificate, issuer_private_key, issuer_certificate):
+def renew_certificate(old_certificate, public_key, issuer_private_key, issuer_certificate):
     """
     Renews an existing certificate, while preserving issuer and
-    subject DNs, as well as public key and all extensions from the old
-    certificate.
+    subject DNs, as well as extensions from the old certificate.
 
     :param old_certificate: Previously issued certificate.
     :type old_certificate: cryptography.x509.Certificate
+
+    :param public_key: Public key to use in resulting certificate. Allows replacement of public key in new certificate.
+    :type public_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPublicKey
 
     :param issuer_private_key: Private key of the issuer to use for signing the certificate structure.
     :type issuer_private_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey
@@ -334,7 +336,7 @@ def renew_certificate(old_certificate, issuer_private_key, issuer_certificate):
     new_certificate = issue_certificate(issuer_certificate.subject,
                                         old_certificate.subject,
                                         issuer_private_key,
-                                        old_certificate.public_key(),
+                                        public_key,
                                         not_before,
                                         not_after,
                                         [(e.value, e.critical) for e in old_certificate.extensions])

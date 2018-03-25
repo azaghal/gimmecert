@@ -658,7 +658,7 @@ def test_renew_command_invoked_with_correct_parameters_for_server(mock_renew, tm
 
     gimmecert.cli.main()
 
-    mock_renew.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'server', 'myserver')
+    mock_renew.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'server', 'myserver', False)
 
 
 @mock.patch('sys.argv', ['gimmecert', 'renew', 'client', 'myclient'])
@@ -672,4 +672,56 @@ def test_renew_command_invoked_with_correct_parameters_for_client(mock_renew, tm
 
     gimmecert.cli.main()
 
-    mock_renew.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'client', 'myclient')
+    mock_renew.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'client', 'myclient', False)
+
+
+@mock.patch('sys.argv', ['gimmecert', 'renew', '--new-private-key', 'server', 'myserver'])
+@mock.patch('gimmecert.cli.renew')
+def test_renew_command_invoked_with_correct_parameters_for_server_with_new_private_key_option(mock_renew, tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
+    mock_renew.return_value = gimmecert.commands.ExitCode.SUCCESS
+
+    gimmecert.cli.main()
+
+    mock_renew.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'server', 'myserver', True)
+
+
+@mock.patch('sys.argv', ['gimmecert', 'renew', '--new-private-key', 'client', 'myclient'])
+@mock.patch('gimmecert.cli.renew')
+def test_renew_command_invoked_with_correct_parameters_for_client_with_new_private_key_option(mock_renew, tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
+    mock_renew.return_value = gimmecert.commands.ExitCode.SUCCESS
+
+    gimmecert.cli.main()
+
+    mock_renew.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'client', 'myclient', True)
+
+
+@mock.patch('sys.argv', ['gimmecert', 'renew', 'server', '--new-private-key', 'myserver'])
+@mock.patch('gimmecert.cli.renew')
+def test_renew_command_accepts_renew_private_key_option_long_form(mock_renew, tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
+    mock_renew.return_value = gimmecert.commands.ExitCode.SUCCESS
+
+    gimmecert.cli.main()  # Should not raise
+
+
+@mock.patch('sys.argv', ['gimmecert', 'renew', 'server', '-p', 'myserver'])
+@mock.patch('gimmecert.cli.renew')
+def test_renew_command_accepts_renew_private_key_option_short_form(mock_renew, tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
+    mock_renew.return_value = gimmecert.commands.ExitCode.SUCCESS
+
+    gimmecert.cli.main()  # Should not raise

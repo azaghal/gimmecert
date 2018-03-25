@@ -253,8 +253,34 @@ def client(stdout, stderr, project_directory, entity_name):
     return ExitCode.SUCCESS
 
 
-def renew(stdout, stderr, project_directory, entity_type, entity_name):
+def renew(stdout, stderr, project_directory, entity_type, entity_name, generate_new_private_key):
+    """
+    Renews existing certificate, while optionally generating a new
+    private key in the process. Naming and extensions are preserved.
 
+    :param stdout: Output stream where the informative messages should be written-out.
+    :type stdout: io.IOBase
+
+    :param stderr: Output stream where the error messages should be written-out.
+    :type stderr: io.IOBase
+
+    :param project_directory: Path to project directory under which the CA artifacats etc will be looked-up.
+    :type project_directory: str
+
+    :param entity_type: Type of entity. Currently supported values are ``server`` and ``client``.
+    :type entity_type: str
+
+    :param entity_name: Name of entity. Name should refer to entity for which a certificate has already been issued.
+    :type entity_name: str
+
+    :param generate_new_private_key: Specify if a new private key should be generated, or an existing one should be used instead.
+    :type generate_new_private_key: bool
+
+    :returns: Status code, one from gimmecert.commands.ExitCode.
+    :rtype: int
+    """
+
+    private_key_path = os.path.join(project_directory, '.gimmecert', entity_type, '%s.key.pem' % entity_name)
     certificate_path = os.path.join(project_directory, '.gimmecert', entity_type, '%s.cert.pem' % entity_name)
 
     if not gimmecert.storage.is_initialised(project_directory):
@@ -272,10 +298,22 @@ def renew(stdout, stderr, project_directory, entity_type, entity_name):
 
     old_certificate = gimmecert.storage.read_certificate(certificate_path)
 
-    certificate = gimmecert.crypto.renew_certificate(old_certificate, issuer_private_key, issuer_certificate)
+    if generate_new_private_key:
+        private_key = gimmecert.crypto.generate_private_key()
+        gimmecert.storage.write_private_key(private_key, private_key_path)
+        public_key = private_key.public_key()
+    else:
+        public_key = old_certificate.public_key()
+
+    certificate = gimmecert.crypto.renew_certificate(old_certificate, public_key, issuer_private_key, issuer_certificate)
+
     gimmecert.storage.write_certificate(certificate, certificate_path)
 
-    print("Renewed certificate for %s %s.\n" % (entity_type, entity_name), file=stdout)
+    if generate_new_private_key:
+        print("Generated new private key and renewed certificate for %s %s." % (entity_type, entity_name), file=stdout)
+    else:
+        print("Renewed certificate for %s %s.\n" % (entity_type, entity_name), file=stdout)
+
     print("""{entity_type_titled} private key: .gimmecert/{entity_type}/{entity_name}.key.pem\n
     {entity_type_titled} certificate: .gimmecert/{entity_type}/{entity_name}.cert.pem""".format(entity_type_titled=entity_type.title(),
                                                                                                 entity_type=entity_type,

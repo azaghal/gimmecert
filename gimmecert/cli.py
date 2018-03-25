@@ -136,11 +136,12 @@ def setup_renew_subcommand_parser(parser, subparsers):
     subparser = subparsers.add_parser('renew', description='Renews existing certificates.')
     subparser.add_argument('entity_type', help='Type of entity to renew.', choices=['server', 'client'])
     subparser.add_argument('entity_name', help='Name of the entity')
+    subparser.add_argument('--new-private-key', '-p', action='store_true', help="Generate new private key for renewal. Default is to keep the existing key.")
 
     def renew_wrapper(args):
         project_directory = os.getcwd()
 
-        return renew(sys.stdout, sys.stderr, project_directory, args.entity_type, args.entity_name)
+        return renew(sys.stdout, sys.stderr, project_directory, args.entity_type, args.entity_name, args.new_private_key)
 
     subparser.set_defaults(func=renew_wrapper)
 
