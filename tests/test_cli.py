@@ -118,12 +118,6 @@ def test_parser_help_contains_examples():
     assert 'Examples' in parser.description
 
 
-def test_setup_help_subcommand_parser_registered():
-    registered_functions = gimmecert.decorators.get_subcommand_parser_setup_functions()
-
-    assert gimmecert.cli.setup_help_subcommand_parser in registered_functions
-
-
 @mock.patch('gimmecert.cli.get_subcommand_parser_setup_functions')
 def test_get_parser_calls_setup_subcommand_parser_functions(mock_get_subcommand_parser_setup_functions):
     mock_setup1 = mock.Mock()
@@ -145,46 +139,66 @@ def test_setup_help_subcommand_parser_adds_parser():
     assert mock_subparsers.add_parser.called
 
 
-def test_help_subcommand_returns_parser():
+@pytest.mark.parametrize("setup_subcommand_parser", gimmecert.decorators.get_subcommand_parser_setup_functions())
+def test_setup_subcommand_parser_returns_parser(setup_subcommand_parser):
+    """
+    Tests if functions registered to return a subcommand parser return
+    a valid parser object.
+
+    Test is parametrised in order to avoid code duplication, and it
+    will automatically fetch registered functions, making it
+    unnecessary to list them here explicitly.
+    """
+
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers()
 
-    subparser = gimmecert.cli.setup_help_subcommand_parser(parser, subparsers)
+    subparser = setup_subcommand_parser(parser, subparsers)
 
     assert isinstance(subparser, argparse.ArgumentParser)
 
 
-def test_help_subcommand_sets_function_callback():
+@pytest.mark.parametrize("setup_subcommand_parser", gimmecert.decorators.get_subcommand_parser_setup_functions())
+def test_setup_subcommand_parser_sets_function_callback(setup_subcommand_parser):
+    """
+    Tests if functions registered to return a subcommand parser will
+    set a default function to be called (as command invocation).
+
+    Test is parametrised in order to avoid code duplication, and it
+    will automatically fetch registered functions, making it
+    unnecessary to list them here explicitly.
+    """
+
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers()
 
-    subparser = gimmecert.cli.setup_help_subcommand_parser(parser, subparsers)
+    subparser = setup_subcommand_parser(parser, subparsers)
 
     assert callable(subparser.get_default('func'))
 
 
-def test_setup_init_subcommand_parser_registered():
+@pytest.mark.parametrize(
+    "setup_subcommand_parser",
+    [
+        gimmecert.cli.setup_help_subcommand_parser,
+        gimmecert.cli.setup_init_subcommand_parser,
+        gimmecert.cli.setup_server_subcommand_parser,
+        gimmecert.cli.setup_client_subcommand_parser,
+        gimmecert.cli.setup_renew_subcommand_parser,
+    ]
+)
+def test_setup_subcommand_parser_registered(setup_subcommand_parser):
+    """
+    Tests if functions registered to return a subcommand parser have
+    been registered correctly using a decorator.
+
+    Test is parametrised in order to avoid code duplication. New
+    functions should simply be added to the list of functions.
+    """
+
     registered_functions = gimmecert.decorators.get_subcommand_parser_setup_functions()
 
-    assert gimmecert.cli.setup_init_subcommand_parser in registered_functions
-
-
-def test_setup_init_subcommand_returns_parser():
-    parser = argparse.ArgumentParser()
-    subparsers = parser.add_subparsers()
-
-    subparser = gimmecert.cli.setup_init_subcommand_parser(parser, subparsers)
-
-    assert isinstance(subparser, argparse.ArgumentParser)
-
-
-def test_setup_init_subcommand_sets_function_callback():
-    parser = argparse.ArgumentParser()
-    subparsers = parser.add_subparsers()
-
-    subparser = gimmecert.cli.setup_init_subcommand_parser(parser, subparsers)
-
-    assert callable(subparser.get_default('func'))
+    assert setup_subcommand_parser in registered_functions
 
 
 # List of valid CLI invocations to use in
@@ -323,21 +337,6 @@ def test_init_command_invoked_with_correct_parameters_with_options(mock_init, tm
     mock_init.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'My Project', default_depth)
 
 
-def test_setup_server_subcommand_parser_registered():
-    registered_functions = gimmecert.decorators.get_subcommand_parser_setup_functions()
-
-    assert gimmecert.cli.setup_server_subcommand_parser in registered_functions
-
-
-def test_setup_server_subcommand_parser_returns_parser():
-    parser = argparse.ArgumentParser()
-    subparsers = parser.add_subparsers()
-
-    subparser = gimmecert.cli.setup_server_subcommand_parser(parser, subparsers)
-
-    assert isinstance(subparser, argparse.ArgumentParser)
-
-
 @mock.patch('sys.argv', ['gimmecert', 'server'])
 def test_setup_server_subcommand_fails_without_arguments(tmpdir):
     # This should ensure we don't accidentally create artifacts
@@ -348,15 +347,6 @@ def test_setup_server_subcommand_fails_without_arguments(tmpdir):
         gimmecert.cli.main()
 
     assert e_info.value.code != 0
-
-
-def test_setup_server_subcommand_sets_function_callback():
-    parser = argparse.ArgumentParser()
-    subparsers = parser.add_subparsers()
-
-    subparser = gimmecert.cli.setup_server_subcommand_parser(parser, subparsers)
-
-    assert callable(subparser.get_default('func'))
 
 
 @mock.patch('sys.argv', ['gimmecert', 'server', 'myserver'])
@@ -465,21 +455,6 @@ def test_main_exits_if_it_calls_function_that_returns_success(tmpdir):
     assert e_info.value.code == gimmecert.commands.ExitCode.ERROR_ALREADY_INITIALISED
 
 
-def test_setup_client_subcommand_parser_registered():
-    registered_functions = gimmecert.decorators.get_subcommand_parser_setup_functions()
-
-    assert gimmecert.cli.setup_client_subcommand_parser in registered_functions
-
-
-def test_setup_client_subcommand_parser_returns_parser():
-    parser = argparse.ArgumentParser()
-    subparsers = parser.add_subparsers()
-
-    subparser = gimmecert.cli.setup_client_subcommand_parser(parser, subparsers)
-
-    assert isinstance(subparser, argparse.ArgumentParser)
-
-
 @mock.patch('sys.argv', ['gimmecert', 'client'])
 def test_setup_client_subcommand_fails_without_arguments(tmpdir):
     # This should ensure we don't accidentally create artifacts
@@ -490,15 +465,6 @@ def test_setup_client_subcommand_fails_without_arguments(tmpdir):
         gimmecert.cli.main()
 
     assert e_info.value.code != 0
-
-
-def test_setup_client_subcommand_sets_function_callback():
-    parser = argparse.ArgumentParser()
-    subparsers = parser.add_subparsers()
-
-    subparser = gimmecert.cli.setup_client_subcommand_parser(parser, subparsers)
-
-    assert callable(subparser.get_default('func'))
 
 
 @mock.patch('sys.argv', ['gimmecert', 'client', 'myclient'])
@@ -529,21 +495,6 @@ def test_server_command_invoked_with_correct_parameters_with_update_option(mock_
     mock_server.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'myserver', ['service.local'], True)
 
 
-def test_setup_renew_subcommand_parser_registered():
-    registered_functions = gimmecert.decorators.get_subcommand_parser_setup_functions()
-
-    assert gimmecert.cli.setup_renew_subcommand_parser in registered_functions
-
-
-def test_setup_renew_subcommand_parser_returns_parser():
-    parser = argparse.ArgumentParser()
-    subparsers = parser.add_subparsers()
-
-    subparser = gimmecert.cli.setup_renew_subcommand_parser(parser, subparsers)
-
-    assert isinstance(subparser, argparse.ArgumentParser)
-
-
 @mock.patch('sys.argv', ['gimmecert', 'renew'])
 def test_renew_command_fails_without_arguments(tmpdir):
     # This should ensure we don't accidentally create artifacts
@@ -554,15 +505,6 @@ def test_renew_command_fails_without_arguments(tmpdir):
         gimmecert.cli.main()
 
     assert e_info.value.code != 0
-
-
-def test_setup_renew_subcommand_sets_function_callback():
-    parser = argparse.ArgumentParser()
-    subparsers = parser.add_subparsers()
-
-    subparser = gimmecert.cli.setup_renew_subcommand_parser(parser, subparsers)
-
-    assert callable(subparser.get_default('func'))
 
 
 @mock.patch('sys.argv', ['gimmecert', 'renew', 'server', 'myserver'])
