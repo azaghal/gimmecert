@@ -185,6 +185,7 @@ def test_setup_subcommand_parser_sets_function_callback(setup_subcommand_parser)
         gimmecert.cli.setup_server_subcommand_parser,
         gimmecert.cli.setup_client_subcommand_parser,
         gimmecert.cli.setup_renew_subcommand_parser,
+        gimmecert.cli.setup_status_subcommand_parser
     ]
 )
 def test_setup_subcommand_parser_registered(setup_subcommand_parser):
@@ -250,6 +251,8 @@ VALID_CLI_INVOCATIONS = [
     ("gimmecert.cli.renew", ["gimmecert", "renew", "-p", "server", "myserver"]),
     ("gimmecert.cli.renew", ["gimmecert", "renew", "-p", "client", "myclient"]),
 
+    # status, no options
+    ("gimmecert.cli.status", ["gimmecert", "status"]),
 ]
 
 
@@ -280,7 +283,7 @@ def test_parser_commands_and_options_are_available(tmpdir, command_function, cli
         gimmecert.cli.main()  # Should not raise
 
 
-@pytest.mark.parametrize("command", ["help", "init", "server", "client", "renew"])
+@pytest.mark.parametrize("command", ["help", "init", "server", "client", "renew", "status"])
 @pytest.mark.parametrize("help_option", ["--help", "-h"])
 def test_command_exists_and_accepts_help_flag(tmpdir, command, help_option):
     """

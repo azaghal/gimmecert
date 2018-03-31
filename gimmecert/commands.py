@@ -321,3 +321,7 @@ def renew(stdout, stderr, project_directory, entity_type, entity_name, generate_
           file=stdout)
 
     return ExitCode.SUCCESS
+
+
+def status():
+    pass

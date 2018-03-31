@@ -24,7 +24,7 @@ import os
 import sys
 
 from .decorators import subcommand_parser, get_subcommand_parser_setup_functions
-from .commands import client, help_, init, renew, server, usage, ExitCode
+from .commands import client, help_, init, renew, server, status, usage, ExitCode
 
 
 ERROR_GENERIC = 10
@@ -144,6 +144,21 @@ def setup_renew_subcommand_parser(parser, subparsers):
         return renew(sys.stdout, sys.stderr, project_directory, args.entity_type, args.entity_name, args.new_private_key)
 
     subparser.set_defaults(func=renew_wrapper)
+
+    return subparser
+
+
+@subcommand_parser
+def setup_status_subcommand_parser(parser, subparsers):
+
+    subparser = subparsers.add_parser(name="status", description="Shows status information about issued certificates.")
+
+    def status_wrapper(args):
+        status()
+
+        return ExitCode.SUCCESS
+
+    subparser.set_defaults(func=status_wrapper)
 
     return subparser
 
