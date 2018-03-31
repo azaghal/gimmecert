@@ -323,5 +323,25 @@ def renew(stdout, stderr, project_directory, entity_type, entity_name, generate_
     return ExitCode.SUCCESS
 
 
-def status():
-    pass
+def status(stdout, stderr, project_directory):
+    """
+    Displays information about initialised hierarchy and issued
+    certificates in project directory.
+
+    :param stdout: Output stream where the informative messages should be written-out.
+    :type stdout: io.IOBase
+
+    :param stderr: Output stream where the error messages should be written-out.
+    :type stderr: io.IOBase
+
+    :param project_directory: Path to project directory under which the artefacts are looked-up.
+    :type project_directory: str
+
+    :returns: Status code, one from gimmecert.commands.ExitCode.
+    :rtype: int
+    """
+
+    if not gimmecert.storage.is_initialised(project_directory):
+        print("CA hierarchy has not been initialised in current directory.", file=stdout)
+
+    return ExitCode.SUCCESS

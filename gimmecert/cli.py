@@ -154,7 +154,9 @@ def setup_status_subcommand_parser(parser, subparsers):
     subparser = subparsers.add_parser(name="status", description="Shows status information about issued certificates.")
 
     def status_wrapper(args):
-        status()
+        project_directory = os.getcwd()
+
+        status(sys.stdout, sys.stderr, project_directory)
 
         return ExitCode.SUCCESS
 

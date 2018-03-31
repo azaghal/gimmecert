@@ -564,3 +564,17 @@ def test_renew_command_invoked_with_correct_parameters_for_client_with_new_priva
     gimmecert.cli.main()
 
     mock_renew.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'client', 'myclient', True)
+
+
+@mock.patch('sys.argv', ['gimmecert', 'status'])
+@mock.patch('gimmecert.cli.status')
+def test_status_command_invoked_with_correct_parameters(mock_status, tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
+    mock_status.return_value = gimmecert.commands.ExitCode.SUCCESS
+
+    gimmecert.cli.main()
+
+    mock_status.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath)

@@ -663,3 +663,23 @@ def test_renew_generates_new_private_key_if_requested(tmpdir):
     private_key_after_renewal = private_key_file.read()
 
     assert private_key_after_issuance != private_key_after_renewal
+
+
+def test_status_returns_status_code(tmpdir):
+    status_code = gimmecert.commands.status(io.StringIO(), io.StringIO(), tmpdir.strpath)
+
+    assert isinstance(status_code, int)
+
+
+def test_status_reports_uninitialised_directory(tmpdir):
+    stdout_stream = io.StringIO()
+    stderr_stream = io.StringIO()
+
+    status_code = gimmecert.commands.status(stdout_stream, stderr_stream, tmpdir.strpath)
+
+    stdout = stdout_stream.getvalue()
+    stderr = stderr_stream.getvalue()
+
+    assert status_code == gimmecert.commands.ExitCode.SUCCESS
+    assert stderr == ""
+    assert "CA hierarchy has not been initialised in current directory." in stdout
