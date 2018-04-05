@@ -393,6 +393,10 @@ def status(stdout, stderr, project_directory):
         print("    DNS: %s" % ", ".join(gimmecert.utils.get_dns_names(certificate)), file=stdout)
         print("    Private key: .gimmecert/server/%s" % certificate_file.replace('.cert.pem', '.key.pem'), file=stdout)
         print("    Certificate: .gimmecert/server/%s" % certificate_file, file=stdout)
+    else:
+        # Separator.
+        print("", file=stdout)
+        print("No server certificates have been issued.", file=stdout)
 
     # Section separator.
     print("\n", file=stdout)
@@ -411,5 +415,9 @@ def status(stdout, stderr, project_directory):
         print("    Validity: %s" % gimmecert.utils.date_range_to_str(certificate.not_valid_before, certificate.not_valid_after), file=stdout)
         print("    Private key: .gimmecert/client/%s" % certificate_file.replace('.cert.pem', '.key.pem'), file=stdout)
         print("    Certificate: .gimmecert/client/%s" % certificate_file, file=stdout)
+    else:
+        # Separator.
+        print("", file=stdout)
+        print("No client certificates have been issued.", file=stdout)
 
     return ExitCode.SUCCESS

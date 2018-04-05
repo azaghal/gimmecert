@@ -824,3 +824,49 @@ def test_status_reports_client_certificate_information(tmpdir):
     assert myclient2_validity == "    Validity: 2018-03-01 00:00:00 UTC - 2019-01-01 00:15:00 UTC"
     assert myclient2_private_key_path == "    Private key: .gimmecert/client/myclient2.key.pem"
     assert myclient2_certificate_path == "    Certificate: .gimmecert/client/myclient2.cert.pem"
+
+
+def test_status_reports_no_server_certificates_were_issued(tmpdir):
+    depth = 1
+
+    stdout_stream = io.StringIO()
+    stderr_stream = io.StringIO()
+
+    # Just create some sample data, but no server certificates.
+    with freeze_time('2018-01-01 00:15:00'):
+        gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
+        gimmecert.commands.client(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myclient1')
+        gimmecert.commands.client(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myclient2')
+
+    status_code = gimmecert.commands.status(stdout_stream, stderr_stream, tmpdir.strpath)
+
+    stdout = stdout_stream.getvalue()
+    stdout_lines = stdout.split("\n")
+    stderr = stderr_stream.getvalue()
+
+    assert status_code == gimmecert.commands.ExitCode.SUCCESS
+    assert stderr == ""
+    assert "Server certificates\n-------------------\n\nNo server certificates have been issued." in stdout, "Missing message about no server certificates being issued:\n%s" % stdout
+
+
+def test_status_reports_no_client_certificates_were_issued(tmpdir):
+    depth = 1
+
+    stdout_stream = io.StringIO()
+    stderr_stream = io.StringIO()
+
+    # Just create some sample data, but no client certificates.
+    with freeze_time('2018-01-01 00:15:00'):
+        gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
+        gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver1', None)
+        gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver2', None)
+
+    status_code = gimmecert.commands.status(stdout_stream, stderr_stream, tmpdir.strpath)
+
+    stdout = stdout_stream.getvalue()
+    stdout_lines = stdout.split("\n")
+    stderr = stderr_stream.getvalue()
+
+    assert status_code == gimmecert.commands.ExitCode.SUCCESS
+    assert stderr == ""
+    assert "Client certificates\n-------------------\n\nNo client certificates have been issued." in stdout, "Missing message about no client certificates being issued:\n%s" % stdout
