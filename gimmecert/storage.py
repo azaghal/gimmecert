@@ -21,6 +21,7 @@
 
 import os
 
+import cryptography.x509
 import cryptography.hazmat.primitives.serialization
 
 import gimmecert.utils

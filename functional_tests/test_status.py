@@ -66,3 +66,92 @@ def test_status_on_uninitialised_directory(tmpdir):
     # informs John that Gimmecert has not been initialised yet.
     assert exit_code == 0
     assert "CA hierarchy has not been initialised in current directory." in stdout
+
+
+def test_status_on_initialised_directory(tmpdir):
+    # John is interested in finding out a bit more about what
+    # certificates have been already issued in one of the projects he
+    # had initialised before.
+    tmpdir.chdir()
+    run_command('gimmecert', 'init', '-d', '3', '-b', 'My Project')
+
+    run_command('gimmecert', 'server', 'myserver1')
+    run_command('gimmecert', 'server', 'myserver2', 'myservice.example.com', 'myotherservice.example.com')
+
+    run_command('gimmecert', 'client', 'myclient1')
+    run_command('gimmecert', 'client', 'myclient2')
+
+    # John switches to project directory.
+    tmpdir.chdir()
+
+    # John runs the status command.
+    stdout, stderr, exit_code = run_command('gimmecert', 'status')
+    stdout_lines = stdout.split("\n")
+
+    # Command exits with success without any errors being
+    # reported.
+    assert exit_code == 0
+    assert stderr == ""
+
+    # John notices that information is laid-out in three separate
+    # sections - one for CA hierachy, one for server certificates, and
+    # one for client certificates.
+    assert "CA hierarchy" in stdout
+    assert "Server certificates" in stdout
+    assert "Client certificates" in stdout
+
+    # John first has a look at information about the CA
+    # hierarchy. Hierarchy tree is presented using indentation. Each
+    # CA is listed with its full subject DN, as well as not before and
+    # not after dates. In addition, the final CA in chain is marked as
+    # end entity issuing CA.
+    index_ca_1 = stdout_lines.index("CN=My Project Level 1 CA")  # Should not raise
+    index_ca_2 = stdout_lines.index("CN=My Project Level 2 CA")  # Should not raise
+    index_ca_3 = stdout_lines.index("CN=My Project Level 3 CA [END ENTITY ISSUING CA]")  # Should not raise
+
+    assert index_ca_1 < index_ca_2
+    assert index_ca_2 < index_ca_3
+
+    assert stdout_lines[index_ca_1+1].startswith("    Validity: ")
+    assert stdout_lines[index_ca_1+2].startswith("    Certificate: ")
+
+    assert stdout_lines[index_ca_2+1].startswith("    Validity: ")
+    assert stdout_lines[index_ca_2+2].startswith("    Certificate: ")
+
+    assert stdout_lines[index_ca_3+1].startswith("    Validity: ")
+    assert stdout_lines[index_ca_3+2].startswith("    Certificate: ")
+
+    # In addition to CA information, path to full certificate chain is
+    # output as well.
+    assert "Full certificate chain:" in stdout
+
+    # John then has a look at server certificates. These are presented
+    # in a list, and for each certificate is listed with subject DN,
+    # not before, not after, and included DNS names. Information for
+    # each server is followed by paths to private key and certificate.
+    index_myserver1 = stdout_lines.index("CN=myserver1")  # Should not raise
+    index_myserver2 = stdout_lines.index("CN=myserver2")  # Should not raise
+
+    assert stdout_lines[index_myserver1+1].startswith("    Validity: ")
+    assert stdout_lines[index_myserver1+2] == "    DNS: myserver1"
+    assert stdout_lines[index_myserver1+3] == "    Private key: .gimmecert/server/myserver1.key.pem"
+    assert stdout_lines[index_myserver1+4] == "    Certificate: .gimmecert/server/myserver1.cert.pem"
+
+    assert stdout_lines[index_myserver2+1].startswith("    Validity: ")
+    assert stdout_lines[index_myserver2+2] == "    DNS: myserver2, myservice.example.com, myotherservice.example.com"
+    assert stdout_lines[index_myserver2+3] == "    Private key: .gimmecert/server/myserver2.key.pem"
+    assert stdout_lines[index_myserver2+4] == "    Certificate: .gimmecert/server/myserver2.cert.pem"
+
+    # For client certificates, John can see that for each certificate
+    # he can see its subject DN and validity. Information for each
+    # server is followed by paths to private key and certificate.
+    index_myclient1 = stdout_lines.index("CN=myclient1")  # Should not raise
+    index_myclient2 = stdout_lines.index("CN=myclient2")  # Should not raise
+
+    assert stdout_lines[index_myclient1+1].startswith("    Validity: ")
+    assert stdout_lines[index_myclient1+2] == "    Private key: .gimmecert/client/myclient1.key.pem"
+    assert stdout_lines[index_myclient1+3] == "    Certificate: .gimmecert/client/myclient1.cert.pem"
+
+    assert stdout_lines[index_myclient2+1].startswith("    Validity: ")
+    assert stdout_lines[index_myclient2+2] == "    Private key: .gimmecert/client/myclient2.key.pem"
+    assert stdout_lines[index_myclient2+3] == "    Certificate: .gimmecert/client/myclient2.cert.pem"

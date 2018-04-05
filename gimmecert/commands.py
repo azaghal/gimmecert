@@ -22,6 +22,7 @@ import os
 
 import gimmecert.crypto
 import gimmecert.storage
+import gimmecert.utils
 
 
 class ExitCode:
@@ -343,5 +344,72 @@ def status(stdout, stderr, project_directory):
 
     if not gimmecert.storage.is_initialised(project_directory):
         print("CA hierarchy has not been initialised in current directory.", file=stdout)
+        return ExitCode.ERROR_NOT_INITIALISED
+
+    def get_section_title(title):
+        """
+        Small helper function that produces section title surrounded by
+        separators for better visibility.
+        """
+
+        return "%s\n%s\n%s" % ("-" * len(title), title, "-" * len(title))
+
+    print(get_section_title("CA hierarchy"), file=stdout)
+
+    ca_hierarchy = gimmecert.storage.read_ca_hierarchy(os.path.join(project_directory, '.gimmecert', 'ca'))
+
+    for i, (_, certificate) in enumerate(ca_hierarchy, 1):
+        # Separator.
+        print("", file=stdout)
+
+        if i == len(ca_hierarchy):
+            print(gimmecert.utils.dn_to_str(certificate.subject) + " [END ENTITY ISSUING CA]", file=stdout)
+        else:
+            print(gimmecert.utils.dn_to_str(certificate.subject), file=stdout)
+
+        print("    Validity: %s" % gimmecert.utils.date_range_to_str(certificate.not_valid_before, certificate.not_valid_after), file=stdout)
+        print("    Certificate: .gimmecert/ca/level%d.cert.pem" % i, file=stdout)
+
+    # Separator.
+    print("", file=stdout)
+
+    print("Full certificate chain: .gimmecert/ca/chain-full.cert.pem", file=stdout)
+
+    # Section separator.
+    print("\n", file=stdout)
+
+    print(get_section_title("Server certificates"), file=stdout)
+
+    certificate_files = sorted([c for c in os.listdir(os.path.join(project_directory, '.gimmecert', 'server')) if c.endswith('.cert.pem')])
+
+    for certificate_file in certificate_files:
+        certificate = gimmecert.storage.read_certificate(os.path.join(project_directory, '.gimmecert', 'server', certificate_file))
+
+        # Separator.
+        print("", file=stdout)
+
+        print(gimmecert.utils.dn_to_str(certificate.subject), file=stdout)
+        print("    Validity: %s" % gimmecert.utils.date_range_to_str(certificate.not_valid_before, certificate.not_valid_after), file=stdout)
+        print("    DNS: %s" % ", ".join(gimmecert.utils.get_dns_names(certificate)), file=stdout)
+        print("    Private key: .gimmecert/server/%s" % certificate_file.replace('.cert.pem', '.key.pem'), file=stdout)
+        print("    Certificate: .gimmecert/server/%s" % certificate_file, file=stdout)
+
+    # Section separator.
+    print("\n", file=stdout)
+
+    print(get_section_title("Client certificates"), file=stdout)
+
+    certificate_files = sorted([c for c in os.listdir(os.path.join(project_directory, '.gimmecert', 'client')) if c.endswith('.cert.pem')])
+
+    for certificate_file in certificate_files:
+        certificate = gimmecert.storage.read_certificate(os.path.join(project_directory, '.gimmecert', 'client', certificate_file))
+
+        # Separator.
+        print("", file=stdout)
+
+        print(gimmecert.utils.dn_to_str(certificate.subject), file=stdout)
+        print("    Validity: %s" % gimmecert.utils.date_range_to_str(certificate.not_valid_before, certificate.not_valid_after), file=stdout)
+        print("    Private key: .gimmecert/client/%s" % certificate_file.replace('.cert.pem', '.key.pem'), file=stdout)
+        print("    Certificate: .gimmecert/client/%s" % certificate_file, file=stdout)
 
     return ExitCode.SUCCESS

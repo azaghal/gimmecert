@@ -11,6 +11,7 @@ dist/
 .pytest_cache/
 __pycache__/
 *.egg-info/
+*.pyc
 
 # Ignore test artefacts.
 .coverage

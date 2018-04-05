@@ -22,6 +22,14 @@
 import cryptography.hazmat
 
 
+class UnsupportedField(Exception):
+    """
+    Exception thrown when trying to process an unsupported field in
+    subject or issuer DN.
+    """
+    pass
+
+
 def certificate_to_pem(certificate):
     """
     Converts certificate object to OpenSSL-style PEM format.
@@ -36,3 +44,70 @@ def certificate_to_pem(certificate):
     certificate_pem = certificate.public_bytes(encoding=cryptography.hazmat.primitives.serialization.Encoding.PEM)
 
     return certificate_pem
+
+
+def dn_to_str(dn):
+    """
+    Converts passed-in DN to a human-readable OpenSSL-style string
+    representation.
+
+    Currently supported fields:
+
+    - Common name.
+
+    :param dn: DN for which to generate string representation.
+    :type dn: cryptography.x509.Name
+
+    :returns: OpenSSL-style string representation of passed-in DN.
+    :rtype: str
+    """
+
+    fields = []
+
+    for field in dn:
+        if field.oid == cryptography.x509.oid.NameOID.COMMON_NAME:
+            fields.append("CN=%s" % field.value)
+        else:
+            raise UnsupportedField("Unable to generate string representation for: %s" % field.oid)
+
+    return ",".join(fields)
+
+
+def date_range_to_str(start, end):
+    """
+    Converts the provided validity range (with starting and end date),
+    into a human-readable string.
+
+    :param begin: Start date in UTC.
+    :type begin: datetime.datetime
+
+    :param end: End date in UTC.
+    :type end: datetime.datetime
+
+    :returns: String representation of date range, up to a second granularity.
+    :rtype: str
+    """
+
+    date_format = "%Y-%m-%d %H:%M:%S UTC"
+
+    return "%s - %s" % (start.strftime(date_format), end.strftime(date_format))
+
+
+def get_dns_names(certificate):
+    """
+    Retrieves list of DNS subject alternative names from certificate.
+
+    :param certificate: Certificate to process.
+    :type certificate: cryptography.x509.Certificate
+
+    :returns: List of DNS subject alternative names extracted from the certificate.
+    :rtype: list[str]
+    """
+
+    try:
+        subject_alternative_name = certificate.extensions.get_extension_for_class(cryptography.x509.SubjectAlternativeName).value
+        dns_names = subject_alternative_name.get_values_for_type(cryptography.x509.DNSName)
+    except cryptography.x509.extensions.ExtensionNotFound:
+        dns_names = []
+
+    return dns_names
