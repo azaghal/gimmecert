@@ -97,6 +97,10 @@ Renew existing certificates, keeping the same private key and naming::
   gimmecert renew server myserver1
   gimmecert renew server myclient1
 
+Show information about CA hierarchy and issued certificates::
+
+  gimmecert status
+
 
 Initialisation
 --------------
@@ -274,3 +278,28 @@ To also generate a new private key during renewal, use the
 
   gimmecert renew --new-private-key server myserver
   gimmecert renew -p server my server
+
+
+Getting information about CA hierarchy and issued certificates
+--------------------------------------------------------------
+
+In order to show information about the CA hierarchy and issued
+certificates simply run the status command::
+
+  gimmecert status
+
+The command will:
+
+- Show information about every CA in generated hierarchy (subject DN,
+  validity, certificate paths, whether the CA is used for issuing end
+  entity certificates).
+- Show information about all issued server certificates (subject DN,
+  DNS subject alternative names, validity, private key path,
+  certificate path).
+- Show information about all issued client certificates (subject DN,
+  validity, private key path, certificate path).
+
+Validity of all certificates is shown in UTC.
+
+Command can also be used for checking if Gimmecert has been
+initialised in local directory or not.

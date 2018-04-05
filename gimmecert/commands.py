@@ -382,17 +382,18 @@ def status(stdout, stderr, project_directory):
 
     certificate_files = sorted([c for c in os.listdir(os.path.join(project_directory, '.gimmecert', 'server')) if c.endswith('.cert.pem')])
 
-    for certificate_file in certificate_files:
-        certificate = gimmecert.storage.read_certificate(os.path.join(project_directory, '.gimmecert', 'server', certificate_file))
+    if certificate_files:
+        for certificate_file in certificate_files:
+            certificate = gimmecert.storage.read_certificate(os.path.join(project_directory, '.gimmecert', 'server', certificate_file))
 
-        # Separator.
-        print("", file=stdout)
+            # Separator.
+            print("", file=stdout)
 
-        print(gimmecert.utils.dn_to_str(certificate.subject), file=stdout)
-        print("    Validity: %s" % gimmecert.utils.date_range_to_str(certificate.not_valid_before, certificate.not_valid_after), file=stdout)
-        print("    DNS: %s" % ", ".join(gimmecert.utils.get_dns_names(certificate)), file=stdout)
-        print("    Private key: .gimmecert/server/%s" % certificate_file.replace('.cert.pem', '.key.pem'), file=stdout)
-        print("    Certificate: .gimmecert/server/%s" % certificate_file, file=stdout)
+            print(gimmecert.utils.dn_to_str(certificate.subject), file=stdout)
+            print("    Validity: %s" % gimmecert.utils.date_range_to_str(certificate.not_valid_before, certificate.not_valid_after), file=stdout)
+            print("    DNS: %s" % ", ".join(gimmecert.utils.get_dns_names(certificate)), file=stdout)
+            print("    Private key: .gimmecert/server/%s" % certificate_file.replace('.cert.pem', '.key.pem'), file=stdout)
+            print("    Certificate: .gimmecert/server/%s" % certificate_file, file=stdout)
     else:
         # Separator.
         print("", file=stdout)
@@ -405,19 +406,23 @@ def status(stdout, stderr, project_directory):
 
     certificate_files = sorted([c for c in os.listdir(os.path.join(project_directory, '.gimmecert', 'client')) if c.endswith('.cert.pem')])
 
-    for certificate_file in certificate_files:
-        certificate = gimmecert.storage.read_certificate(os.path.join(project_directory, '.gimmecert', 'client', certificate_file))
+    if certificate_files:
+        for certificate_file in certificate_files:
+            certificate = gimmecert.storage.read_certificate(os.path.join(project_directory, '.gimmecert', 'client', certificate_file))
 
-        # Separator.
-        print("", file=stdout)
+            # Separator.
+            print("", file=stdout)
 
-        print(gimmecert.utils.dn_to_str(certificate.subject), file=stdout)
-        print("    Validity: %s" % gimmecert.utils.date_range_to_str(certificate.not_valid_before, certificate.not_valid_after), file=stdout)
-        print("    Private key: .gimmecert/client/%s" % certificate_file.replace('.cert.pem', '.key.pem'), file=stdout)
-        print("    Certificate: .gimmecert/client/%s" % certificate_file, file=stdout)
+            print(gimmecert.utils.dn_to_str(certificate.subject), file=stdout)
+            print("    Validity: %s" % gimmecert.utils.date_range_to_str(certificate.not_valid_before, certificate.not_valid_after), file=stdout)
+            print("    Private key: .gimmecert/client/%s" % certificate_file.replace('.cert.pem', '.key.pem'), file=stdout)
+            print("    Certificate: .gimmecert/client/%s" % certificate_file, file=stdout)
     else:
         # Separator.
         print("", file=stdout)
         print("No client certificates have been issued.", file=stdout)
+
+    # Separator. Helps separate terminal prompt from final line of output.
+    print("", file=stdout)
 
     return ExitCode.SUCCESS

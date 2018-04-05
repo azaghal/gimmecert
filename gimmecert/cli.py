@@ -64,6 +64,9 @@ Examples:
 
     # Renew a TLS client certificate, preserving naming and private key.
     gimmecert renew client myclient
+
+    # Show information about CA hierarchy and issued certificates.
+    gimmecert status
 """
 
 

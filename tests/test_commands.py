@@ -756,6 +756,7 @@ def test_status_reports_server_certificate_information(tmpdir):
     assert status_code == gimmecert.commands.ExitCode.SUCCESS
     assert stderr == ""
     assert "Server certificates\n-------------------\n" in stdout
+    assert "No server certificates" not in stdout
 
     index_myserver1 = stdout_lines.index("CN=myserver1")  # Should not raise
     index_myserver2 = stdout_lines.index("CN=myserver2")  # Should not raise
@@ -805,6 +806,7 @@ def test_status_reports_client_certificate_information(tmpdir):
     assert status_code == gimmecert.commands.ExitCode.SUCCESS
     assert stderr == ""
     assert "Client certificates\n-------------------\n" in stdout
+    assert "No client certificates" not in stdout
 
     index_myclient1 = stdout_lines.index("CN=myclient1")  # Should not raise
     index_myclient2 = stdout_lines.index("CN=myclient2")  # Should not raise
