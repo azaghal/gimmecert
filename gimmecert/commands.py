@@ -19,6 +19,7 @@
 #
 
 import os
+import datetime
 
 import gimmecert.crypto
 import gimmecert.storage
@@ -342,6 +343,8 @@ def status(stdout, stderr, project_directory):
     :rtype: int
     """
 
+    now = datetime.datetime.now()
+
     if not gimmecert.storage.is_initialised(project_directory):
         print("CA hierarchy has not been initialised in current directory.", file=stdout)
         return ExitCode.ERROR_NOT_INITIALISED
@@ -367,7 +370,16 @@ def status(stdout, stderr, project_directory):
         else:
             print(gimmecert.utils.dn_to_str(certificate.subject), file=stdout)
 
-        print("    Validity: %s" % gimmecert.utils.date_range_to_str(certificate.not_valid_before, certificate.not_valid_after), file=stdout)
+        if certificate.not_valid_before > now:
+            validity_status = " [NOT VALID YET]"
+        elif certificate.not_valid_after < now:
+            validity_status = " [EXPIRED]"
+        else:
+            validity_status = ""
+
+        print("    Validity: %s%s" % (gimmecert.utils.date_range_to_str(certificate.not_valid_before,
+                                                                        certificate.not_valid_after),
+                                      validity_status), file=stdout)
         print("    Certificate: .gimmecert/ca/level%d.cert.pem" % i, file=stdout)
 
     # Separator.
@@ -389,8 +401,17 @@ def status(stdout, stderr, project_directory):
             # Separator.
             print("", file=stdout)
 
+            if certificate.not_valid_before > now:
+                validity_status = " [NOT VALID YET]"
+            elif certificate.not_valid_after < now:
+                validity_status = " [EXPIRED]"
+            else:
+                validity_status = ""
+
             print(gimmecert.utils.dn_to_str(certificate.subject), file=stdout)
-            print("    Validity: %s" % gimmecert.utils.date_range_to_str(certificate.not_valid_before, certificate.not_valid_after), file=stdout)
+            print("    Validity: %s%s" % (gimmecert.utils.date_range_to_str(certificate.not_valid_before,
+                                                                            certificate.not_valid_after),
+                                          validity_status), file=stdout)
             print("    DNS: %s" % ", ".join(gimmecert.utils.get_dns_names(certificate)), file=stdout)
             print("    Private key: .gimmecert/server/%s" % certificate_file.replace('.cert.pem', '.key.pem'), file=stdout)
             print("    Certificate: .gimmecert/server/%s" % certificate_file, file=stdout)
@@ -413,8 +434,17 @@ def status(stdout, stderr, project_directory):
             # Separator.
             print("", file=stdout)
 
+            if certificate.not_valid_before > now:
+                validity_status = " [NOT VALID YET]"
+            elif certificate.not_valid_after < now:
+                validity_status = " [EXPIRED]"
+            else:
+                validity_status = ""
+
             print(gimmecert.utils.dn_to_str(certificate.subject), file=stdout)
-            print("    Validity: %s" % gimmecert.utils.date_range_to_str(certificate.not_valid_before, certificate.not_valid_after), file=stdout)
+            print("    Validity: %s%s" % (gimmecert.utils.date_range_to_str(certificate.not_valid_before,
+                                                                            certificate.not_valid_after),
+                                          validity_status), file=stdout)
             print("    Private key: .gimmecert/client/%s" % certificate_file.replace('.cert.pem', '.key.pem'), file=stdout)
             print("    Certificate: .gimmecert/client/%s" % certificate_file, file=stdout)
     else:

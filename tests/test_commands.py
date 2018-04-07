@@ -25,6 +25,7 @@ import os
 import gimmecert.commands
 
 from freezegun import freeze_time
+import pytest
 
 
 def test_init_sets_up_directory_structure(tmpdir):
@@ -843,12 +844,12 @@ def test_status_reports_no_server_certificates_were_issued(tmpdir):
     status_code = gimmecert.commands.status(stdout_stream, stderr_stream, tmpdir.strpath)
 
     stdout = stdout_stream.getvalue()
-    stdout_lines = stdout.split("\n")
     stderr = stderr_stream.getvalue()
 
     assert status_code == gimmecert.commands.ExitCode.SUCCESS
     assert stderr == ""
-    assert "Server certificates\n-------------------\n\nNo server certificates have been issued." in stdout, "Missing message about no server certificates being issued:\n%s" % stdout
+    assert "Server certificates\n-------------------\n\nNo server certificates have been issued." in stdout, \
+        "Missing message about no server certificates being issued:\n%s" % stdout
 
 
 def test_status_reports_no_client_certificates_were_issued(tmpdir):
@@ -866,9 +867,56 @@ def test_status_reports_no_client_certificates_were_issued(tmpdir):
     status_code = gimmecert.commands.status(stdout_stream, stderr_stream, tmpdir.strpath)
 
     stdout = stdout_stream.getvalue()
+    stderr = stderr_stream.getvalue()
+
+    assert status_code == gimmecert.commands.ExitCode.SUCCESS
+    assert stderr == ""
+    assert "Client certificates\n-------------------\n\nNo client certificates have been issued." in stdout, \
+        "Missing message about no client certificates being issued:\n%s" % stdout
+
+
+@pytest.mark.parametrize("subject_dn_line", [
+    "CN=My Project Level 1 CA [END ENTITY ISSUING CA]",
+    "CN=myserver",
+    "CN=myclient",
+])
+@pytest.mark.parametrize("issuance_date, status_date, validity_status", [
+    ("2018-01-01 00:15:00", "2018-06-01 00:00:00", ""),
+    ("2018-01-01 00:15:00", "2017-01-01 00:15:00", " [NOT VALID YET]"),
+    ("2018-01-01 00:15:00", "2020-01-01 00:15:00", " [EXPIRED]"),
+])
+def test_certificate_marked_as_not_valid_or_expired_as_appropriate(tmpdir, subject_dn_line, issuance_date, status_date, validity_status):
+    """
+    Tests if various certificates (CA, server, client) are marked and
+    valid/invalid in terms of validity dates.
+
+    The test has been parametrised since the pattern is pretty similar
+    between these.
+    """
+
+    depth = 1
+
+    stdout_stream = io.StringIO()
+    stderr_stream = io.StringIO()
+
+    # Perform action on our fixed issuance date.
+    with freeze_time(issuance_date):
+        gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, "My Project", depth)
+        gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None)
+        gimmecert.commands.client(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myclient')
+
+    # Move to specific date in future/past for different validity checks.
+    with freeze_time(status_date):
+        status_code = gimmecert.commands.status(stdout_stream, stderr_stream, tmpdir.strpath)
+
+    stdout = stdout_stream.getvalue()
     stdout_lines = stdout.split("\n")
     stderr = stderr_stream.getvalue()
 
     assert status_code == gimmecert.commands.ExitCode.SUCCESS
     assert stderr == ""
-    assert "Client certificates\n-------------------\n\nNo client certificates have been issued." in stdout, "Missing message about no client certificates being issued:\n%s" % stdout
+
+    index_dn = stdout_lines.index(subject_dn_line)  # Should not raise
+    validity = stdout_lines[index_dn + 1]
+
+    assert validity.endswith(validity_status)
