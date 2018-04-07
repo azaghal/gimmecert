@@ -92,7 +92,8 @@ def init(stdout, stderr, project_directory, ca_base_name, ca_hierarchy_depth):
     for level in range(1, ca_hierarchy_depth+1):
         print("    CA Level %d private key: .gimmecert/ca/level%d.key.pem" % (level, level), file=stdout)
         print("    CA Level %d certificate: .gimmecert/ca/level%d.cert.pem" % (level, level), file=stdout)
-        print("    Full certificate chain: .gimmecert/ca/chain-full.cert.pem", file=stdout)
+
+    print("    Full certificate chain: .gimmecert/ca/chain-full.cert.pem", file=stdout)
 
     return ExitCode.SUCCESS
 
