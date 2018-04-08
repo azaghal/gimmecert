@@ -46,7 +46,7 @@ def test_renew_command_available_with_help():
     assert exit_code == 0
     assert stderr == ""
     assert stdout.startswith("usage: gimmecert renew")
-    assert stdout.split('\n')[0].endswith("{server,client} entity_name")  # First line of help
+    assert stdout.split('\n')[1].endswith("{server,client} entity_name")  # Second line of help (first is options)
 
 
 def test_renew_command_requires_initialised_hierarchy(tmpdir):

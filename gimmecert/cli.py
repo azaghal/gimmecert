@@ -108,6 +108,8 @@ def setup_server_subcommand_parser(parser, subparsers):
     subparser.add_argument('--update-dns-names', '-u', action='store_true', help='''Renew certificate for an existing server entity by reusing \
     the private key, but replacing the DNS subject alternative names with listed values (if any). \
     If entity does not exist, this option has no effect, and a new private key/certificate will be generated as usual.''')
+    subparser.add_argument('--csr', '-c', type=str, default=None, help='''Do not generate server private key locally, and use the passed-in \
+    certificate signing request (CSR) instead.''')
 
     def server_wrapper(args):
         project_directory = os.getcwd()
@@ -123,6 +125,8 @@ def setup_server_subcommand_parser(parser, subparsers):
 def setup_client_subcommand_parser(parser, subparsers):
     subparser = subparsers.add_parser('client', description='Issue client certificate.')
     subparser.add_argument('entity_name', help='Name of the client entity.')
+    subparser.add_argument('--csr', '-c', type=str, help='''Do not generate client private key locally, and use the passed-in \
+    certificate signing request (CSR) instead.''')
 
     def client_wrapper(args):
         project_directory = os.getcwd()
@@ -139,7 +143,14 @@ def setup_renew_subcommand_parser(parser, subparsers):
     subparser = subparsers.add_parser('renew', description='Renews existing certificates.')
     subparser.add_argument('entity_type', help='Type of entity to renew.', choices=['server', 'client'])
     subparser.add_argument('entity_name', help='Name of the entity')
-    subparser.add_argument('--new-private-key', '-p', action='store_true', help="Generate new private key for renewal. Default is to keep the existing key.")
+
+    new_private_key_or_csr_group = subparser.add_mutually_exclusive_group()
+
+    new_private_key_or_csr_group.add_argument('--new-private-key', '-p', action='store_true', help='''Generate new private key for renewal. \
+    Default is to keep the existing key. Mutually exclusive with the --csr option.''')
+    new_private_key_or_csr_group.add_argument('--csr', '-c', type=str, help='''Do not use local private key and public key information from \
+    existing certificate, and use the passed-in certificate signing request (CSR) instead. If private key exists, it will be removed. \
+    Mutually exclusive with the --new-private-key option.''')
 
     def renew_wrapper(args):
         project_directory = os.getcwd()

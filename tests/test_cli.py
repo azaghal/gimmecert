@@ -238,8 +238,16 @@ VALID_CLI_INVOCATIONS = [
     ("gimmecert.cli.server", ["gimmecert", "server", "--update-dns-names", "myserver"]),
     ("gimmecert.cli.server", ["gimmecert", "server", "-u", "myserver"]),
 
+    # server, CSR long and short option
+    ("gimmecert.cli.server", ["gimmecert", "server", "--csr", "myserver.csr.pem", "myserver"]),
+    ("gimmecert.cli.server", ["gimmecert", "server", "-c", "myserver.csr.pem", "myserver"]),
+
     # client, no options
     ("gimmecert.cli.client", ["gimmecert", "client", "myclient"]),
+
+    # client, CSR long and short option
+    ("gimmecert.cli.client", ["gimmecert", "client", "--csr", "myclient.csr.pem", "myclient"]),
+    ("gimmecert.cli.client", ["gimmecert", "client", "-c", "myclient.csr.pem", "myclient"]),
 
     # renew, no options
     ("gimmecert.cli.renew", ["gimmecert", "renew", "server", "myserver"]),
@@ -250,6 +258,12 @@ VALID_CLI_INVOCATIONS = [
     ("gimmecert.cli.renew", ["gimmecert", "renew", "--new-private-key", "client", "myclient"]),
     ("gimmecert.cli.renew", ["gimmecert", "renew", "-p", "server", "myserver"]),
     ("gimmecert.cli.renew", ["gimmecert", "renew", "-p", "client", "myclient"]),
+
+    # renew, CSR long and short option
+    ("gimmecert.cli.renew", ["gimmecert", "renew", "--csr", "myserver.csr.pem", "server", "myserver"]),
+    ("gimmecert.cli.renew", ["gimmecert", "renew", "--csr", "myclient.csr.pem", "client", "myclient"]),
+    ("gimmecert.cli.renew", ["gimmecert", "renew", "-c", "myserver.csr.pem", "server", "myserver"]),
+    ("gimmecert.cli.renew", ["gimmecert", "renew", "-c", "myclient.csr.pem", "client", "myclient"]),
 
     # status, no options
     ("gimmecert.cli.status", ["gimmecert", "status"]),
@@ -578,3 +592,31 @@ def test_status_command_invoked_with_correct_parameters(mock_status, tmpdir):
     gimmecert.cli.main()
 
     mock_status.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath)
+
+
+@mock.patch('sys.argv', ['gimmecert', 'renew', 'server', '--new-private-key', '--csr', 'myserver.csr.pem', 'myserver'])
+@mock.patch('gimmecert.cli.renew')
+def test_renew_command_fails_if_both_new_private_key_and_csr_options_are_specified_for_server(mock_renew, tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
+    with pytest.raises(SystemExit) as e_info:
+        gimmecert.cli.main()
+
+    assert mock_renew.called is False
+    assert e_info.value.code != 0
+
+
+@mock.patch('sys.argv', ['gimmecert', 'renew', 'client', '--new-private-key', '--csr', 'myclient.csr.pem', 'myclient'])
+@mock.patch('gimmecert.cli.renew')
+def test_renew_command_fails_if_both_new_private_key_and_csr_options_are_specified_for_client(mock_renew, tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
+    with pytest.raises(SystemExit) as e_info:
+        gimmecert.cli.main()
+
+    assert mock_renew.called is False
+    assert e_info.value.code != 0
