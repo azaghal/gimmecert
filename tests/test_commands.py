@@ -129,7 +129,7 @@ def test_init_does_not_overwrite_artifcats_if_already_initialised(tmpdir):
 
 
 def test_server_returns_status_code(tmpdir):
-    status_code = gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None)
+    status_code = gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None, False)
 
     assert isinstance(status_code, int)
 
@@ -139,7 +139,7 @@ def test_server_reports_error_if_directory_is_not_initialised(tmpdir):
     stdout_stream = io.StringIO()
     stderr_stream = io.StringIO()
 
-    status_code = gimmecert.commands.server(stdout_stream, stderr_stream, tmpdir.strpath, 'myserver', None)
+    status_code = gimmecert.commands.server(stdout_stream, stderr_stream, tmpdir.strpath, 'myserver', None, False)
 
     stdout = stdout_stream.getvalue()
     stderr = stderr_stream.getvalue()
@@ -157,7 +157,7 @@ def test_server_reports_success_and_paths_to_generated_artifacts(tmpdir):
 
     gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
 
-    status_code = gimmecert.commands.server(stdout_stream, stderr_stream, tmpdir.strpath, 'myserver', None)
+    status_code = gimmecert.commands.server(stdout_stream, stderr_stream, tmpdir.strpath, 'myserver', None, False)
 
     stdout = stdout_stream.getvalue()
     stderr = stderr_stream.getvalue()
@@ -174,7 +174,7 @@ def test_server_outputs_private_key_to_file(tmpdir):
 
     gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
 
-    gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None)
+    gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None, False)
 
     assert private_key_file.check(file=1)
 
@@ -190,7 +190,7 @@ def test_server_outputs_certificate_to_file(tmpdir):
 
     gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
 
-    gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None)
+    gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None, False)
 
     assert certificate_file.check(file=1)
 
@@ -208,12 +208,12 @@ def test_server_errors_out_if_certificate_already_issued(tmpdir):
 
     # Previous run.
     gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
-    gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None)
+    gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None, False)
     existing_private_key = tmpdir.join('.gimmecert', 'server', 'myserver.key.pem').read()
     certificate = tmpdir.join('.gimmecert', 'server', 'myserver.cert.pem').read()
 
     # New run.
-    status_code = gimmecert.commands.server(stdout_stream, stderr_stream, tmpdir.strpath, 'myserver', None)
+    status_code = gimmecert.commands.server(stdout_stream, stderr_stream, tmpdir.strpath, 'myserver', None, False)
 
     stdout = stdout_stream.getvalue()
     stderr = stderr_stream.getvalue()
@@ -431,7 +431,7 @@ def test_server_reports_success_if_certificate_already_issued_but_update_was_req
 
     # Previous run.
     gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
-    gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None)
+    gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None, False)
     existing_private_key = tmpdir.join('.gimmecert', 'server', 'myserver.key.pem').read()
     certificate = tmpdir.join('.gimmecert', 'server', 'myserver.cert.pem').read()
 
@@ -536,7 +536,7 @@ def test_renew_reports_success_and_paths_to_server_artifacts(tmpdir):
     stderr_stream = io.StringIO()
 
     gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
-    gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None)
+    gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None, False)
 
     status_code = gimmecert.commands.renew(stdout_stream, stderr_stream, tmpdir.strpath, 'server', 'myserver', False)
 
@@ -577,7 +577,7 @@ def test_renew_keeps_server_private_key(tmpdir):
 
     gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
 
-    gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None)
+    gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None, False)
     private_key_after_issuance = private_key_file.read()
 
     gimmecert.commands.renew(io.StringIO(), io.StringIO(), tmpdir.strpath, 'server', 'myserver', False)
@@ -607,7 +607,7 @@ def test_renew_replaces_server_certificate(tmpdir):
 
     gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
 
-    gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None)
+    gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None, False)
     certificate_after_issuance = certificate_file.read()
 
     gimmecert.commands.renew(io.StringIO(), io.StringIO(), tmpdir.strpath, 'server', 'myserver', False)
@@ -642,7 +642,7 @@ def test_renew_reports_success_and_paths_to_server_artifacts_with_new_key(tmpdir
     stderr_stream = io.StringIO()
 
     gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
-    gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None)
+    gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None, False)
 
     status_code = gimmecert.commands.renew(stdout_stream, stderr_stream, tmpdir.strpath, 'server', 'myserver', True)
 
@@ -662,7 +662,7 @@ def test_renew_generates_new_private_key_if_requested(tmpdir):
 
     gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
 
-    gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None)
+    gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None, False)
     private_key_after_issuance = private_key_file.read()
 
     gimmecert.commands.renew(io.StringIO(), io.StringIO(), tmpdir.strpath, 'server', 'myserver', True)
@@ -746,10 +746,10 @@ def test_status_reports_server_certificate_information(tmpdir):
         gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
 
     with freeze_time('2018-02-01 00:15:00'):
-        gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver1', None)
+        gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver1', None, False)
 
     with freeze_time('2018-03-01 00:15:00'):
-        gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver2', ['myservice1.example.com', 'myservice2.example.com'])
+        gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver2', ['myservice1.example.com', 'myservice2.example.com'], False)
 
     status_code = gimmecert.commands.status(stdout_stream, stderr_stream, tmpdir.strpath)
 
@@ -864,8 +864,8 @@ def test_status_reports_no_client_certificates_were_issued(tmpdir):
     # Just create some sample data, but no client certificates.
     with freeze_time('2018-01-01 00:15:00'):
         gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
-        gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver1', None)
-        gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver2', None)
+        gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver1', None, False)
+        gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver2', None, False)
 
     status_code = gimmecert.commands.status(stdout_stream, stderr_stream, tmpdir.strpath)
 
@@ -905,7 +905,7 @@ def test_certificate_marked_as_not_valid_or_expired_as_appropriate(tmpdir, subje
     # Perform action on our fixed issuance date.
     with freeze_time(issuance_date):
         gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, "My Project", depth)
-        gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None)
+        gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None, False)
         gimmecert.commands.client(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myclient', None)
 
     # Move to specific date in future/past for different validity checks.

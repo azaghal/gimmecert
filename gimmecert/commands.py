@@ -98,7 +98,7 @@ def init(stdout, stderr, project_directory, ca_base_name, ca_hierarchy_depth):
     return ExitCode.SUCCESS
 
 
-def server(stdout, stderr, project_directory, entity_name, extra_dns_names, update_dns_names=False):
+def server(stdout, stderr, project_directory, entity_name, extra_dns_names, update_dns_names):
     """
     Generates a server private key and issues a server certificate
     using the CA hierarchy initialised within the specified directory.
