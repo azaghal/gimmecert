@@ -84,11 +84,9 @@ def test_client_certificate_issuance_by_passing_csr_as_file(tmpdir):
 
     # John notices that the content of stored CSR is identical to the
     # one he provided.
-    with open("myclient1.csr.pem", "r") as original_csr_file, open(".gimmecert/client/myclient1.csr.pem", "r") as stored_csr_file:
-        original_csr = original_csr_file.read()
-        stored_csr = stored_csr_file.read()
-
-        assert original_csr == stored_csr
+    original_csr = tmpdir.join("myclient1.csr.pem").read()
+    stored_csr = tmpdir.join(".gimmecert", "client", "myclient1.csr.pem").read()
+    assert original_csr == stored_csr
 
     # John then quickly has a look at the public key associated with
     # the private key, and public key stored in certificate.
