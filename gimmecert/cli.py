@@ -125,13 +125,13 @@ def setup_server_subcommand_parser(parser, subparsers):
 def setup_client_subcommand_parser(parser, subparsers):
     subparser = subparsers.add_parser('client', description='Issue client certificate.')
     subparser.add_argument('entity_name', help='Name of the client entity.')
-    subparser.add_argument('--csr', '-c', type=str, help='''Do not generate client private key locally, and use the passed-in \
+    subparser.add_argument('--csr', '-c', type=str, default=None, help='''Do not generate client private key locally, and use the passed-in \
     certificate signing request (CSR) instead.''')
 
     def client_wrapper(args):
         project_directory = os.getcwd()
 
-        return client(sys.stdout, sys.stderr, project_directory, args.entity_name)
+        return client(sys.stdout, sys.stderr, project_directory, args.entity_name, args.csr)
 
     subparser.set_defaults(func=client_wrapper)
 

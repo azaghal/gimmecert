@@ -169,3 +169,32 @@ def test_read_ca_hierarchy_returns_list_of_ca_private_key_and_certificate_pairs_
     assert isinstance(private_key_4, cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey)
     assert isinstance(certificate_4, cryptography.x509.Certificate)
     assert certificate_4.subject == gimmecert.crypto.get_dn("My Project Level 4 CA")
+
+
+def test_write_csr(tmpdir):
+    csr_file = tmpdir.join('test.csr.pem')
+
+    private_key = gimmecert.crypto.generate_private_key()
+    csr = gimmecert.crypto.generate_csr('test', private_key)
+
+    gimmecert.storage.write_csr(csr, csr_file.strpath)
+
+    csr_file_content = csr_file.read()
+
+    assert os.path.exists(csr_file.strpath)
+    assert csr_file_content.startswith('-----BEGIN CERTIFICATE REQUEST-----')
+    assert csr_file_content.endswith('-----END CERTIFICATE REQUEST-----\n')
+
+
+def test_read_csr(tmpdir):
+    csr_file = tmpdir.join('mycsr.csr.pem')
+
+    private_key = gimmecert.crypto.generate_private_key()
+    original_csr = gimmecert.crypto.generate_csr('mycsr', private_key)
+
+    gimmecert.storage.write_csr(original_csr, csr_file.strpath)
+
+    csr = gimmecert.storage.read_csr(csr_file.strpath)
+
+    assert isinstance(csr, cryptography.x509.CertificateSigningRequest)
+    assert csr == original_csr

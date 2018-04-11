@@ -589,3 +589,28 @@ def test_renew_certificate_not_after_does_not_exceed_ca_validity():
         certificate = gimmecert.crypto.renew_certificate(old_certificate, private_key.public_key(), issuer_private_key, issuer_certificate)
 
     assert certificate.not_valid_after == issuer_certificate.not_valid_after
+
+
+def test_generate_csr_returns_csr_with_passed_in_dn():
+
+    private_key = gimmecert.crypto.generate_private_key()
+    subject_dn = gimmecert.crypto.get_dn('testcsr')
+
+    csr = gimmecert.crypto.generate_csr(subject_dn, private_key)
+
+    assert isinstance(csr, cryptography.x509.CertificateSigningRequest)
+    assert csr.public_key().public_numbers() == private_key.public_key().public_numbers()
+    assert csr.subject == subject_dn
+
+
+def test_generate_csr_returns_csr_with_passed_in_name():
+
+    private_key = gimmecert.crypto.generate_private_key()
+    name = 'testcsr'
+
+    expected_subject_dn = gimmecert.crypto.get_dn('testcsr')
+
+    csr = gimmecert.crypto.generate_csr(name, private_key)
+
+    assert csr.public_key().public_numbers() == private_key.public_key().public_numbers()
+    assert csr.subject == expected_subject_dn

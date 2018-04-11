@@ -495,7 +495,7 @@ def test_client_command_invoked_with_correct_parameters(mock_client, tmpdir):
 
     gimmecert.cli.main()
 
-    mock_client.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'myclient')
+    mock_client.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'myclient', None)
 
 
 @mock.patch('sys.argv', ['gimmecert', 'server', '--update-dns-names', 'myserver', 'service.local'])

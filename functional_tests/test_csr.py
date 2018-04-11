@@ -53,3 +53,47 @@ def test_commands_report_csr_option_as_available():
     # John notcies the option for passing-in a CSR.
     assert " --csr " in stdout
     assert " -c " in stdout
+
+
+def test_client_certificate_issuance_by_passing_csr_as_file(tmpdir):
+    # John is working on a project where he has already generated
+    # client private key.
+    tmpdir.chdir()
+    run_command("openssl", "genrsa", "-out", "myclient1.key.pem", "2048")
+
+    # However, he still needs to have a CA as a trustpoint, so he goes
+    # ahead and initialises Gimmecert for this purpose.
+    run_command("gimmecert", "init")
+
+    # Before issuing the certificate, he goes ahead and generates a
+    # CSR for the client private key
+    run_command("openssl", "req", "-new", "-key", "myclient1.key.pem", "-subj", "/CN=myclient1", "-out", "myclient1.csr.pem")
+
+    # John issues client certificate using CSR.
+    stdout, stderr, exit_code = run_command("gimmecert", "client", "--csr", "myclient1.csr.pem", "myclient1")
+
+    # The operation is successful, and he is presented with
+    # information about generated artefacts.
+    assert exit_code == 0
+    assert stderr == ""
+    assert ".gimmecert/client/myclient1.cert.pem" in stdout
+    assert ".gimmecert/client/myclient1.csr.pem" in stdout
+
+    # John also notices that there is no mention of a private key.
+    assert ".gimmecert/client/myclient1.key.pem" not in stdout
+
+    # John notices that the content of stored CSR is identical to the
+    # one he provided.
+    with open("myclient1.csr.pem", "r") as original_csr_file, open(".gimmecert/client/myclient1.csr.pem", "r") as stored_csr_file:
+        original_csr = original_csr_file.read()
+        stored_csr = stored_csr_file.read()
+
+        assert original_csr == stored_csr
+
+    # John then quickly has a look at the public key associated with
+    # the private key, and public key stored in certificate.
+    public_key, _, _ = run_command("openssl", "rsa", "-pubout", "-in", "myclient1.key.pem")
+    certificate_public_key, _, _ = run_command("openssl", "x509", "-pubkey", "-noout", "-in", ".gimmecert/client/myclient1.cert.pem")
+
+    # To his delight, they are identical.
+    assert certificate_public_key == public_key

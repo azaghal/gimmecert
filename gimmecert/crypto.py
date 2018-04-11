@@ -342,3 +342,34 @@ def renew_certificate(old_certificate, public_key, issuer_private_key, issuer_ce
                                         [(e.value, e.critical) for e in old_certificate.extensions])
 
     return new_certificate
+
+
+def generate_csr(name, private_key):
+    """
+    Generates certificate signing request.
+
+    :param name: Name of the end entity. If string, passed-in name is treated as value for CN in subject DN.
+    :type name: str or cryptography.x509.Name
+
+    :param private_key: Private key of end entity to use for signing the CSR.
+    :type private_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey
+
+    :returns: Certificate signing request with specified naming signed with passed-in private key.
+    :rtype: cryptography.x509.CertificateSigningRequest
+    """
+
+    if isinstance(name, cryptography.x509.Name):
+        subject_dn = name
+    else:
+        subject_dn = get_dn(name)
+
+    builder = cryptography.x509.CertificateSigningRequestBuilder()
+    builder = builder.subject_name(subject_dn)
+
+    csr = builder.sign(
+        private_key,
+        cryptography.hazmat.primitives.hashes.SHA256(),
+        cryptography.hazmat.backends.default_backend()
+    )
+
+    return csr

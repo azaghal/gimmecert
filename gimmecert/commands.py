@@ -209,10 +209,17 @@ def usage(stdout, stderr, parser):
     return ExitCode.SUCCESS
 
 
-def client(stdout, stderr, project_directory, entity_name):
+def client(stdout, stderr, project_directory, entity_name, custom_csr_path):
     """
-    Generates a client private key and issues a client certificate
-    using the CA hierarchy initialised within the specified directory.
+    Issues a client certificate using the CA hierarchy initialised
+    within the specified directory.
+
+    If custom CSR path is not passed-in, a private key will be
+    generated and stored.
+
+    If custom CSR is passed-in, no private key will be generated, and
+    the CSR will be stored instead. Only the public key will be used
+    from the CSR - no naming information is taken from it.
 
     :param stdout: Output stream where the informative messages should be written-out.
     :type stdout: io.IOBase
@@ -226,32 +233,61 @@ def client(stdout, stderr, project_directory, entity_name):
     :param entity_name: Name of the client entity. Name will be used in subject DN.
     :type entity_name: str
 
+    :param custom_csr_path: Path to custom certificate signing request to use for issuing client certificate. Set to None or "" to generate private key.
+    :type custom_csr_path: str or None
+
     :returns: Status code, one from gimmecert.commands.ExitCode.
     :rtype: int
     """
 
+    # Set-up paths where we will output artefacts.
     private_key_path = os.path.join(project_directory, '.gimmecert', 'client', '%s.key.pem' % entity_name)
     certificate_path = os.path.join(project_directory, '.gimmecert', 'client', '%s.cert.pem' % entity_name)
+    csr_path = os.path.join(project_directory, '.gimmecert', 'client', '%s.csr.pem' % entity_name)
 
+    # Ensure hierarchy is initialised.
     if not gimmecert.storage.is_initialised(project_directory):
         print("CA hierarchy must be initialised prior to issuing client certificates. Run the gimmecert init command first.", file=stderr)
         return ExitCode.ERROR_NOT_INITIALISED
 
-    if os.path.exists(private_key_path) or os.path.exists(certificate_path):
+    # Ensure artefacts do not exist already.
+    if os.path.exists(private_key_path) or os.path.exists(certificate_path) or os.path.exists(csr_path):
         print("Refusing to overwrite existing data. Certificate has already been issued for client %s." % entity_name, file=stderr)
         return ExitCode.ERROR_CERTIFICATE_ALREADY_ISSUED
 
+    # Grab the issuing CA private key and certificate.
     ca_hierarchy = gimmecert.storage.read_ca_hierarchy(os.path.join(project_directory, '.gimmecert', 'ca'))
     issuer_private_key, issuer_certificate = ca_hierarchy[-1]
-    private_key = gimmecert.crypto.generate_private_key()
-    certificate = gimmecert.crypto.issue_client_certificate(entity_name, private_key.public_key(), issuer_private_key, issuer_certificate)
 
-    gimmecert.storage.write_private_key(private_key, private_key_path)
+    # Either read public key from CSR, or generate a new private key.
+    if custom_csr_path:
+        csr = gimmecert.storage.read_csr(custom_csr_path)
+        public_key = csr.public_key()
+    else:
+        private_key = gimmecert.crypto.generate_private_key()
+        public_key = private_key.public_key()
+
+    # Issue certificate using the passed-in information and
+    # appropriate public key.
+    certificate = gimmecert.crypto.issue_client_certificate(entity_name, public_key, issuer_private_key, issuer_certificate)
+
+    # Output CSR or private key depending on what was provided.
+    if custom_csr_path:
+        gimmecert.storage.write_csr(csr, csr_path)
+    else:
+        gimmecert.storage.write_private_key(private_key, private_key_path)
+
     gimmecert.storage.write_certificate(certificate, certificate_path)
 
-    print("""Client certificate issued.\n
-    Client private key: .gimmecert/client/%s.key.pem\n
-    Client certificate: .gimmecert/client/%s.cert.pem""" % (entity_name, entity_name), file=stdout)
+    # Show user information about generated artefacts.
+    print("Client certificate issued.", file=stdout)
+
+    if custom_csr_path:
+        print("Client CSR: .gimmecert/client/%s.csr.pem" % entity_name, file=stdout)
+    else:
+        print("Client private key: .gimmecert/client/%s.key.pem" % entity_name, file=stdout)
+
+    print("Client certificate: .gimmecert/client/%s.cert.pem" % entity_name, file=stdout)
 
     return ExitCode.SUCCESS
 

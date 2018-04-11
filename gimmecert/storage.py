@@ -194,3 +194,43 @@ def read_certificate(certificate_path):
         )
 
     return certificate
+
+
+def write_csr(csr, path):
+    """
+    Writes the passed-in certificate signing request to designated
+    path in OpenSSL-style PEM format.
+
+    :param certificate: CSR that should be writtent-out.
+    :type certificate: cryptography.x509.CertificateSigningRequest
+
+    :param path: File path where the CSR should be written.
+    :type path: str
+    """
+
+    csr_pem = csr.public_bytes(encoding=cryptography.hazmat.primitives.serialization.Encoding.PEM)
+
+    with open(path, 'wb') as csr_file:
+        csr_file.write(csr_pem)
+
+
+def read_csr(csr_path):
+    """
+    Reads X.509 certificate signing request from the designated file
+    path. The CSR is expected to be provided in OpenSSL-style PEM
+    format.
+
+    :param csr_path: Path to CSR file.
+    :type csr_path: str
+
+    :returns: CSR object read from the specified file.
+    :rtype: cryptography.x509.CertificateSigningRequest
+    """
+
+    with open(csr_path, 'rb') as csr_file:
+        csr = cryptography.x509.load_pem_x509_csr(
+            csr_file.read(),
+            cryptography.hazmat.backends.default_backend()
+        )
+
+    return csr
