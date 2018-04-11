@@ -125,42 +125,54 @@ def server(stdout, stderr, project_directory, entity_name, extra_dns_names, upda
     :rtype: int
     """
 
-    renew_certificate_only = False
-
+    # Set-up some paths for outputting artefacts.
     private_key_path = os.path.join(project_directory, '.gimmecert', 'server', '%s.key.pem' % entity_name)
     certificate_path = os.path.join(project_directory, '.gimmecert', 'server', '%s.cert.pem' % entity_name)
 
+    # Ensure hierarchy is initialised.
     if not gimmecert.storage.is_initialised(project_directory):
         print("CA hierarchy must be initialised prior to issuing server certificates. Run the gimmecert init command first.", file=stderr)
         return ExitCode.ERROR_NOT_INITIALISED
 
-    if not update_dns_names and (os.path.exists(private_key_path) or os.path.exists(certificate_path)):
+    # Ensure artefacts do not exist already, unless update of DNS
+    # names has been requested.
+    if not update_dns_names and (
+            os.path.exists(private_key_path) or
+            os.path.exists(certificate_path)
+    ):
         print("Refusing to overwrite existing data. Certificate has already been issued for server %s." % entity_name, file=stderr)
         return ExitCode.ERROR_CERTIFICATE_ALREADY_ISSUED
 
+    # Read or generate the private key.
     if update_dns_names and os.path.exists(private_key_path):
-        renew_certificate_only = True
+        renew_certificate = True
         private_key = gimmecert.storage.read_private_key(private_key_path)
     else:
+        renew_certificate = False
         private_key = gimmecert.crypto.generate_private_key()
 
+    # Extract the public key.
+    public_key = private_key.public_key()
+
+    # Grab the issuing CA private key and certificate.
     ca_hierarchy = gimmecert.storage.read_ca_hierarchy(os.path.join(project_directory, '.gimmecert', 'ca'))
     issuer_private_key, issuer_certificate = ca_hierarchy[-1]
 
-    certificate = gimmecert.crypto.issue_server_certificate(entity_name, private_key.public_key(), issuer_private_key, issuer_certificate, extra_dns_names)
+    # Issue the certificate.
+    certificate = gimmecert.crypto.issue_server_certificate(entity_name, public_key, issuer_private_key, issuer_certificate, extra_dns_names)
 
     gimmecert.storage.write_private_key(private_key, private_key_path)
     gimmecert.storage.write_certificate(certificate, certificate_path)
 
-    if renew_certificate_only:
-        print("""Server certificate renewed with new DNS subject alternative names.\n
-        Server private key has remained unchanged.\n
-        Server private key: .gimmecert/server/%s.key.pem
-        Server certificate: .gimmecert/server/%s.cert.pem""" % (entity_name, entity_name), file=stdout)
+    # Show user information about generated artefacts.
+    if renew_certificate:
+        print("Server certificate renewed with new DNS subject alternative names.", file=stdout)
+        print("Server private key has remained unchanged.", file=stdout)
     else:
-        print("""Server certificate issued.\n
-        Server private key: .gimmecert/server/%s.key.pem
-        Server certificate: .gimmecert/server/%s.cert.pem""" % (entity_name, entity_name), file=stdout)
+        print("Server certificate issued.", file=stdout)
+
+    print("Server private key: .gimmecert/server/%s.key.pem" % entity_name, file=stdout)
+    print("Server certificate: .gimmecert/server/%s.cert.pem" % entity_name, file=stdout)
 
     return ExitCode.SUCCESS
 
