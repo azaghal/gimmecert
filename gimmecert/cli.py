@@ -114,7 +114,7 @@ def setup_server_subcommand_parser(parser, subparsers):
     def server_wrapper(args):
         project_directory = os.getcwd()
 
-        return server(sys.stdout, sys.stderr, project_directory, args.entity_name, args.dns_name, args.update_dns_names)
+        return server(sys.stdout, sys.stderr, project_directory, args.entity_name, args.dns_name, args.update_dns_names, args.csr)
 
     subparser.set_defaults(func=server_wrapper)
 

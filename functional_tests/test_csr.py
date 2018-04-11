@@ -95,3 +95,45 @@ def test_client_certificate_issuance_by_passing_csr_as_file(tmpdir):
 
     # To his delight, they are identical.
     assert certificate_public_key == public_key
+
+
+def test_server_certificate_issuance_by_passing_csr_as_file(tmpdir):
+    # John is working on a project where he has already generated
+    # server private key.
+    tmpdir.chdir()
+    run_command("openssl", "genrsa", "-out", "myserver1.key.pem", "2048")
+
+    # However, he still needs to have a CA as a trustpoint, so he goes
+    # ahead and initialises Gimmecert for this purpose.
+    run_command("gimmecert", "init")
+
+    # Before issuing the certificate, he goes ahead and generates a
+    # CSR for the server private key
+    run_command("openssl", "req", "-new", "-key", "myserver1.key.pem", "-subj", "/CN=myserver1", "-out", "myserver1.csr.pem")
+
+    # John issues server certificate using CSR.
+    stdout, stderr, exit_code = run_command("gimmecert", "server", "--csr", "myserver1.csr.pem", "myserver1")
+
+    # The operation is successful, and he is presented with
+    # information about generated artefacts.
+    assert exit_code == 0
+    assert stderr == ""
+    assert ".gimmecert/server/myserver1.cert.pem" in stdout
+    assert ".gimmecert/server/myserver1.csr.pem" in stdout
+
+    # John also notices that there is no mention of a private key.
+    assert ".gimmecert/server/myserver1.key.pem" not in stdout
+
+    # John notices that the content of stored CSR is identical to the
+    # one he provided.
+    original_csr = tmpdir.join("myserver1.csr.pem").read()
+    stored_csr = tmpdir.join(".gimmecert", "server", "myserver1.csr.pem").read()
+    assert original_csr == stored_csr
+
+    # John then quickly has a look at the public key associated with
+    # the private key, and public key stored in certificate.
+    public_key, _, _ = run_command("openssl", "rsa", "-pubout", "-in", "myserver1.key.pem")
+    certificate_public_key, _, _ = run_command("openssl", "x509", "-pubkey", "-noout", "-in", ".gimmecert/server/myserver1.cert.pem")
+
+    # To his delight, they are identical.
+    assert certificate_public_key == public_key

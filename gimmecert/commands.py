@@ -98,10 +98,17 @@ def init(stdout, stderr, project_directory, ca_base_name, ca_hierarchy_depth):
     return ExitCode.SUCCESS
 
 
-def server(stdout, stderr, project_directory, entity_name, extra_dns_names, update_dns_names):
+def server(stdout, stderr, project_directory, entity_name, extra_dns_names, update_dns_names, custom_csr_path):
     """
-    Generates a server private key and issues a server certificate
-    using the CA hierarchy initialised within the specified directory.
+    Issues a server certificate using the CA hierarchy initialised
+    within the specified directory.
+
+    If custom CSR path is not passed-in, a private key will be
+    generated and stored.
+
+    If custom CSR is passed-in, no private key will be generated, and
+    the CSR will be stored instead. Only the public key will be used
+    from the CSR - no naming information is taken from it.
 
     :param stdout: Output stream where the informative messages should be written-out.
     :type stdout: io.IOBase
@@ -121,6 +128,9 @@ def server(stdout, stderr, project_directory, entity_name, extra_dns_names, upda
     :param update_dns_names: Whether the certificate should be renewed using the existing private key, but with new DNS subject alternative names.
     :type update: bool
 
+    :param custom_csr_path: Path to custom certificate signing request to use for issuing client certificate. Set to None or "" to generate private key.
+    :type custom_csr_path: str or None
+
     :returns: Status code, one from gimmecert.commands.ExitCode.
     :rtype: int
     """
@@ -128,6 +138,7 @@ def server(stdout, stderr, project_directory, entity_name, extra_dns_names, upda
     # Set-up some paths for outputting artefacts.
     private_key_path = os.path.join(project_directory, '.gimmecert', 'server', '%s.key.pem' % entity_name)
     certificate_path = os.path.join(project_directory, '.gimmecert', 'server', '%s.cert.pem' % entity_name)
+    csr_path = os.path.join(project_directory, '.gimmecert', 'server', '%s.csr.pem' % entity_name)
 
     # Ensure hierarchy is initialised.
     if not gimmecert.storage.is_initialised(project_directory):
@@ -138,21 +149,33 @@ def server(stdout, stderr, project_directory, entity_name, extra_dns_names, upda
     # names has been requested.
     if not update_dns_names and (
             os.path.exists(private_key_path) or
-            os.path.exists(certificate_path)
+            os.path.exists(certificate_path) or
+            os.path.exists(csr_path)
     ):
         print("Refusing to overwrite existing data. Certificate has already been issued for server %s." % entity_name, file=stderr)
         return ExitCode.ERROR_CERTIFICATE_ALREADY_ISSUED
 
-    # Read or generate the private key.
+    # Grab the private key or CSR, and extract public key.
     if update_dns_names and os.path.exists(private_key_path):
         renew_certificate = True
         private_key = gimmecert.storage.read_private_key(private_key_path)
+        public_key = private_key.public_key()
+        csr = None
+    elif update_dns_names and os.path.exists(csr_path):
+        renew_certificate = True
+        csr = gimmecert.storage.read_csr(csr_path)
+        public_key = csr.public_key()
+        private_key = None
+    elif custom_csr_path:
+        renew_certificate = False
+        csr = gimmecert.storage.read_csr(custom_csr_path)
+        public_key = csr.public_key()
+        private_key = None
     else:
         renew_certificate = False
         private_key = gimmecert.crypto.generate_private_key()
-
-    # Extract the public key.
-    public_key = private_key.public_key()
+        public_key = private_key.public_key()
+        csr = None
 
     # Grab the issuing CA private key and certificate.
     ca_hierarchy = gimmecert.storage.read_ca_hierarchy(os.path.join(project_directory, '.gimmecert', 'ca'))
@@ -161,17 +184,30 @@ def server(stdout, stderr, project_directory, entity_name, extra_dns_names, upda
     # Issue the certificate.
     certificate = gimmecert.crypto.issue_server_certificate(entity_name, public_key, issuer_private_key, issuer_certificate, extra_dns_names)
 
-    gimmecert.storage.write_private_key(private_key, private_key_path)
+    # Output CSR or private key depending on what has been passed-in.
+    if csr:
+        gimmecert.storage.write_csr(csr, csr_path)
+    else:
+        gimmecert.storage.write_private_key(private_key, private_key_path)
+
     gimmecert.storage.write_certificate(certificate, certificate_path)
 
     # Show user information about generated artefacts.
     if renew_certificate:
         print("Server certificate renewed with new DNS subject alternative names.", file=stdout)
-        print("Server private key has remained unchanged.", file=stdout)
+
+        if csr:
+            print("Server CSR has remained unchanged.", file=stdout)
+        else:
+            print("Server private key has remained unchanged.", file=stdout)
     else:
         print("Server certificate issued.", file=stdout)
 
-    print("Server private key: .gimmecert/server/%s.key.pem" % entity_name, file=stdout)
+    if csr:
+        print("Server CSR: .gimmecert/server/%s.csr.pem" % entity_name, file=stdout)
+    else:
+        print("Server private key: .gimmecert/server/%s.key.pem" % entity_name, file=stdout)
+
     print("Server certificate: .gimmecert/server/%s.cert.pem" % entity_name, file=stdout)
 
     return ExitCode.SUCCESS

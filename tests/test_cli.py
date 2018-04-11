@@ -377,7 +377,7 @@ def test_server_command_invoked_with_correct_parameters_without_extra_dns_names(
 
     gimmecert.cli.main()
 
-    mock_server.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'myserver', [], False)
+    mock_server.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'myserver', [], False, None)
 
 
 @mock.patch('sys.argv', ['gimmecert', 'server', 'myserver', 'service.local', 'service.example.com'])
@@ -391,7 +391,7 @@ def test_server_command_invoked_with_correct_parameters_with_extra_dns_names(moc
 
     gimmecert.cli.main()
 
-    mock_server.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'myserver', ['service.local', 'service.example.com'], False)
+    mock_server.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'myserver', ['service.local', 'service.example.com'], False, None)
 
 
 @mock.patch('sys.argv', ['gimmecert', 'help'])
@@ -509,7 +509,7 @@ def test_server_command_invoked_with_correct_parameters_with_update_option(mock_
 
     gimmecert.cli.main()
 
-    mock_server.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'myserver', ['service.local'], True)
+    mock_server.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'myserver', ['service.local'], True, None)
 
 
 @mock.patch('sys.argv', ['gimmecert', 'renew'])
