@@ -15,6 +15,7 @@ __pycache__/
 
 # Ignore test artefacts.
 .coverage
+.coverage.*
 coverage/
 .tox/
 
