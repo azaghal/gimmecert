@@ -554,6 +554,7 @@ def test_renew_reports_success_and_paths_to_server_artifacts(tmpdir):
     assert "Renewed certificate for server myserver." in stdout
     assert ".gimmecert/server/myserver.key.pem" in stdout
     assert ".gimmecert/server/myserver.cert.pem" in stdout
+    assert ".gimmecert/server/myserver.csr.pem" not in stdout
     assert stderr == ""
 
 
@@ -575,6 +576,7 @@ def test_renew_reports_success_and_paths_to_client_artifacts(tmpdir):
     assert "Renewed certificate for client myclient." in stdout
     assert ".gimmecert/client/myclient.key.pem" in stdout
     assert ".gimmecert/client/myclient.cert.pem" in stdout
+    assert ".gimmecert/client/myclient.csr.pem" not in stdout
     assert stderr == ""
 
 
@@ -1219,3 +1221,59 @@ def test_server_errors_out_if_certificate_already_issued_with_csr(tmpdir):
     assert stdout == ""
     assert tmpdir.join('.gimmecert', 'server', 'myserver.csr.pem').read() == existing_csr
     assert tmpdir.join('.gimmecert', 'server', 'myserver.cert.pem').read() == certificate
+
+
+def test_renew_reports_success_and_paths_to_server_artifacts_with_csr(tmpdir):
+    depth = 1
+
+    csr_file = tmpdir.join("mycustom.csr.pem")
+
+    stdout_stream = io.StringIO()
+    stderr_stream = io.StringIO()
+
+    private_key = gimmecert.crypto.generate_private_key()
+    csr = gimmecert.crypto.generate_csr("mytest", private_key)
+    gimmecert.storage.write_csr(csr, csr_file.strpath)
+
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
+    gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None, False, csr_file.strpath)
+
+    status_code = gimmecert.commands.renew(stdout_stream, stderr_stream, tmpdir.strpath, 'server', 'myserver', False)
+
+    stdout = stdout_stream.getvalue()
+    stderr = stderr_stream.getvalue()
+
+    assert status_code == gimmecert.commands.ExitCode.SUCCESS
+    assert "Renewed certificate for server myserver." in stdout
+    assert ".gimmecert/server/myserver.csr.pem" in stdout
+    assert ".gimmecert/server/myserver.cert.pem" in stdout
+    assert ".gimmecert/server/myserver.key.pem" not in stdout
+    assert stderr == ""
+
+
+def test_renew_reports_success_and_paths_to_client_artifacts_with_csr(tmpdir):
+    depth = 1
+
+    csr_file = tmpdir.join("mycustom.csr.pem")
+
+    stdout_stream = io.StringIO()
+    stderr_stream = io.StringIO()
+
+    private_key = gimmecert.crypto.generate_private_key()
+    csr = gimmecert.crypto.generate_csr("mytest", private_key)
+    gimmecert.storage.write_csr(csr, csr_file.strpath)
+
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
+    gimmecert.commands.client(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myclient', csr_file.strpath)
+
+    status_code = gimmecert.commands.renew(stdout_stream, stderr_stream, tmpdir.strpath, 'client', 'myclient', False)
+
+    stdout = stdout_stream.getvalue()
+    stderr = stderr_stream.getvalue()
+
+    assert status_code == gimmecert.commands.ExitCode.SUCCESS
+    assert "Renewed certificate for client myclient." in stdout
+    assert ".gimmecert/client/myclient.csr.pem" in stdout
+    assert ".gimmecert/client/myclient.cert.pem" in stdout
+    assert ".gimmecert/client/myclient.key.pem" not in stdout
+    assert stderr == ""

@@ -367,24 +367,33 @@ def renew(stdout, stderr, project_directory, entity_type, entity_name, generate_
     :rtype: int
     """
 
+    # Set-up paths to possible artefacts.
     private_key_path = os.path.join(project_directory, '.gimmecert', entity_type, '%s.key.pem' % entity_name)
+    csr_path = os.path.join(project_directory, '.gimmecert', entity_type, '%s.csr.pem' % entity_name)
     certificate_path = os.path.join(project_directory, '.gimmecert', entity_type, '%s.cert.pem' % entity_name)
 
+    # Ensure the hierarchy has been previously initialised.
     if not gimmecert.storage.is_initialised(project_directory):
         print("No CA hierarchy has been initialised yet. Run the gimmecert init command and issue some certificates first.", file=stderr)
 
         return ExitCode.ERROR_NOT_INITIALISED
 
+    # Ensure certificate has already been issued.
     if not os.path.exists(certificate_path):
         print("Cannot renew certificate. No existing certificate found for %s %s." % (entity_type, entity_name), file=stderr)
 
         return ExitCode.ERROR_UNKNOWN_ENTITY
 
+    # Grab the signing CA private key and certificate.
     ca_hierarchy = gimmecert.storage.read_ca_hierarchy(os.path.join(project_directory, '.gimmecert', 'ca'))
     issuer_private_key, issuer_certificate = ca_hierarchy[-1]
 
+    # Information will be extracted from the old certificate.
     old_certificate = gimmecert.storage.read_certificate(certificate_path)
 
+    # Generate new private key and use its public key for new
+    # certificate. Otherwise just reuse existing public key in
+    # certificate.
     if generate_new_private_key:
         private_key = gimmecert.crypto.generate_private_key()
         gimmecert.storage.write_private_key(private_key, private_key_path)
@@ -392,19 +401,36 @@ def renew(stdout, stderr, project_directory, entity_type, entity_name, generate_
     else:
         public_key = old_certificate.public_key()
 
+    # Issue and write out the new certificate.
     certificate = gimmecert.crypto.renew_certificate(old_certificate, public_key, issuer_private_key, issuer_certificate)
-
     gimmecert.storage.write_certificate(certificate, certificate_path)
 
+    # Type of artefacts reported depending on whether the private key
+    # or CSR are present.
     if generate_new_private_key:
         print("Generated new private key and renewed certificate for %s %s." % (entity_type, entity_name), file=stdout)
     else:
         print("Renewed certificate for %s %s.\n" % (entity_type, entity_name), file=stdout)
 
-    print("""{entity_type_titled} private key: .gimmecert/{entity_type}/{entity_name}.key.pem\n
-    {entity_type_titled} certificate: .gimmecert/{entity_type}/{entity_name}.cert.pem""".format(entity_type_titled=entity_type.title(),
-                                                                                                entity_type=entity_type,
-                                                                                                entity_name=entity_name),
+    # Output information about private key or CSR path.
+    if os.path.exists(csr_path):
+        print("{entity_type_titled} CSR: .gimmecert/{entity_type}/{entity_name}.csr.pem"
+              .format(entity_type_titled=entity_type.title(),
+                      entity_type=entity_type,
+                      entity_name=entity_name),
+              file=stdout)
+    elif os.path.exists(private_key_path):
+        print("{entity_type_titled} private key: .gimmecert/{entity_type}/{entity_name}.key.pem"
+              .format(entity_type_titled=entity_type.title(),
+                      entity_type=entity_type,
+                      entity_name=entity_name),
+              file=stdout)
+
+    # Output information about generate certificate.
+    print("{entity_type_titled} certificate: .gimmecert/{entity_type}/{entity_name}.cert.pem".
+          format(entity_type_titled=entity_type.title(),
+                 entity_type=entity_type,
+                 entity_name=entity_name),
           file=stdout)
 
     return ExitCode.SUCCESS

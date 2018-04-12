@@ -137,3 +137,77 @@ def test_server_certificate_issuance_by_passing_csr_as_file(tmpdir):
 
     # To his delight, they are identical.
     assert certificate_public_key == public_key
+
+
+def test_renew_certificate_originally_issued_with_csr(tmpdir):
+    # In one of his past projects, John has initialised CA hierarchy
+    # and issued server and client certificate using CSR.
+    tmpdir.chdir()
+
+    run_command("openssl", "req", "-new", "-newkey", "rsa:2048", "-nodes", "-keyout", "myserver.key.pem",
+                "-subj", "/CN=myserver", "-out", "mycustomserver.csr.pem")
+    run_command("openssl", "req", "-new", "-newkey", "rsa:2048", "-nodes", "-keyout", "myclient.key.pem",
+                "-subj", "/CN=myclient", "-out", "mycustomclient.csr.pem")
+
+    run_command("gimmecert", "init")
+    run_command("gimmecert", "server", "--csr", "mycustomserver.csr.pem", "myserver")
+    run_command("gimmecert", "client", "--csr", "mycustomclient.csr.pem", "myclient")
+
+    # After a while John comes back to the project and has a look at
+    # generated artefacts.
+    server_old_stored_csr = tmpdir.join(".gimmecert", "server", "myserver.csr.pem").read()
+    server_old_certificate = tmpdir.join(".gimmecert", "server", "myserver.cert.pem").read()
+
+    client_old_stored_csr = tmpdir.join(".gimmecert", "client", "myclient.csr.pem").read()
+    client_old_certificate = tmpdir.join(".gimmecert", "client", "myclient.cert.pem").read()
+
+    # He decides to renew the certificates to update their
+    # validity. First he runs renewal for the server certificate.
+    stdout, stderr, exit_code = run_command("gimmecert", "renew", "server", "myserver")
+
+    # No errors are shown, and John is informed about generated
+    # artefacts. He notices that there is not mention of private key.
+    assert exit_code == 0
+    assert stderr == ""
+    assert "Renewed certificate for server myserver." in stdout
+    assert ".gimmecert/server/myserver.csr.pem" in stdout
+    assert ".gimmecert/server/myserver.cert.pem" in stdout
+    assert ".gimmecert/server/myserver.key.pem" not in stdout
+
+    # John has a look at generated artefacts.
+    server_new_stored_csr = tmpdir.join(".gimmecert", "server", "myserver.csr.pem").read()
+    server_new_certificate = tmpdir.join(".gimmecert", "server", "myserver.cert.pem").read()
+    server_csr_public_key, _, _ = run_command("openssl", "req", "-noout", "-pubkey", "-in", ".gimmecert/server/myserver.csr.pem")
+    server_certificate_public_key, _, _ = run_command("openssl", "x509", "-noout", "-pubkey", "-in", ".gimmecert/server/myserver.cert.pem")
+
+    # John notices that the reported CSR has remained unchanged, that
+    # the certificate seems to have been updated, and that the public
+    # key is the same in CSR and certificate.
+    assert server_new_stored_csr == server_old_stored_csr
+    assert server_new_certificate != server_old_certificate
+    assert server_csr_public_key == server_certificate_public_key
+
+    # John renews the client certificate.
+    stdout, stderr, exit_code = run_command("gimmecert", "renew", "client", "myclient")
+
+    # No errors are shown, and John is informed about generated
+    # artefacts. He notices that there is not mention of private key.
+    assert exit_code == 0
+    assert stderr == ""
+    assert "Renewed certificate for client myclient." in stdout
+    assert ".gimmecert/client/myclient.csr.pem" in stdout
+    assert ".gimmecert/client/myclient.cert.pem" in stdout
+    assert ".gimmecert/client/myclient.key.pem" not in stdout
+
+    # John has a look at generated artefacts.
+    client_new_stored_csr = tmpdir.join(".gimmecert", "client", "myclient.csr.pem").read()
+    client_new_certificate = tmpdir.join(".gimmecert", "client", "myclient.cert.pem").read()
+    client_csr_public_key, _, _ = run_command("openssl", "req", "-noout", "-pubkey", "-in", ".gimmecert/client/myclient.csr.pem")
+    client_certificate_public_key, _, _ = run_command("openssl", "x509", "-noout", "-pubkey", "-in", ".gimmecert/client/myclient.cert.pem")
+
+    # John notices that the reported CSR has remained unchanged, that
+    # the certificate seems to have been updated, and that the public
+    # key is the same in CSR and certificate.
+    assert client_new_stored_csr == client_old_stored_csr
+    assert client_new_certificate != client_old_certificate
+    assert client_csr_public_key == client_certificate_public_key
