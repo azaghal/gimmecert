@@ -340,7 +340,7 @@ def client(stdout, stderr, project_directory, entity_name, custom_csr_path):
     return ExitCode.SUCCESS
 
 
-def renew(stdout, stderr, project_directory, entity_type, entity_name, generate_new_private_key):
+def renew(stdout, stderr, project_directory, entity_type, entity_name, generate_new_private_key, custom_csr_path):
     """
     Renews existing certificate, while optionally generating a new
     private key in the process. Naming and extensions are preserved.
@@ -362,6 +362,9 @@ def renew(stdout, stderr, project_directory, entity_type, entity_name, generate_
 
     :param generate_new_private_key: Specify if a new private key should be generated, or an existing one should be used instead.
     :type generate_new_private_key: bool
+
+    :param custom_csr_path: Path to custom certificate signing request to use for issuing client certificate. Set to None or "" to generate private key.
+    :type custom_csr_path: str or None
 
     :returns: Status code, one from gimmecert.commands.ExitCode.
     :rtype: int
@@ -398,6 +401,10 @@ def renew(stdout, stderr, project_directory, entity_type, entity_name, generate_
         private_key = gimmecert.crypto.generate_private_key()
         gimmecert.storage.write_private_key(private_key, private_key_path)
         public_key = private_key.public_key()
+    elif custom_csr_path:
+        csr = gimmecert.storage.read_csr(custom_csr_path)
+        gimmecert.storage.write_csr(csr, csr_path)
+        public_key = csr.public_key()
     else:
         public_key = old_certificate.public_key()
 
@@ -405,12 +412,22 @@ def renew(stdout, stderr, project_directory, entity_type, entity_name, generate_
     certificate = gimmecert.crypto.renew_certificate(old_certificate, public_key, issuer_private_key, issuer_certificate)
     gimmecert.storage.write_certificate(certificate, certificate_path)
 
+    # Replace private key with CSR.
+    if custom_csr_path and os.path.exists(private_key_path):
+        os.remove(private_key_path)
+        private_key_replaced_with_csr = True
+    else:
+        private_key_replaced_with_csr = False
+
     # Type of artefacts reported depending on whether the private key
     # or CSR are present.
     if generate_new_private_key:
         print("Generated new private key and renewed certificate for %s %s." % (entity_type, entity_name), file=stdout)
     else:
         print("Renewed certificate for %s %s.\n" % (entity_type, entity_name), file=stdout)
+
+    if private_key_replaced_with_csr:
+        print("Private key used for issuance of previous certificate has been removed, and replaced with the passed-in CSR.", file=stdout)
 
     # Output information about private key or CSR path.
     if os.path.exists(csr_path):

@@ -535,7 +535,7 @@ def test_renew_command_invoked_with_correct_parameters_for_server(mock_renew, tm
 
     gimmecert.cli.main()
 
-    mock_renew.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'server', 'myserver', False)
+    mock_renew.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'server', 'myserver', False, None)
 
 
 @mock.patch('sys.argv', ['gimmecert', 'renew', 'client', 'myclient'])
@@ -549,7 +549,7 @@ def test_renew_command_invoked_with_correct_parameters_for_client(mock_renew, tm
 
     gimmecert.cli.main()
 
-    mock_renew.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'client', 'myclient', False)
+    mock_renew.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'client', 'myclient', False, None)
 
 
 @mock.patch('sys.argv', ['gimmecert', 'renew', '--new-private-key', 'server', 'myserver'])
@@ -563,7 +563,7 @@ def test_renew_command_invoked_with_correct_parameters_for_server_with_new_priva
 
     gimmecert.cli.main()
 
-    mock_renew.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'server', 'myserver', True)
+    mock_renew.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'server', 'myserver', True, None)
 
 
 @mock.patch('sys.argv', ['gimmecert', 'renew', '--new-private-key', 'client', 'myclient'])
@@ -577,7 +577,35 @@ def test_renew_command_invoked_with_correct_parameters_for_client_with_new_priva
 
     gimmecert.cli.main()
 
-    mock_renew.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'client', 'myclient', True)
+    mock_renew.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'client', 'myclient', True, None)
+
+
+@mock.patch('sys.argv', ['gimmecert', 'renew', '--csr', 'mycustom.csr.pem', 'server', 'myserver'])
+@mock.patch('gimmecert.cli.renew')
+def test_renew_command_invoked_with_correct_parameters_for_server_with_csr_option(mock_renew, tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
+    mock_renew.return_value = gimmecert.commands.ExitCode.SUCCESS
+
+    gimmecert.cli.main()
+
+    mock_renew.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'server', 'myserver', False, 'mycustom.csr.pem')
+
+
+@mock.patch('sys.argv', ['gimmecert', 'renew', '--csr', 'mycustom.csr.pem', 'client', 'myclient'])
+@mock.patch('gimmecert.cli.renew')
+def test_renew_command_invoked_with_correct_parameters_for_client_with_csr_option(mock_renew, tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
+    mock_renew.return_value = gimmecert.commands.ExitCode.SUCCESS
+
+    gimmecert.cli.main()
+
+    mock_renew.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'client', 'myclient', False, 'mycustom.csr.pem')
 
 
 @mock.patch('sys.argv', ['gimmecert', 'status'])
