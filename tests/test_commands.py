@@ -1314,6 +1314,7 @@ def test_renew_replaces_server_private_key_with_csr(tmpdir):
 
     custom_csr_file = tmpdir.join("mycustom.csr.pem")
     csr_file = tmpdir.join(".gimmecert", "server", "myserver.csr.pem")
+    certificate_file = tmpdir.join(".gimmecert", "server", "myserver.cert.pem")
     private_key_file = tmpdir.join(".gimmecert", "server", "myserver.key.pem")
 
     custom_csr_private_key = gimmecert.crypto.generate_private_key()
@@ -1332,8 +1333,14 @@ def test_renew_replaces_server_private_key_with_csr(tmpdir):
 
     csr_file_content = csr_file.read()
 
+    csr = gimmecert.storage.read_csr(csr_file.strpath)
+    csr_public_numbers = csr.public_key().public_numbers()
+    certificate = gimmecert.storage.read_certificate(certificate_file.strpath)
+    certificate_public_numbers = certificate.public_key().public_numbers()
+
     assert csr_file_content == custom_csr_file_content
     assert not private_key_file.check()
+    assert certificate_public_numbers == csr_public_numbers
 
 
 def test_renew_raises_exception_if_both_new_private_key_generation_and_csr_are_passed_in(tmpdir):
@@ -1352,3 +1359,63 @@ def test_renew_raises_exception_if_both_new_private_key_generation_and_csr_are_p
 
     print(e_info.value)
     assert str(e_info.value) == "Only one of the following two parameters should be specified: generate_new_private_key, custom_csr_path."
+
+
+def test_renew_reports_success_and_paths_to_server_artifacts_with_private_key_when_replacing_csr(tmpdir):
+    depth = 1
+
+    custom_csr_file = tmpdir.join("mycustom.csr.pem")
+
+    stdout_stream = io.StringIO()
+    stderr_stream = io.StringIO()
+
+    custom_private_key = gimmecert.crypto.generate_private_key()
+    custom_csr = gimmecert.crypto.generate_csr("mytest", custom_private_key)
+    gimmecert.storage.write_csr(custom_csr, custom_csr_file.strpath)
+
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
+    gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None, False, custom_csr_file.strpath)
+
+    status_code = gimmecert.commands.renew(stdout_stream, stderr_stream, tmpdir.strpath, 'server', 'myserver', True, None)
+
+    stdout = stdout_stream.getvalue()
+    stderr = stderr_stream.getvalue()
+
+    assert status_code == gimmecert.commands.ExitCode.SUCCESS
+    assert "Generated new private key and renewed certificate for server myserver." in stdout
+    assert "removed" in stdout
+    assert "generated" in stdout
+    assert ".gimmecert/server/myserver.key.pem" in stdout
+    assert ".gimmecert/server/myserver.cert.pem" in stdout
+    assert ".gimmecert/server/myserver.csr.pem" not in stdout
+    assert stderr == ""
+
+
+def test_renew_replaces_server_csr_with_private_key(tmpdir):
+    depth = 1
+
+    custom_csr_file = tmpdir.join("mycustom.csr.pem")
+    csr_file = tmpdir.join(".gimmecert", "server", "myserver.csr.pem")
+    certificate_file = tmpdir.join(".gimmecert", "server", "myserver.cert.pem")
+    private_key_file = tmpdir.join(".gimmecert", "server", "myserver.key.pem")
+
+    custom_csr_private_key = gimmecert.crypto.generate_private_key()
+    custom_csr = gimmecert.crypto.generate_csr("mycustom", custom_csr_private_key)
+    gimmecert.storage.write_csr(custom_csr, custom_csr_file.strpath)
+
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
+    gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None, False, custom_csr_file.strpath)
+
+    assert csr_file.check(file=1)
+
+    gimmecert.commands.renew(io.StringIO(), io.StringIO(), tmpdir.strpath, 'server', 'myserver', True, None)
+
+    assert private_key_file.check(file=1)
+
+    private_key = gimmecert.storage.read_private_key(private_key_file.strpath)
+    private_key_public_numbers = private_key.public_key().public_numbers()
+    certificate = gimmecert.storage.read_certificate(certificate_file.strpath)
+    certificate_public_numbers = certificate.public_key().public_numbers()
+
+    assert not csr_file.check()
+    assert certificate_public_numbers == private_key_public_numbers

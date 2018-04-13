@@ -430,6 +430,13 @@ def renew(stdout, stderr, project_directory, entity_type, entity_name, generate_
     else:
         private_key_replaced_with_csr = False
 
+    # Replace CSR with private key.
+    if generate_new_private_key and os.path.exists(csr_path):
+        os.remove(csr_path)
+        csr_replaced_with_private_key = True
+    else:
+        csr_replaced_with_private_key = False
+
     # Type of artefacts reported depending on whether the private key
     # or CSR are present.
     if generate_new_private_key:
@@ -439,6 +446,9 @@ def renew(stdout, stderr, project_directory, entity_type, entity_name, generate_
 
     if private_key_replaced_with_csr:
         print("Private key used for issuance of previous certificate has been removed, and replaced with the passed-in CSR.", file=stdout)
+
+    if csr_replaced_with_private_key:
+        print("CSR used for issuance of previous certificate has been removed, and a private key has been generated in its place.", file=stdout)
 
     # Output information about private key or CSR path.
     if os.path.exists(csr_path):
