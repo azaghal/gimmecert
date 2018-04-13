@@ -1334,3 +1334,21 @@ def test_renew_replaces_server_private_key_with_csr(tmpdir):
 
     assert csr_file_content == custom_csr_file_content
     assert not private_key_file.check()
+
+
+def test_renew_raises_exception_if_both_new_private_key_generation_and_csr_are_passed_in(tmpdir):
+    depth = 1
+
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
+
+    custom_csr_file = tmpdir.join("mycustom.csr.pem")
+
+    custom_csr_private_key = gimmecert.crypto.generate_private_key()
+    custom_csr = gimmecert.crypto.generate_csr("mycustom", custom_csr_private_key)
+    gimmecert.storage.write_csr(custom_csr, custom_csr_file.strpath)
+
+    with pytest.raises(gimmecert.commands.InvalidCommandInvocation) as e_info:
+        gimmecert.commands.renew(io.StringIO(), io.StringIO(), tmpdir.strpath, 'server', 'myserver', True, custom_csr_file.strpath)
+
+    print(e_info.value)
+    assert str(e_info.value) == "Only one of the following two parameters should be specified: generate_new_private_key, custom_csr_path."

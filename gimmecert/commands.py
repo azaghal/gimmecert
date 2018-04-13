@@ -38,6 +38,13 @@ class ExitCode:
     ERROR_UNKNOWN_ENTITY = 13
 
 
+class InvalidCommandInvocation(Exception):
+    """
+    Exception thrown if command is invoked with invalid arguments.
+    """
+    pass
+
+
 def init(stdout, stderr, project_directory, ca_base_name, ca_hierarchy_depth):
     """
     Initialises the necessary directory and CA hierarchies for use in
@@ -360,15 +367,19 @@ def renew(stdout, stderr, project_directory, entity_type, entity_name, generate_
     :param entity_name: Name of entity. Name should refer to entity for which a certificate has already been issued.
     :type entity_name: str
 
-    :param generate_new_private_key: Specify if a new private key should be generated, or an existing one should be used instead.
+    :param generate_new_private_key: Specify if a new private key should be generated. Cannot be used together with custom_csr_path.
     :type generate_new_private_key: bool
 
-    :param custom_csr_path: Path to custom certificate signing request to use for issuing client certificate. Set to None or "" to generate private key.
+    :param custom_csr_path: Path to custom CSR for issuing client certificate. Cannot be used together with generate_new_private_key.
     :type custom_csr_path: str or None
 
     :returns: Status code, one from gimmecert.commands.ExitCode.
     :rtype: int
     """
+
+    # Ensure we are not called with conflicting request.
+    if generate_new_private_key and custom_csr_path:
+        raise InvalidCommandInvocation("Only one of the following two parameters should be specified: generate_new_private_key, custom_csr_path.")
 
     # Set-up paths to possible artefacts.
     private_key_path = os.path.join(project_directory, '.gimmecert', entity_type, '%s.key.pem' % entity_name)
