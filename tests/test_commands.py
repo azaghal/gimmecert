@@ -149,6 +149,66 @@ def test_server_reports_error_if_directory_is_not_initialised(tmpdir):
     assert status_code == gimmecert.commands.ExitCode.ERROR_NOT_INITIALISED
 
 
+def test_server_reports_error_with_update_dns_and_csr_options_and_private_key_with_certificate_already_exists(sample_project_directory, key_with_csr):
+    entity_name = "server-with-privkey-1"
+
+    private_key_file = sample_project_directory.join(".gimmecert", "server", "%s.key.pem" % entity_name)
+    csr_file = sample_project_directory.join(".gimmecert", "server", "%s.csr.pem" % entity_name)
+    certificate_file = sample_project_directory.join(".gimmecert", "server", "%s.cert.pem" % entity_name)
+
+    existing_private_key = private_key_file.read()
+    existing_certificate = certificate_file.read()
+
+    stdout_stream = io.StringIO()
+    stderr_stream = io.StringIO()
+
+    status_code = gimmecert.commands.server(stdout_stream, stderr_stream, sample_project_directory.strpath, entity_name, None, True, key_with_csr.csr_path)
+
+    stdout = stdout_stream.getvalue()
+    stderr = stderr_stream.getvalue()
+
+    new_private_key = private_key_file.read()
+    new_certificate = certificate_file.read()
+
+    assert status_code == gimmecert.commands.ExitCode.ERROR_CERTIFICATE_ALREADY_ISSUED
+    assert stdout == ""
+    assert "already been issued" in stderr
+    assert entity_name in stderr
+    assert not csr_file.check()
+    assert new_private_key == existing_private_key
+    assert new_certificate == existing_certificate
+
+
+def test_server_reports_error_with_update_dns_and_csr_options_and_csr_with_certificate_already_exists(sample_project_directory, key_with_csr):
+    entity_name = "server-with-csr-1"
+
+    private_key_file = sample_project_directory.join(".gimmecert", "server", "%s.key.pem" % entity_name)
+    csr_file = sample_project_directory.join(".gimmecert", "server", "%s.csr.pem" % entity_name)
+    certificate_file = sample_project_directory.join(".gimmecert", "server", "%s.cert.pem" % entity_name)
+
+    existing_csr = csr_file.read()
+    existing_certificate = certificate_file.read()
+
+    stdout_stream = io.StringIO()
+    stderr_stream = io.StringIO()
+
+    status_code = gimmecert.commands.server(stdout_stream, stderr_stream, sample_project_directory.strpath, entity_name, None, True, key_with_csr.csr_path)
+
+    stdout = stdout_stream.getvalue()
+    stderr = stderr_stream.getvalue()
+
+    new_csr = csr_file.read()
+    new_certificate = certificate_file.read()
+
+    assert status_code == gimmecert.commands.ExitCode.ERROR_CERTIFICATE_ALREADY_ISSUED
+    assert stdout == ""
+    assert "already been issued" in stderr
+    assert entity_name in stderr
+    assert not private_key_file.check()
+    assert new_csr == existing_csr
+    assert new_certificate == existing_certificate
+
+
 @pytest.mark.parametrize(
     "entity_name, update_dns_names, custom_csr_path, strings_expected_in_output, strings_not_expected_in_output",
     [
@@ -179,12 +239,6 @@ def test_server_reports_error_if_directory_is_not_initialised(tmpdir):
          ["renewed with new DNS subject alternative names", "CSR has remained unchanged",
           ".gimmecert/server/server-with-csr-1.cert.pem", ".gimmecert/server/server-with-csr-1.csr.pem"],
          [".gimmecert/server/server-with-csr-1.key.pem"]),
-
-        # New server certificate, DNS update, replace existing private key with CSR. @TODO: This should really error-out.
-        ("server-with-privkey-1", True, "custom_csr/mycustom.csr.pem",
-         ["certificate renewed", "private key has remained unchanged",
-          ".gimmecert/server/server-with-privkey-1.key.pem", ".gimmecert/server/server-with-privkey-1.cert.pem"],
-         [".gimmecert/server/server-with-privkey-1.csr.pem"]),
     ]
 )
 def test_server_reports_success_and_outputs_correct_information(sample_project_directory, key_with_csr,

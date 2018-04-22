@@ -153,8 +153,9 @@ def server(stdout, stderr, project_directory, entity_name, extra_dns_names, upda
         return ExitCode.ERROR_NOT_INITIALISED
 
     # Ensure artefacts do not exist already, unless update of DNS
-    # names has been requested.
-    if not update_dns_names and (
+    # names has been requested and custom CSR path has not been
+    # passed-in.
+    if (not update_dns_names or custom_csr_path) and (
             os.path.exists(private_key_path) or
             os.path.exists(certificate_path) or
             os.path.exists(csr_path)
