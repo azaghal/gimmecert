@@ -323,7 +323,11 @@ def client(stdout, stderr, project_directory, entity_name, custom_csr_path):
     issuer_private_key, issuer_certificate = ca_hierarchy[-1]
 
     # Either read public key from CSR, or generate a new private key.
-    if custom_csr_path:
+    if custom_csr_path == "-":
+        csr_pem = gimmecert.utils.read_input(sys.stdin, stderr, "Please enter the CSR")
+        csr = gimmecert.utils.csr_from_pem(csr_pem)
+        public_key = csr.public_key()
+    elif custom_csr_path:
         csr = gimmecert.storage.read_csr(custom_csr_path)
         public_key = csr.public_key()
     else:

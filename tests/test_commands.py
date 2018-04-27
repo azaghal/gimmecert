@@ -1498,3 +1498,32 @@ def test_server_reads_csr_from_stdin(mock_read_input, sample_project_directory, 
     assert stored_csr_public_numbers == custom_csr_public_numbers
     assert certificate_public_numbers == custom_csr_public_numbers
     assert certificate.subject != key_with_csr.csr.subject
+
+
+@mock.patch('gimmecert.utils.read_input')
+def test_client_reads_csr_from_stdin(mock_read_input, sample_project_directory, key_with_csr):
+    entity_name = 'myclient'
+    stored_csr_file = sample_project_directory.join('.gimmecert', 'client', '%s.csr.pem' % entity_name)
+    certificate_file = sample_project_directory.join('.gimmecert', 'client', '%s.cert.pem' % entity_name)
+
+    # Mock our util for reading input from user.
+    mock_read_input.return_value = key_with_csr.csr_pem
+
+    stdout_stream = io.StringIO()
+    stderr_stream = io.StringIO()
+
+    status_code = gimmecert.commands.client(stdout_stream, stderr_stream, sample_project_directory.strpath, entity_name, '-')
+    assert status_code == 0
+
+    # Read stored/generated artefacts.
+    stored_csr = gimmecert.storage.read_csr(stored_csr_file.strpath)
+    certificate = gimmecert.storage.read_certificate(certificate_file.strpath)
+
+    custom_csr_public_numbers = key_with_csr.csr.public_key().public_numbers()
+    stored_csr_public_numbers = stored_csr.public_key().public_numbers()
+    certificate_public_numbers = certificate.public_key().public_numbers()
+
+    mock_read_input.assert_called_once_with(sys.stdin, stderr_stream, "Please enter the CSR")
+    assert stored_csr_public_numbers == custom_csr_public_numbers
+    assert certificate_public_numbers == custom_csr_public_numbers
+    assert certificate.subject != key_with_csr.csr.subject

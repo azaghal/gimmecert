@@ -473,3 +473,64 @@ def test_server_command_accepts_csr_from_stdin(tmpdir):
 
     # To his delight, they are identical.
     assert certificate_public_key == public_key
+
+
+def test_client_command_accepts_csr_from_stdin(tmpdir):
+    # John is working on a project where he has already generated
+    # client private key.
+    tmpdir.chdir()
+    run_command("openssl", "genrsa", "-out", "myclient1.key.pem", "2048")
+
+    # However, he still needs to have a CA as a trustpoint, so he goes
+    # ahead and initialises Gimmecert for this purpose.
+    run_command("gimmecert", "init")
+
+    # Before issuing the certificate, he generates a CSR for the
+    # client private key.
+    custom_csr, _, exit_code = run_command("openssl", "req", "-new", "-key", "myclient1.key.pem", "-subj", "/CN=myclient1")
+
+    # John realises that although the CSR generation was successful, he
+    # forgot to output it to a file.
+    assert exit_code == 0
+    assert "BEGIN CERTIFICATE REQUEST" in custom_csr
+    assert "END CERTIFICATE REQUEST" in custom_csr
+
+    # He could output the CSR into a file, and feed that into
+    # Gimmecert, but he feels a bit lazy. Instead, John tries to pass
+    # in a dash ("-") as input, knowing that it is commonly used as
+    # shorthand for reading from standard input.
+    prompt_failure, output, exit_code = run_interactive_command([], "gimmecert", "client", "--csr", "-", "myclient1")
+
+    # John sees that the application has prompted him to provide the
+    # CSR interactively, and that it waits for his input.
+    assert exit_code is None, "Output was: %s" % output
+    assert prompt_failure == "Command got stuck waiting for input.", "Output was: %s" % output
+    assert "Please enter the CSR (finish with Ctrl-D on an empty line):" in output
+
+    # John reruns the command, this time passing-in the CSR and ending
+    # the input with Ctrl-D.
+    prompt_failure, output, exit_code = run_interactive_command([('Please enter the CSR \(finish with Ctrl-D on an empty line\):', custom_csr + '\n\004')],
+                                                                "gimmecert", "client", "--csr", "-", "myclient1")
+
+    # The operation is successful, and he is presented with
+    # information about generated artefacts.
+    assert prompt_failure is None
+    assert exit_code == 0
+    assert ".gimmecert/client/myclient1.cert.pem" in output
+    assert ".gimmecert/client/myclient1.csr.pem" in output
+
+    # John also notices that there is no mention of a private key.
+    assert ".gimmecert/client/myclient1.key.pem" not in output
+
+    # John notices that the content of stored CSR is identical to the
+    # one he provided.
+    stored_csr = tmpdir.join(".gimmecert", "client", "myclient1.csr.pem").read()
+    assert custom_csr == stored_csr
+
+    # John then quickly has a look at the public key associated with
+    # the private key, and public key stored in certificate.
+    public_key, _, _ = run_command("openssl", "rsa", "-pubout", "-in", "myclient1.key.pem")
+    certificate_public_key, _, _ = run_command("openssl", "x509", "-pubkey", "-noout", "-in", ".gimmecert/client/myclient1.cert.pem")
+
+    # To his delight, they are identical.
+    assert certificate_public_key == public_key
