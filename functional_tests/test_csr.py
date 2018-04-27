@@ -534,3 +534,124 @@ def test_client_command_accepts_csr_from_stdin(tmpdir):
 
     # To his delight, they are identical.
     assert certificate_public_key == public_key
+
+
+def test_renew_command_accepts_csr_from_stdin(tmpdir):
+    # John has an existing project where he has generated a server and
+    # client private key with corresponding CSR.
+    tmpdir.chdir()
+    server_csr, _, server_csr_exit_code = run_command("openssl", "req", "-new", "-newkey", "rsa:2048", "-nodes", "-keyout", "myserver.key.pem",
+                                                      "-subj", "/CN=myserver")
+    client_csr, _, client_csr_exit_code = run_command("openssl", "req", "-new", "-newkey", "rsa:2048", "-nodes", "-keyout", "myclient.key.pem",
+                                                      "-subj", "/CN=myclient")
+
+    # John realises that although the CSR generation was successful, he
+    # forgot to output them to a file.
+    assert server_csr_exit_code == 0
+    assert "BEGIN CERTIFICATE REQUEST" in server_csr
+    assert "END CERTIFICATE REQUEST" in server_csr
+
+    assert client_csr_exit_code == 0
+    assert "BEGIN CERTIFICATE REQUEST" in client_csr
+    assert "END CERTIFICATE REQUEST" in client_csr
+
+    # He could output the CSR into a file, and feed that into
+    # Gimmecert, but he feels a bit lazy. Instead, John tries to pass
+    # in a dash ("-") as input, knowing that it is commonly used as
+    # shorthand for reading from standard input.
+
+    # He goes ahead and initalises the CA hierarchy first.
+    tmpdir.chdir()
+    run_command("gimmecert", "init")
+
+    # He proceeds to issue a server and client certificate.
+    run_command("gimmecert", "server", "myserver")
+    run_command("gimmecert", "client", "myclient")
+
+    # Very quickly John realises that he has mistakenly forgotten to
+    # pass-in the relevant CSRs, and that Gimmecert has generated
+    # private keys locally and issued certificates for them.
+    assert tmpdir.join('.gimmecert', 'server', 'myserver.key.pem').check(file=1)
+    assert not tmpdir.join('.gimmecert', 'server', 'myserver.csr.pem').check(file=1)
+    assert tmpdir.join('.gimmecert', 'client', 'myclient.key.pem').check(file=1)
+    assert not tmpdir.join('.gimmecert', 'client', 'myclient.csr.pem').check(file=1)
+
+    # He has a look at the public key from the generated CSRs (that he
+    # originally wanted to use).
+    tmpfile = tmpdir.join('tempfile')
+
+    tmpfile.write(server_csr)
+    server_csr_public_key, _, _ = run_command("openssl", "req", "-noout", "-pubkey", "-in", tmpfile.strpath)
+
+    tmpfile.write(client_csr)
+    client_csr_public_key, _, _ = run_command("openssl", "req", "-noout", "-pubkey", "-in", tmpfile.strpath)
+
+    # The renew command can accept a CSR to replace existing artifact
+    # used for original issuance. He could output the CSRs into a
+    # file, and feed that into Gimmecert, but he feels a bit
+    # lazy. Instead, John tries to pass in a dash ("-") as input to
+    # the renew command, knowing that it is commonly used as shorthand
+    # for reading from standard input.
+    renew_server_prompt_failure, renew_server_output, renew_server_exit_code = run_interactive_command(
+        [],
+        "gimmecert", "renew", "--csr", "-", "server", "myserver"
+    )
+    renew_client_prompt_failure, renew_client_output, renew_client_exit_code = run_interactive_command(
+        [], "gimmecert", "renew", "--csr", "-", "client", "myclient"
+    )
+
+    # John sees that the application has prompted him to provide the
+    # CSR interactively for both server and client certificate
+    # renewal, and that it waits for his input.
+    assert renew_server_exit_code is None, "Output was: %s" % renew_server_output
+    assert renew_server_prompt_failure == "Command got stuck waiting for input.", "Output was: %s" % renew_server_output
+    assert "Please enter the CSR (finish with Ctrl-D on an empty line):" in renew_server_output
+
+    assert renew_server_exit_code is None, "Output was: %s" % renew_client_output
+    assert renew_client_prompt_failure == "Command got stuck waiting for input.", "Output was: %s" % renew_client_output
+    assert "Please enter the CSR (finish with Ctrl-D on an empty line):" in renew_client_output
+
+    # John reruns renewal commands, this time passing-in the CSR and
+    # ending the input with Ctrl-D.
+    renew_server_prompt_failure, renew_server_output, renew_server_exit_code = run_interactive_command(
+        [('Please enter the CSR \(finish with Ctrl-D on an empty line\):', server_csr + '\n\004')],
+        "gimmecert", "renew", "--csr", "-", "server", "myserver"
+    )
+
+    renew_client_prompt_failure, renew_client_output, renew_client_exit_code = run_interactive_command(
+        [('Please enter the CSR \(finish with Ctrl-D on an empty line\):', client_csr + '\n\004')],
+        "gimmecert", "renew", "--csr", "-", "client", "myclient"
+    )
+
+    # The operation is successful, and he is presented with
+    # information about generated artefacts.
+    assert renew_server_prompt_failure is None
+    assert renew_server_exit_code == 0
+    assert ".gimmecert/server/myserver.cert.pem" in renew_server_output
+    assert ".gimmecert/server/myserver.csr.pem" in renew_server_output
+
+    assert renew_client_prompt_failure is None
+    assert renew_client_exit_code == 0
+    assert ".gimmecert/client/myclient.cert.pem" in renew_client_output
+    assert ".gimmecert/client/myclient.csr.pem" in renew_client_output
+
+    # John also notices that there is no mention of a private key.
+    assert ".gimmecert/server/myserver.key.pem" not in renew_server_output
+    assert ".gimmecert/client/myclient.key.pem" not in renew_client_output
+
+    # John notices that the content of stored CSRs is identical to the
+    # ones he provided.
+    server_stored_csr = tmpdir.join(".gimmecert", "server", "myserver.csr.pem").read()
+    assert server_stored_csr == server_csr
+
+    client_stored_csr = tmpdir.join(".gimmecert", "client", "myclient.csr.pem").read()
+    assert client_stored_csr == client_csr
+
+    # John then quickly has a look at the public key from passed-in
+    # CSR and compares it to the one stored in certificate.
+    server_certificate_public_key, _, _ = run_command("openssl", "x509", "-pubkey", "-noout", "-in", ".gimmecert/server/myserver.cert.pem")
+    client_certificate_public_key, _, _ = run_command("openssl", "x509", "-pubkey", "-noout", "-in", ".gimmecert/client/myclient.cert.pem")
+
+    # To his delight, they are identical.
+    assert server_certificate_public_key == server_csr_public_key
+    assert client_certificate_public_key == client_csr_public_key

@@ -149,8 +149,8 @@ def setup_renew_subcommand_parser(parser, subparsers):
     new_private_key_or_csr_group.add_argument('--new-private-key', '-p', action='store_true', help='''Generate new private key for renewal. \
     Default is to keep the existing key. Mutually exclusive with the --csr option.''')
     new_private_key_or_csr_group.add_argument('--csr', '-c', type=str, default=None, help='''Do not use local private key and public key information from \
-    existing certificate, and use the passed-in certificate signing request (CSR) instead. If private key exists, it will be removed. \
-    Mutually exclusive with the --new-private-key option.''')
+    existing certificate, and use the passed-in certificate signing request (CSR) instead. Use dash (-) to read from standard input. \
+    If private key exists, it will be removed. Mutually exclusive with the --new-private-key option.''')
 
     def renew_wrapper(args):
         project_directory = os.getcwd()

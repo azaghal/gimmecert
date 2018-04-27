@@ -88,8 +88,10 @@ def run_interactive_command(prompt_answers, command, *args):
     # Spawn the process, use dedicated stream for capturin command
     # stdout/stderr.
     output_stream = io.StringIO()
+    send_stream = io.StringIO()
     process = pexpect.spawnu(command, [*args], timeout=2)
     process.logfile_read = output_stream
+    process.logfile_send = send_stream
 
     # Try to feed the interactive process with answers. Stop iteration
     # at first prompt that was not reached.

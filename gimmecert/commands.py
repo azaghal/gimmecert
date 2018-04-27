@@ -424,6 +424,11 @@ def renew(stdout, stderr, project_directory, entity_type, entity_name, generate_
         private_key = gimmecert.crypto.generate_private_key()
         gimmecert.storage.write_private_key(private_key, private_key_path)
         public_key = private_key.public_key()
+    elif custom_csr_path == '-':
+        csr_pem = gimmecert.utils.read_input(sys.stdin, stderr, "Please enter the CSR")
+        csr = gimmecert.utils.csr_from_pem(csr_pem)
+        gimmecert.storage.write_csr(csr, csr_path)
+        public_key = csr.public_key()
     elif custom_csr_path:
         csr = gimmecert.storage.read_csr(custom_csr_path)
         gimmecert.storage.write_csr(csr, csr_path)
