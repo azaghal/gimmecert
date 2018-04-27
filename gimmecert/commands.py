@@ -563,6 +563,8 @@ def status(stdout, stderr, project_directory):
     if certificate_files:
         for certificate_file in certificate_files:
             certificate = gimmecert.storage.read_certificate(os.path.join(project_directory, '.gimmecert', 'server', certificate_file))
+            private_key_path = os.path.join(project_directory, '.gimmecert', 'server', certificate_file.replace('.cert.pem', '.key.pem'))
+            csr_path = os.path.join(project_directory, '.gimmecert', 'server', certificate_file.replace('.cert.pem', '.csr.pem'))
 
             # Separator.
             print("", file=stdout)
@@ -579,7 +581,12 @@ def status(stdout, stderr, project_directory):
                                                                             certificate.not_valid_after),
                                           validity_status), file=stdout)
             print("    DNS: %s" % ", ".join(gimmecert.utils.get_dns_names(certificate)), file=stdout)
-            print("    Private key: .gimmecert/server/%s" % certificate_file.replace('.cert.pem', '.key.pem'), file=stdout)
+
+            if os.path.exists(private_key_path):
+                print("    Private key: .gimmecert/server/%s" % certificate_file.replace('.cert.pem', '.key.pem'), file=stdout)
+            elif os.path.exists(csr_path):
+                print("    CSR: .gimmecert/server/%s" % certificate_file.replace('.cert.pem', '.csr.pem'), file=stdout)
+
             print("    Certificate: .gimmecert/server/%s" % certificate_file, file=stdout)
     else:
         # Separator.
@@ -596,6 +603,8 @@ def status(stdout, stderr, project_directory):
     if certificate_files:
         for certificate_file in certificate_files:
             certificate = gimmecert.storage.read_certificate(os.path.join(project_directory, '.gimmecert', 'client', certificate_file))
+            private_key_path = os.path.join(project_directory, '.gimmecert', 'client', certificate_file.replace('.cert.pem', '.key.pem'))
+            csr_path = os.path.join(project_directory, '.gimmecert', 'client', certificate_file.replace('.cert.pem', '.csr.pem'))
 
             # Separator.
             print("", file=stdout)
@@ -611,7 +620,12 @@ def status(stdout, stderr, project_directory):
             print("    Validity: %s%s" % (gimmecert.utils.date_range_to_str(certificate.not_valid_before,
                                                                             certificate.not_valid_after),
                                           validity_status), file=stdout)
-            print("    Private key: .gimmecert/client/%s" % certificate_file.replace('.cert.pem', '.key.pem'), file=stdout)
+
+            if os.path.exists(private_key_path):
+                print("    Private key: .gimmecert/client/%s" % certificate_file.replace('.cert.pem', '.key.pem'), file=stdout)
+            elif os.path.exists(csr_path):
+                print("    CSR: .gimmecert/client/%s" % certificate_file.replace('.cert.pem', '.csr.pem'), file=stdout)
+
             print("    Certificate: .gimmecert/client/%s" % certificate_file, file=stdout)
     else:
         # Separator.

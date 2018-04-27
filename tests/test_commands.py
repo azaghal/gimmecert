@@ -861,6 +861,11 @@ def test_status_reports_server_certificate_information(tmpdir):
     stdout_stream = io.StringIO()
     stderr_stream = io.StringIO()
 
+    myserver3_csr_file = tmpdir.join('server3.csr.pem')
+    myserver3_private_key = gimmecert.crypto.generate_private_key()
+    myserver3_csr = gimmecert.crypto.generate_csr('blah', myserver3_private_key)
+    gimmecert.storage.write_csr(myserver3_csr, myserver3_csr_file.strpath)
+
     with freeze_time('2018-01-01 00:15:00'):
         gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
 
@@ -869,6 +874,9 @@ def test_status_reports_server_certificate_information(tmpdir):
 
     with freeze_time('2018-03-01 00:15:00'):
         gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver2', ['myservice1.example.com', 'myservice2.example.com'], False, None)
+
+    with freeze_time('2018-04-01 00:15:00'):
+        gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver3', None, False, myserver3_csr_file.strpath)
 
     status_code = gimmecert.commands.status(stdout_stream, stderr_stream, tmpdir.strpath)
 
@@ -883,6 +891,7 @@ def test_status_reports_server_certificate_information(tmpdir):
 
     index_myserver1 = stdout_lines.index("CN=myserver1")  # Should not raise
     index_myserver2 = stdout_lines.index("CN=myserver2")  # Should not raise
+    index_myserver3 = stdout_lines.index("CN=myserver3")  # Should not raise
 
     myserver1_validity = stdout_lines[index_myserver1 + 1]
     myserver1_dns = stdout_lines[index_myserver1 + 2]
@@ -894,6 +903,11 @@ def test_status_reports_server_certificate_information(tmpdir):
     myserver2_private_key_path = stdout_lines[index_myserver2 + 3]
     myserver2_certificate_path = stdout_lines[index_myserver2 + 4]
 
+    myserver3_validity = stdout_lines[index_myserver3 + 1]
+    myserver3_dns = stdout_lines[index_myserver3 + 2]
+    myserver3_csr_path = stdout_lines[index_myserver3 + 3]
+    myserver3_certificate_path = stdout_lines[index_myserver3 + 4]
+
     assert myserver1_validity == "    Validity: 2018-02-01 00:00:00 UTC - 2019-01-01 00:15:00 UTC"
     assert myserver1_dns == "    DNS: myserver1"
     assert myserver1_private_key_path == "    Private key: .gimmecert/server/myserver1.key.pem"
@@ -904,12 +918,22 @@ def test_status_reports_server_certificate_information(tmpdir):
     assert myserver2_private_key_path == "    Private key: .gimmecert/server/myserver2.key.pem"
     assert myserver2_certificate_path == "    Certificate: .gimmecert/server/myserver2.cert.pem"
 
+    assert myserver3_validity == "    Validity: 2018-04-01 00:00:00 UTC - 2019-01-01 00:15:00 UTC"
+    assert myserver3_dns == "    DNS: myserver3"
+    assert myserver3_csr_path == "    CSR: .gimmecert/server/myserver3.csr.pem"
+    assert myserver3_certificate_path == "    Certificate: .gimmecert/server/myserver3.cert.pem"
+
 
 def test_status_reports_client_certificate_information(tmpdir):
     depth = 3
 
     stdout_stream = io.StringIO()
     stderr_stream = io.StringIO()
+
+    myclient3_csr_file = tmpdir.join('client3.csr.pem')
+    myclient3_private_key = gimmecert.crypto.generate_private_key()
+    myclient3_csr = gimmecert.crypto.generate_csr('blah', myclient3_private_key)
+    gimmecert.storage.write_csr(myclient3_csr, myclient3_csr_file.strpath)
 
     with freeze_time('2018-01-01 00:15:00'):
         gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
@@ -919,6 +943,9 @@ def test_status_reports_client_certificate_information(tmpdir):
 
     with freeze_time('2018-03-01 00:15:00'):
         gimmecert.commands.client(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myclient2', None)
+
+    with freeze_time('2018-04-01 00:15:00'):
+        gimmecert.commands.client(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myclient3', myclient3_csr_file.strpath)
 
     status_code = gimmecert.commands.status(stdout_stream, stderr_stream, tmpdir.strpath)
 
@@ -933,6 +960,7 @@ def test_status_reports_client_certificate_information(tmpdir):
 
     index_myclient1 = stdout_lines.index("CN=myclient1")  # Should not raise
     index_myclient2 = stdout_lines.index("CN=myclient2")  # Should not raise
+    index_myclient3 = stdout_lines.index("CN=myclient3")  # Should not raise
 
     myclient1_validity = stdout_lines[index_myclient1 + 1]
     myclient1_private_key_path = stdout_lines[index_myclient1 + 2]
@@ -942,6 +970,10 @@ def test_status_reports_client_certificate_information(tmpdir):
     myclient2_private_key_path = stdout_lines[index_myclient2 + 2]
     myclient2_certificate_path = stdout_lines[index_myclient2 + 3]
 
+    myclient3_validity = stdout_lines[index_myclient3 + 1]
+    myclient3_csr_path = stdout_lines[index_myclient3 + 2]
+    myclient3_certificate_path = stdout_lines[index_myclient3 + 3]
+
     assert myclient1_validity == "    Validity: 2018-02-01 00:00:00 UTC - 2019-01-01 00:15:00 UTC"
     assert myclient1_private_key_path == "    Private key: .gimmecert/client/myclient1.key.pem"
     assert myclient1_certificate_path == "    Certificate: .gimmecert/client/myclient1.cert.pem"
@@ -949,6 +981,10 @@ def test_status_reports_client_certificate_information(tmpdir):
     assert myclient2_validity == "    Validity: 2018-03-01 00:00:00 UTC - 2019-01-01 00:15:00 UTC"
     assert myclient2_private_key_path == "    Private key: .gimmecert/client/myclient2.key.pem"
     assert myclient2_certificate_path == "    Certificate: .gimmecert/client/myclient2.cert.pem"
+
+    assert myclient3_validity == "    Validity: 2018-04-01 00:00:00 UTC - 2019-01-01 00:15:00 UTC"
+    assert myclient3_csr_path == "    CSR: .gimmecert/client/myclient3.csr.pem"
+    assert myclient3_certificate_path == "    Certificate: .gimmecert/client/myclient3.cert.pem"
 
 
 def test_status_reports_no_server_certificates_were_issued(tmpdir):

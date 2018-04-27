@@ -73,13 +73,20 @@ def test_status_on_initialised_directory(tmpdir):
     # certificates have been already issued in one of the projects he
     # had initialised before.
     tmpdir.chdir()
+
     run_command('gimmecert', 'init', '-d', '3', '-b', 'My Project')
 
     run_command('gimmecert', 'server', 'myserver1')
     run_command('gimmecert', 'server', 'myserver2', 'myservice.example.com', 'myotherservice.example.com')
+    run_command("openssl", "req", "-new", "-newkey", "rsa:2048", "-nodes", "-keyout", "myserver3.key.pem",
+                "-subj", "/CN=myserver3", "-out", "myserver3.csr.pem")
+    run_command('gimmecert', 'server', '--csr', 'myserver3.csr.pem', 'myserver3')
 
     run_command('gimmecert', 'client', 'myclient1')
     run_command('gimmecert', 'client', 'myclient2')
+    run_command("openssl", "req", "-new", "-newkey", "rsa:2048", "-nodes", "-keyout", "myclient3.key.pem",
+                "-subj", "/CN=myclient3", "-out", "myclient3.csr.pem")
+    run_command('gimmecert', 'client', '--csr', 'myclient3.csr.pem', 'myclient3')
 
     # John switches to project directory.
     tmpdir.chdir()
@@ -131,6 +138,7 @@ def test_status_on_initialised_directory(tmpdir):
     # each server is followed by paths to private key and certificate.
     index_myserver1 = stdout_lines.index("CN=myserver1")  # Should not raise
     index_myserver2 = stdout_lines.index("CN=myserver2")  # Should not raise
+    index_myserver3 = stdout_lines.index("CN=myserver3")  # Should not raise
 
     assert stdout_lines[index_myserver1+1].startswith("    Validity: ")
     assert stdout_lines[index_myserver1+2] == "    DNS: myserver1"
@@ -142,11 +150,17 @@ def test_status_on_initialised_directory(tmpdir):
     assert stdout_lines[index_myserver2+3] == "    Private key: .gimmecert/server/myserver2.key.pem"
     assert stdout_lines[index_myserver2+4] == "    Certificate: .gimmecert/server/myserver2.cert.pem"
 
+    assert stdout_lines[index_myserver3+1].startswith("    Validity: ")
+    assert stdout_lines[index_myserver3+2] == "    DNS: myserver3"
+    assert stdout_lines[index_myserver3+3] == "    CSR: .gimmecert/server/myserver3.csr.pem"
+    assert stdout_lines[index_myserver3+4] == "    Certificate: .gimmecert/server/myserver3.cert.pem"
+
     # For client certificates, John can see that for each certificate
     # he can see its subject DN and validity. Information for each
     # server is followed by paths to private key and certificate.
     index_myclient1 = stdout_lines.index("CN=myclient1")  # Should not raise
     index_myclient2 = stdout_lines.index("CN=myclient2")  # Should not raise
+    index_myclient3 = stdout_lines.index("CN=myclient3")  # Should not raise
 
     assert stdout_lines[index_myclient1+1].startswith("    Validity: ")
     assert stdout_lines[index_myclient1+2] == "    Private key: .gimmecert/client/myclient1.key.pem"
@@ -155,3 +169,7 @@ def test_status_on_initialised_directory(tmpdir):
     assert stdout_lines[index_myclient2+1].startswith("    Validity: ")
     assert stdout_lines[index_myclient2+2] == "    Private key: .gimmecert/client/myclient2.key.pem"
     assert stdout_lines[index_myclient2+3] == "    Certificate: .gimmecert/client/myclient2.cert.pem"
+
+    assert stdout_lines[index_myclient3+1].startswith("    Validity: ")
+    assert stdout_lines[index_myclient3+2] == "    CSR: .gimmecert/client/myclient3.csr.pem"
+    assert stdout_lines[index_myclient3+3] == "    Certificate: .gimmecert/client/myclient3.cert.pem"
