@@ -21,11 +21,13 @@
 import argparse
 import io
 import os
+import sys
 
 import gimmecert.commands
 
-from freezegun import freeze_time
 import pytest
+from unittest import mock
+from freezegun import freeze_time
 
 
 def test_init_sets_up_directory_structure(tmpdir):
@@ -1467,3 +1469,32 @@ def test_renew_replaces_server_csr_with_private_key(tmpdir):
 
     assert not csr_file.check()
     assert certificate_public_numbers == private_key_public_numbers
+
+
+@mock.patch('gimmecert.utils.read_input')
+def test_server_reads_csr_from_stdin(mock_read_input, sample_project_directory, key_with_csr):
+    entity_name = 'myserver'
+    stored_csr_file = sample_project_directory.join('.gimmecert', 'server', '%s.csr.pem' % entity_name)
+    certificate_file = sample_project_directory.join('.gimmecert', 'server', '%s.cert.pem' % entity_name)
+
+    # Mock our util for reading input from user.
+    mock_read_input.return_value = key_with_csr.csr_pem
+
+    stdout_stream = io.StringIO()
+    stderr_stream = io.StringIO()
+
+    status_code = gimmecert.commands.server(stdout_stream, stderr_stream, sample_project_directory.strpath, entity_name, None, True, '-')
+    assert status_code == 0
+
+    # Read stored/generated artefacts.
+    stored_csr = gimmecert.storage.read_csr(stored_csr_file.strpath)
+    certificate = gimmecert.storage.read_certificate(certificate_file.strpath)
+
+    custom_csr_public_numbers = key_with_csr.csr.public_key().public_numbers()
+    stored_csr_public_numbers = stored_csr.public_key().public_numbers()
+    certificate_public_numbers = certificate.public_key().public_numbers()
+
+    mock_read_input.assert_called_once_with(sys.stdin, stderr_stream, "Please enter the CSR")
+    assert stored_csr_public_numbers == custom_csr_public_numbers
+    assert certificate_public_numbers == custom_csr_public_numbers
+    assert certificate.subject != key_with_csr.csr.subject

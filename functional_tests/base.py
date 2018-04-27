@@ -19,7 +19,10 @@
 #
 
 
+import io
 import subprocess
+
+import pexpect
 
 
 def run_command(command, *args):
@@ -48,3 +51,70 @@ def run_command(command, *args):
     stdout, stderr = stdout.decode(), stderr.decode()
 
     return stdout, stderr, process.returncode
+
+
+def run_interactive_command(prompt_answers, command, *args):
+    """
+    Helper function that runs the specified command, and takes care of
+    providing answers to interactive prompts.
+
+    This is a convenience wrapper around the pexpect library.
+
+    Unlikes the run_command helper, this helper is not capable of
+    separating the standard output from standard error
+    (unfortunately).
+
+    The failure message returned describes only issues related to
+    command not providing the expected prompt for answer, or if
+    command gets stuck in a prompt after all expected prompts were
+    processed.
+
+    :param prompt_answers: List of prompts and their correspnding answers. To send a control character, start the answer with 'Ctrl-' (for example 'Ctrl-d').
+    :type prompt_answers: list[(str, str)]
+
+    :param command: Command that should be run.
+    :type command: str
+
+    :param *args: Zero or more arguments to pass to the command.
+    :type *args: str
+
+    :returns: (failure, output, exit_code) -- Prompt failure message, combined standard output and error, and exit code (None if prompt failure happened).
+    :rtype: (str or None, str, int)
+    """
+
+    # Assume that all prompts/answers worked as expected.
+    failure = None
+
+    # Spawn the process, use dedicated stream for capturin command
+    # stdout/stderr.
+    output_stream = io.StringIO()
+    process = pexpect.spawnu(command, [*args], timeout=2)
+    process.logfile_read = output_stream
+
+    # Try to feed the interactive process with answers. Stop iteration
+    # at first prompt that was not reached.
+    for prompt, answer in prompt_answers:
+        try:
+            process.expect(prompt)
+            if answer.startswith('Ctrl-'):
+                process.sendcontrol(answer.lstrip('Ctrl-'))
+            else:
+                process.sendline(answer)
+        except pexpect.TIMEOUT:
+            failure = "Command never prompted us with: %s" % prompt
+            process.terminate()
+            break
+
+    # If we were successful until now, wait for the process to exit.
+    if failure is None:
+        try:
+            process.expect(pexpect.EOF)
+        except pexpect.TIMEOUT:
+            failure = "Command got stuck waiting for input."
+            process.terminate()
+
+    process.close()
+    output = output_stream.getvalue()
+    exit_code = process.exitstatus
+
+    return failure, output, exit_code

@@ -111,3 +111,53 @@ def get_dns_names(certificate):
         dns_names = []
 
     return dns_names
+
+
+def read_input(input_stream, prompt_stream, prompt):
+    """
+    Reads input from the passed-in input stream until Ctrl-D sequence
+    is reached, while also providing a meaningful prompt to the user.
+
+    The prompt will be extended with short information telling the
+    user to end input with Ctrl-D.
+
+    :param input_stream: Input stream to read from.
+    :type input_stream: io.IOBase
+
+    :param prompt_stream: Output stream where the prompt should be written-out.
+    :type prompt_stream: io.IOBase
+
+    :param prompt: Prompt message to show to the user.
+    :type prompt: str
+    """
+
+    print("%s (finish with Ctrl-D on an empty line):\n" % prompt, file=prompt_stream)
+
+    user_input = ""
+
+    c = input_stream.read(1)
+    while c != '':
+        user_input += c
+        c = input_stream.read(1)
+
+    return user_input
+
+
+def csr_from_pem(csr_pem):
+    """
+    Converts passed-in CSR in OpenSSL-style PEM format into a CSR
+    object.
+
+    :param csr_pem: CSR in OpenSSL-style PEM format.
+    :type csr_pem: str
+
+    :returns: CSR object.
+    :rtype: cryptography.x509.CertificateSigningRequest
+    """
+
+    csr = cryptography.x509.load_pem_x509_csr(
+        bytes(csr_pem, encoding='utf8'),
+        cryptography.hazmat.backends.default_backend()
+    )
+
+    return csr

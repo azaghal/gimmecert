@@ -20,6 +20,7 @@
 
 import os
 import datetime
+import sys
 
 import gimmecert.crypto
 import gimmecert.storage
@@ -172,6 +173,12 @@ def server(stdout, stderr, project_directory, entity_name, extra_dns_names, upda
     elif update_dns_names and os.path.exists(csr_path):
         renew_certificate = True
         csr = gimmecert.storage.read_csr(csr_path)
+        public_key = csr.public_key()
+        private_key = None
+    elif custom_csr_path == "-":
+        renew_certificate = False
+        csr_pem = gimmecert.utils.read_input(sys.stdin, stderr, "Please enter the CSR")
+        csr = gimmecert.utils.csr_from_pem(csr_pem)
         public_key = csr.public_key()
         private_key = None
     elif custom_csr_path:

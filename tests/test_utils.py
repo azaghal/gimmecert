@@ -20,6 +20,7 @@
 
 
 import datetime
+import io
 
 import cryptography.x509
 import cryptography.hazmat.backends
@@ -102,3 +103,36 @@ def test_get_dns_names_returns_list_of_dns_names():
 
     assert isinstance(dns_names, list)
     assert dns_names == ['myserver', 'myservice1.example.com', 'myservice2.example.com']
+
+
+def test_read_long_input():
+
+    provided_input = """\
+This is my input string that
+spans multiple
+lines.
+"""
+
+    input_stream = io.StringIO()
+    prompt_stream = io.StringIO()
+
+    # End the input with Ctrl-D.
+    input_stream.write(provided_input)
+    input_stream.seek(0)
+
+    returned_input = gimmecert.utils.read_input(input_stream, prompt_stream, "My prompt")
+
+    prompt = prompt_stream.getvalue()
+
+    assert prompt == "My prompt (finish with Ctrl-D on an empty line):\n\n"
+    assert isinstance(returned_input, str)
+    assert returned_input == provided_input
+
+
+def test_csr_from_pem(key_with_csr):
+
+    csr = gimmecert.utils.csr_from_pem(key_with_csr.csr_pem)
+
+    assert isinstance(csr, cryptography.x509.CertificateSigningRequest)
+    assert csr.public_key().public_numbers() == key_with_csr.csr.public_key().public_numbers()
+    assert csr.subject == key_with_csr.csr.subject

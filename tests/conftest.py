@@ -23,6 +23,8 @@ import collections
 import io
 
 import gimmecert
+import gimmecert.crypto
+import gimmecert.storage
 
 import pytest
 

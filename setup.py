@@ -42,6 +42,7 @@ test_requirements = [
     'pytest>=3.4,<3.5',
     'pytest-cov>=2.5,<2.6',
     'tox>=2.9,<2.10',
+    'pexpect>=4.5,<4.6',
 ]
 
 setup_requirements = [

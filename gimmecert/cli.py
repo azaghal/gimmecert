@@ -109,7 +109,7 @@ def setup_server_subcommand_parser(parser, subparsers):
     the private key, but replacing the DNS subject alternative names with listed values (if any). \
     If entity does not exist, this option has no effect, and a new private key/certificate will be generated as usual.''')
     subparser.add_argument('--csr', '-c', type=str, default=None, help='''Do not generate server private key locally, and use the passed-in \
-    certificate signing request (CSR) instead.''')
+    certificate signing request (CSR) instead. Use dash (-) to read from standard input.''')
 
     def server_wrapper(args):
         project_directory = os.getcwd()
