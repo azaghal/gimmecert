@@ -48,8 +48,14 @@ Examples:
     # Issue a TLS server certificate with additional DNS subject alternative names.
     gimmecert server myserver extradns1.local extradns2.example.com
 
+    # Issue a TLS server certificate by using public key from the CSR (naming/extensions are ignored).
+    gimmecert server myserver --csr /tmp/myserver.csr.pem
+
     # Issue a TLS client certificate.
     gimmecert client myclient
+
+    # Issue a TLS client certificate by using public key from the CSR (naming/extensions are ignored).
+    gimmecert client myclient --csr /tmp/myclient.csr.pem
 
     # Renew a TLS server certificate with updated DNS subject alternative names. Keeps the private key if any.
     gimmecert server myserver wrongdns.local
@@ -109,7 +115,7 @@ def setup_server_subcommand_parser(parser, subparsers):
     the private key, but replacing the DNS subject alternative names with listed values (if any). \
     If entity does not exist, this option has no effect, and a new private key/certificate will be generated as usual.''')
     subparser.add_argument('--csr', '-c', type=str, default=None, help='''Do not generate server private key locally, and use the passed-in \
-    certificate signing request (CSR) instead. Use dash (-) to read from standard input.''')
+    certificate signing request (CSR) instead. Use dash (-) to read from standard input. Only the public key is taken from the CSR.''')
 
     def server_wrapper(args):
         project_directory = os.getcwd()
@@ -126,7 +132,7 @@ def setup_client_subcommand_parser(parser, subparsers):
     subparser = subparsers.add_parser('client', description='Issue client certificate.')
     subparser.add_argument('entity_name', help='Name of the client entity.')
     subparser.add_argument('--csr', '-c', type=str, default=None, help='''Do not generate client private key locally, and use the passed-in \
-    certificate signing request (CSR) instead. Use dash (-) to read from standard input.''')
+    certificate signing request (CSR) instead. Use dash (-) to read from standard input. Only the public key is taken from the CSR.''')
 
     def client_wrapper(args):
         project_directory = os.getcwd()
@@ -150,7 +156,7 @@ def setup_renew_subcommand_parser(parser, subparsers):
     Default is to keep the existing key. Mutually exclusive with the --csr option.''')
     new_private_key_or_csr_group.add_argument('--csr', '-c', type=str, default=None, help='''Do not use local private key and public key information from \
     existing certificate, and use the passed-in certificate signing request (CSR) instead. Use dash (-) to read from standard input. \
-    If private key exists, it will be removed. Mutually exclusive with the --new-private-key option.''')
+    If private key exists, it will be removed. Mutually exclusive with the --new-private-key option. Only the public key is taken from the CSR.''')
 
     def renew_wrapper(args):
         project_directory = os.getcwd()

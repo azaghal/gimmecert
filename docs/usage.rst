@@ -92,6 +92,17 @@ This time around, the ``myserver2`` certificate will include
 ``myserver2``, ``myserver2.local``, and ``service.example.com`` as DNS
 subject alternative names.
 
+Issue a server certificate by passing-in certificate signing request
+(CSR) from which the public key should be extracted::
+
+  openssl req -new -newkey rsa:2048 -nodes -keyout "/tmp/myserver3.key.pem" -subj "/CN=ignoredname" -out "/tmp/myserver3.csr.pem"
+  gimmecert server --csr /tmp/myserver3.csr.pem myserver3
+
+This will create the following artifacts for the server:
+
+- ``.gimmecert/server/myserver3.csr.pem`` (CSR)
+- ``.gimmecert/server/myserver3.cert.pem`` (certificate)
+
 Renew existing certificates, keeping the same private key and naming::
 
   gimmecert renew server myserver1
@@ -219,6 +230,26 @@ for this server entity before, though, the option is ignored, and the
 command behaves as if it was not specified (so you still get a private
 key and certificate).
 
+In addition to generating a private key, it is also possible to
+pass-in a certificate signing request (CSR). If specified path is a
+dash (``-``), CSR is read from standard input. The resulting
+certificate will contain public key from the CSR. All other
+information stored in the CSR (naming, extensions) is ignored. For
+example::
+
+  # Issue server certificate by passing-in path to a generated CSR.
+  gimmecert server --csr /tmp/myown.csr.pem myserver
+
+  # Issue server certificate by reading the CSR from standard input.
+  gimmecert server --csr - myserver
+
+  # Issue server certificate by reading the CSR from standard input,
+  # using redirection.
+  gimmecert server --csr - myserver < /tmp/myown.csr.pem
+
+The passed-in CSR will be stored alongside certificate, under
+``.gimmecert/server/NAME.csr.pem``.
+
 
 Issuing client certificates
 ---------------------------
@@ -248,6 +279,26 @@ where ``NAME`` is passed-in via positional argument.
 Key usage and extended key usage in certificate are set typical TLS
 client use (e.g. *digital signature* + *key encipherment* for KU, and
 *TLS WWW client authentication* for EKU).
+
+In addition to generating a private key, it is also possible to
+pass-in a certificate signing request (CSR). If specified path is a
+dash (``-``), CSR is read from standard input. The resulting
+certificate will contain public key from the CSR. All other
+information stored in the CSR (naming, extensions) is ignored. For
+example::
+
+  # Issue client certificate by passing-in path to a generated CSR.
+  gimmecert client --csr /tmp/myown.csr.pem myclient
+
+  # Issue client certificate by reading the CSR from standard input.
+  gimmecert client --csr - myclient
+
+  # Issue client certificate by reading the CSR from standard input,
+  # using redirection.
+  gimmecert client --csr - myclient < /tmp/myown.csr.pem
+
+The passed-in CSR will be stored alongside certificate, under
+``.gimmecert/client/NAME.csr.pem``.
 
 
 Renewing certificates
@@ -279,6 +330,15 @@ To also generate a new private key during renewal, use the
   gimmecert renew --new-private-key server myserver
   gimmecert renew -p server my server
 
+To replace the existing private key or CSR during renewal with a new
+CSR, use the ``--csr`` option and pass along path to the file. If
+specified path is a dash (``-``), CSR is read from standard input. For
+example::
+
+  gimmecert renew --csr /tmp/myserver.csr.pem server myserver
+  gimmecert renew --csr - server myserver < /tmp/myserver.csr.pem
+  gimmecert renew --csr - client myclient
+
 
 Getting information about CA hierarchy and issued certificates
 --------------------------------------------------------------
@@ -294,10 +354,10 @@ The command will:
   validity, certificate paths, whether the CA is used for issuing end
   entity certificates).
 - Show information about all issued server certificates (subject DN,
-  DNS subject alternative names, validity, private key path,
+  DNS subject alternative names, validity, private key or CSR path,
   certificate path).
 - Show information about all issued client certificates (subject DN,
-  validity, private key path, certificate path).
+  validity, private key or CSR path, certificate path).
 
 Validity of all certificates is shown in UTC.
 
