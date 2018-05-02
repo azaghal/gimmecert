@@ -38,12 +38,12 @@ def certificate_to_pem(certificate):
     :type certificate: cryptography.x509.Certificate
 
     :returns: Certificate in OpenSSL-style PEM format.
-    :rtype: bytes
+    :rtype: str
     """
 
     certificate_pem = certificate.public_bytes(encoding=cryptography.hazmat.primitives.serialization.Encoding.PEM)
 
-    return certificate_pem
+    return certificate_pem.decode()
 
 
 def dn_to_str(dn):

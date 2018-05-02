@@ -211,7 +211,7 @@ def test_setup_subcommand_parser_registered(setup_subcommand_parser):
 # command from CLI. See test documentation for more details.
 VALID_CLI_INVOCATIONS = [
     # help, no options
-    ("gimmecert.cli.help", ["gimmecert", "help"]),
+    ("gimmecert.cli.help_", ["gimmecert", "help"]),
 
     # init, no options
     ("gimmecert.cli.init", ["gimmecert", "init"]),

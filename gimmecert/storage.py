@@ -103,11 +103,11 @@ def write_certificate_chain(certificate_chain, path):
     :type path: str
     """
 
-    chain_pem = b"\n".join(
+    chain_pem = "\n".join(
         [gimmecert.utils.certificate_to_pem(certificate) for certificate in certificate_chain]
     )
 
-    with open(path, 'wb') as certificate_chain_file:
+    with open(path, 'w') as certificate_chain_file:
         certificate_chain_file.write(chain_pem)
 
 

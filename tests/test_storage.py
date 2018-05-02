@@ -84,8 +84,8 @@ def test_write_certificate_chain(tmpdir):
     level1_pem, level2_pem, level3_pem = [gimmecert.utils.certificate_to_pem(certificate) for certificate in certificate_chain]
 
     gimmecert.storage.write_certificate_chain(certificate_chain, output_file.strpath)
-    content = output_file.read(mode='rb')
-    expected_content = b"%s\n%s\n%s" % (level1_pem, level2_pem, level3_pem)
+    content = output_file.read(mode='r')
+    expected_content = "%s\n%s\n%s" % (level1_pem, level2_pem, level3_pem)
 
     assert content == expected_content
 
