@@ -149,8 +149,19 @@ def setup_renew_subcommand_parser(parser, subparsers):
     subparser = subparsers.add_parser('renew', description='Renews existing certificates.')
     subparser.add_argument('entity_type', help='Type of entity to renew.', choices=['server', 'client'])
     subparser.add_argument('entity_name', help='Name of the entity')
-    subparser.add_argument('--update-dns-names', '-u', dest="dns_names", default=None, type=str, help='''Replace the DNS subject alternative names \
-    with new values. \
+
+    def csv_list(csv):
+        """
+        Small helper that converts CSV string into a list.
+        """
+
+        if csv:
+            return csv.split(",")
+
+        return []
+
+    subparser.add_argument('--update-dns-names', '-u', dest="dns_names", default=None, type=csv_list,
+                           help='''Replace the DNS subject alternative names with new values. \
     Valid only for server certificate renewals. Multiple DNS names can be passed-in as comma-separated list. \
     Passing-in an empty string will result in all additional DNS subject alternative names being removed. \
     The entity name is kept as DNS subject alternative name in either case.''')

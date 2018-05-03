@@ -1453,7 +1453,7 @@ def test_renew_raises_exception_if_update_dns_names_is_used_for_client_certifica
     with pytest.raises(gimmecert.commands.InvalidCommandInvocation) as e_info:
         gimmecert.commands.renew(io.StringIO(), io.StringIO(), sample_project_directory.strpath,
                                  'client', 'client-with-privkey-1',
-                                 False, None, "myservice.example.com")
+                                 False, None, ["myservice.example.com"])
 
     assert str(e_info.value) == "Updating DNS subject alternative names can be done only for server certificates."
 
@@ -1498,7 +1498,7 @@ def test_renew_reports_success_and_paths_to_artifacts_when_renewing_server_certi
     status_code = gimmecert.commands.renew(stdout_stream, stderr_stream,
                                            sample_project_directory.strpath,
                                            'server', entity_name,
-                                           False, None, "myservice.example.com")
+                                           False, None, ["myservice.example.com"])
 
     stdout = stdout_stream.getvalue()
     stderr = stderr_stream.getvalue()
@@ -1520,7 +1520,9 @@ def test_renew_replaces_dns_names(tmpdir):
     old_certificate = gimmecert.storage.read_certificate(certificate_file.strpath)
     old_subject_alt_name = old_certificate.extensions.get_extension_for_class(cryptography.x509.SubjectAlternativeName).value
 
-    gimmecert.commands.renew(io.StringIO(), io.StringIO(), tmpdir.strpath, 'server', 'myserver', False, None, "myservice1.example.com,myservice2.example.com")
+    gimmecert.commands.renew(io.StringIO(), io.StringIO(), tmpdir.strpath,
+                             'server', 'myserver',
+                             False, None, ["myservice1.example.com", "myservice2.example.com"])
 
     new_certificate_pem = certificate_file.read()
     new_certificate = gimmecert.storage.read_certificate(certificate_file.strpath)
@@ -1544,7 +1546,7 @@ def test_renew_removes_dns_names(tmpdir):
     old_certificate = gimmecert.storage.read_certificate(certificate_file.strpath)
     old_subject_alt_name = old_certificate.extensions.get_extension_for_class(cryptography.x509.SubjectAlternativeName).value
 
-    gimmecert.commands.renew(io.StringIO(), io.StringIO(), tmpdir.strpath, 'server', 'myserver', False, None, "")
+    gimmecert.commands.renew(io.StringIO(), io.StringIO(), tmpdir.strpath, 'server', 'myserver', False, None, [])
 
     new_certificate_pem = certificate_file.read()
     new_certificate = gimmecert.storage.read_certificate(certificate_file.strpath)

@@ -385,9 +385,9 @@ def renew(stdout, stderr, project_directory, entity_type, entity_name, generate_
     :param custom_csr_path: Path to custom CSR for issuing client certificate. Cannot be used together with generate_new_private_key.
     :type custom_csr_path: str or None
 
-    :param dns_names: Comma-separated list of additional DNS names to use as replacement when renewing a server certificate. To remove additional DNS names,
-        set the value to empty string (""). To keep the existing DNS names, set the value to None. Valid only for server certificates.
-    :type dns_names: str or None
+    :param dns_names: List of additional DNS names to use as replacement when renewing a server certificate. To remove additional DNS names,
+        set the value to empty list. To keep the existing DNS names, set the value to None. Valid only for server certificates.
+    :type dns_names: list[str] or None
 
     :returns: Status code, one from gimmecert.commands.ExitCode.
     :rtype: int
@@ -445,12 +445,7 @@ def renew(stdout, stderr, project_directory, entity_type, entity_name, generate_
 
     # Issue and write out the new certificate.
     if entity_type == 'server' and dns_names is not None:
-        if dns_names == "":
-            extra_dns_names = []
-        else:
-            extra_dns_names = dns_names.split(',')
-
-        certificate = gimmecert.crypto.issue_server_certificate(entity_name, public_key, issuer_private_key, issuer_certificate, extra_dns_names)
+        certificate = gimmecert.crypto.issue_server_certificate(entity_name, public_key, issuer_private_key, issuer_certificate, dns_names)
     else:
         certificate = gimmecert.crypto.renew_certificate(old_certificate, public_key, issuer_private_key, issuer_certificate)
     gimmecert.storage.write_certificate(certificate, certificate_path)

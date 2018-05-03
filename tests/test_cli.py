@@ -627,7 +627,7 @@ def test_renew_command_invoked_with_correct_parameters_for_client_with_update_dn
 
     mock_renew.assert_called_once_with(sys.stdout, sys.stderr,
                                        tmpdir.strpath,
-                                       'server', 'myserver', False, None, 'myservice1.example.com,myservice2.example.com')
+                                       'server', 'myserver', False, None, ['myservice1.example.com', 'myservice2.example.com'])
 
 
 @mock.patch('sys.argv', ['gimmecert', 'status'])
