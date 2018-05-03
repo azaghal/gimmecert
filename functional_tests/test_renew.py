@@ -46,7 +46,7 @@ def test_renew_command_available_with_help():
     assert exit_code == 0
     assert stderr == ""
     assert stdout.startswith("usage: gimmecert renew")
-    assert stdout.split('\n')[1].endswith("{server,client} entity_name")  # Second line of help (first is options)
+    assert stdout.split('\n')[2].endswith("{server,client} entity_name")  # Third line of help (first two are options)
 
 
 def test_renew_command_requires_initialised_hierarchy(tmpdir):
@@ -286,3 +286,57 @@ def test_renew_both_certificate_and_private_key(tmpdir):
     # He is happy to see that verification succeeds.
     assert verify_server_error_code == 0
     assert verify_client_error_code == 0
+
+
+def test_renew_update_dns_option(tmpdir):
+    # John is in a bit of a rush to get his project going. Since he
+    # needs a server certificate issued, he goes ahead and quickly
+    # initialises CA and issues a server certificate, with intention
+    # of accessing the service via URL https://myservice.example.com/.
+    tmpdir.chdir()
+    run_command("gimmecert", "init")
+    run_command("gimmecert", "server", "myserver1", "mysercive.example.com")
+
+    # Once he imports the CA certificate into his browser, and tries
+    # to access the service page, he very quickly finds out that he
+    # has misspelled "myservice". Just to be on the safe side, he has
+    # a look at the certificate using the OpenSSL CLI.
+    stdout, stderr, exit_code = run_command('openssl', 'x509', '-noout', '-text', '-in', '.gimmecert/server/myserver1.cert.pem')
+
+    # And indeed, in addition to his server name, he can see that the
+    # extra DNS subject alternative name he provided is wrong.
+    assert "DNS:myserver1," in stdout
+    assert "DNS:mysercive.example.com\n" in stdout
+    assert "DNS:myservice.example.com" not in stdout
+
+    # Since he wants to just replace the certificate, while preserving
+    # the private key, John figures he needs to renew his certificate
+    # somehow, and update the DNS names while doing so. He takes a
+    # quick look at help for the renew command.
+    stdout, stderr, exit_code = run_command("gimmecert", "renew", "-h")
+
+    # He notices there is an option for updating DNS subject
+    # alternative names.
+    assert " --update-dns-names DNS_NAMES" in stdout
+    assert " -u DNS_NAMES\n" in stdout
+
+    # Based on help description, this seems to be exactly what he
+    # needs.He goes ahead and runs the renewal command, specifying
+    # correct DNS subject alternative names.
+    stdout, stderr, exit_code = run_command("gimmecert", "renew", "server", "--update-dns-names", "myservice.example.com", "myserver1")
+
+    # He notices that no error has been reported by the command, and
+    # that he is informed that the certificate has been renewed with
+    # new DNS names, while the private key has been preserved.
+    assert exit_code == 0
+    assert "subject alternative names have been updated" in stdout
+
+    # Being paranoid, he decides to double-check the certificate, just
+    # to be on the safe side. He uses the OpenSSL CLI for this
+    # purpose.
+    stdout, stderr, exit_code = run_command('openssl', 'x509', '-noout', '-text', '-in', '.gimmecert/server/myserver1.cert.pem')
+
+    # He notices that certificate includes the intended naming. He can
+    # finally move ahead with his project.
+    assert "DNS:myserver1," in stdout
+    assert "DNS:myservice.example.com\n" in stdout

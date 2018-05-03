@@ -253,6 +253,12 @@ VALID_CLI_INVOCATIONS = [
     ("gimmecert.cli.renew", ["gimmecert", "renew", "server", "myserver"]),
     ("gimmecert.cli.renew", ["gimmecert", "renew", "client", "myclient"]),
 
+    # renew, server, update dns names long and short option
+    ("gimmecert.cli.renew", ["gimmecert", "renew", "--update-dns-names", "myservice.example.com", "server", "myserver"]),
+    ("gimmecert.cli.renew", ["gimmecert", "renew", "--update-dns-names", "", "server", "myserver"]),
+    ("gimmecert.cli.renew", ["gimmecert", "renew", "-u", "myservice.example.com", "server", "myserver"]),
+    ("gimmecert.cli.renew", ["gimmecert", "renew", "-u", "", "server", "myserver"]),
+
     # renew, generate new private key long and short option
     ("gimmecert.cli.renew", ["gimmecert", "renew", "--new-private-key", "server", "myserver"]),
     ("gimmecert.cli.renew", ["gimmecert", "renew", "--new-private-key", "client", "myclient"]),
@@ -535,7 +541,7 @@ def test_renew_command_invoked_with_correct_parameters_for_server(mock_renew, tm
 
     gimmecert.cli.main()
 
-    mock_renew.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'server', 'myserver', False, None)
+    mock_renew.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'server', 'myserver', False, None, None)
 
 
 @mock.patch('sys.argv', ['gimmecert', 'renew', 'client', 'myclient'])
@@ -549,7 +555,7 @@ def test_renew_command_invoked_with_correct_parameters_for_client(mock_renew, tm
 
     gimmecert.cli.main()
 
-    mock_renew.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'client', 'myclient', False, None)
+    mock_renew.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'client', 'myclient', False, None, None)
 
 
 @mock.patch('sys.argv', ['gimmecert', 'renew', '--new-private-key', 'server', 'myserver'])
@@ -563,7 +569,7 @@ def test_renew_command_invoked_with_correct_parameters_for_server_with_new_priva
 
     gimmecert.cli.main()
 
-    mock_renew.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'server', 'myserver', True, None)
+    mock_renew.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'server', 'myserver', True, None, None)
 
 
 @mock.patch('sys.argv', ['gimmecert', 'renew', '--new-private-key', 'client', 'myclient'])
@@ -577,7 +583,7 @@ def test_renew_command_invoked_with_correct_parameters_for_client_with_new_priva
 
     gimmecert.cli.main()
 
-    mock_renew.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'client', 'myclient', True, None)
+    mock_renew.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'client', 'myclient', True, None, None)
 
 
 @mock.patch('sys.argv', ['gimmecert', 'renew', '--csr', 'mycustom.csr.pem', 'server', 'myserver'])
@@ -591,7 +597,7 @@ def test_renew_command_invoked_with_correct_parameters_for_server_with_csr_optio
 
     gimmecert.cli.main()
 
-    mock_renew.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'server', 'myserver', False, 'mycustom.csr.pem')
+    mock_renew.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'server', 'myserver', False, 'mycustom.csr.pem', None)
 
 
 @mock.patch('sys.argv', ['gimmecert', 'renew', '--csr', 'mycustom.csr.pem', 'client', 'myclient'])
@@ -605,7 +611,23 @@ def test_renew_command_invoked_with_correct_parameters_for_client_with_csr_optio
 
     gimmecert.cli.main()
 
-    mock_renew.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'client', 'myclient', False, 'mycustom.csr.pem')
+    mock_renew.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'client', 'myclient', False, 'mycustom.csr.pem', None)
+
+
+@mock.patch('sys.argv', ['gimmecert', 'renew', '--update-dns-names', 'myservice1.example.com,myservice2.example.com', 'server', 'myserver'])
+@mock.patch('gimmecert.cli.renew')
+def test_renew_command_invoked_with_correct_parameters_for_client_with_update_dns_option(mock_renew, tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
+    mock_renew.return_value = gimmecert.commands.ExitCode.SUCCESS
+
+    gimmecert.cli.main()
+
+    mock_renew.assert_called_once_with(sys.stdout, sys.stderr,
+                                       tmpdir.strpath,
+                                       'server', 'myserver', False, None, 'myservice1.example.com,myservice2.example.com')
 
 
 @mock.patch('sys.argv', ['gimmecert', 'status'])

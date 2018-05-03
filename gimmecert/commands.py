@@ -359,7 +359,7 @@ def client(stdout, stderr, project_directory, entity_name, custom_csr_path):
     return ExitCode.SUCCESS
 
 
-def renew(stdout, stderr, project_directory, entity_type, entity_name, generate_new_private_key, custom_csr_path):
+def renew(stdout, stderr, project_directory, entity_type, entity_name, generate_new_private_key, custom_csr_path, dns_names):
     """
     Renews existing certificate, while optionally generating a new
     private key in the process. Naming and extensions are preserved.
@@ -385,6 +385,10 @@ def renew(stdout, stderr, project_directory, entity_type, entity_name, generate_
     :param custom_csr_path: Path to custom CSR for issuing client certificate. Cannot be used together with generate_new_private_key.
     :type custom_csr_path: str or None
 
+    :param dns_names: Comma-separated list of additional DNS names to use as replacement when renewing a server certificate. To remove additional DNS names,
+        set the value to empty string (""). To keep the existing DNS names, set the value to None. Valid only for server certificates.
+    :type dns_names: str or None
+
     :returns: Status code, one from gimmecert.commands.ExitCode.
     :rtype: int
     """
@@ -392,6 +396,9 @@ def renew(stdout, stderr, project_directory, entity_type, entity_name, generate_
     # Ensure we are not called with conflicting request.
     if generate_new_private_key and custom_csr_path:
         raise InvalidCommandInvocation("Only one of the following two parameters should be specified: generate_new_private_key, custom_csr_path.")
+
+    if dns_names is not None and entity_type != "server":
+        raise InvalidCommandInvocation("Updating DNS subject alternative names can be done only for server certificates.")
 
     # Set-up paths to possible artefacts.
     private_key_path = os.path.join(project_directory, '.gimmecert', entity_type, '%s.key.pem' % entity_name)
@@ -437,7 +444,15 @@ def renew(stdout, stderr, project_directory, entity_type, entity_name, generate_
         public_key = old_certificate.public_key()
 
     # Issue and write out the new certificate.
-    certificate = gimmecert.crypto.renew_certificate(old_certificate, public_key, issuer_private_key, issuer_certificate)
+    if entity_type == 'server' and dns_names is not None:
+        if dns_names == "":
+            extra_dns_names = []
+        else:
+            extra_dns_names = dns_names.split(',')
+
+        certificate = gimmecert.crypto.issue_server_certificate(entity_name, public_key, issuer_private_key, issuer_certificate, extra_dns_names)
+    else:
+        certificate = gimmecert.crypto.renew_certificate(old_certificate, public_key, issuer_private_key, issuer_certificate)
     gimmecert.storage.write_certificate(certificate, certificate_path)
 
     # Replace private key with CSR.
@@ -460,6 +475,9 @@ def renew(stdout, stderr, project_directory, entity_type, entity_name, generate_
         print("Generated new private key and renewed certificate for %s %s." % (entity_type, entity_name), file=stdout)
     else:
         print("Renewed certificate for %s %s.\n" % (entity_type, entity_name), file=stdout)
+
+    if dns_names is not None:
+        print("DNS subject alternative names have been updated.", file=stdout)
 
     if private_key_replaced_with_csr:
         print("Private key used for issuance of previous certificate has been removed, and replaced with the passed-in CSR.", file=stdout)

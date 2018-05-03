@@ -149,6 +149,11 @@ def setup_renew_subcommand_parser(parser, subparsers):
     subparser = subparsers.add_parser('renew', description='Renews existing certificates.')
     subparser.add_argument('entity_type', help='Type of entity to renew.', choices=['server', 'client'])
     subparser.add_argument('entity_name', help='Name of the entity')
+    subparser.add_argument('--update-dns-names', '-u', dest="dns_names", default=None, type=str, help='''Replace the DNS subject alternative names \
+    with new values. \
+    Valid only for server certificate renewals. Multiple DNS names can be passed-in as comma-separated list. \
+    Passing-in an empty string will result in all additional DNS subject alternative names being removed. \
+    The entity name is kept as DNS subject alternative name in either case.''')
 
     new_private_key_or_csr_group = subparser.add_mutually_exclusive_group()
 
@@ -161,7 +166,7 @@ def setup_renew_subcommand_parser(parser, subparsers):
     def renew_wrapper(args):
         project_directory = os.getcwd()
 
-        return renew(sys.stdout, sys.stderr, project_directory, args.entity_type, args.entity_name, args.new_private_key, args.csr)
+        return renew(sys.stdout, sys.stderr, project_directory, args.entity_type, args.entity_name, args.new_private_key, args.csr, args.dns_names)
 
     subparser.set_defaults(func=renew_wrapper)
 
