@@ -147,11 +147,11 @@ def sample_project_directory(tmpdir):
     # Issue a bunch of certificates.
     for i in range(1, per_type_count + 1):
         entity_name = "server-with-privkey-%d" % i
-        gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, entity_name, None, False, None)
+        gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, entity_name, None, None)
 
         entity_name = "server-with-csr-%d" % i
         custom_csr_path = custom_csr_dir.join("server-with-csr-%d.csr.pem" % i).strpath
-        gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, entity_name, None, False, custom_csr_path)
+        gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, entity_name, None, custom_csr_path)
 
         entity_name = "client-with-privkey-%d" % i
         gimmecert.commands.client(io.StringIO(), io.StringIO(), tmpdir.strpath, entity_name, None)
