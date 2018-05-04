@@ -57,16 +57,16 @@ Examples:
     # Issue a TLS client certificate by using public key from the CSR (naming/extensions are ignored).
     gimmecert client myclient --csr /tmp/myclient.csr.pem
 
-    # Renew a TLS server certificate with updated DNS subject alternative names. Keeps the private key if any.
-    gimmecert server myserver wrongdns.local
-    gimmecert server --update-dns-names myserver correctdns1.local correctdns2.local
-
-    # Renew a TLS server certificate removing extra DNS subject alternative names. Keeps the private key if any.
-    gimmecert server myserver dontneedthisname.local
-    gimmecert server myserver --update-dns-names
-
     # Renew a TLS server certificate, preserving naming and private key.
     gimmecert renew server myserver
+
+    # Renew a TLS server certificate, replacing the extra DNS names, but keeping the private key.
+    gimmecert server myserver wrongdns.local
+    gimmecert renew server myserver --update-dns-names "correctdns1.local,correctdns2.local"
+
+    # Renew a TLS server certificate, removing extra DNS subject alternative names, but keeping the private key.
+    gimmecert server myserver dontneedthisname.local
+    gimmecert renew server myserver --update-dns-names ""
 
     # Renew a TLS client certificate, preserving naming and private key.
     gimmecert renew client myclient
