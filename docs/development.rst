@@ -151,3 +151,65 @@ To build documentation, run::
 
 Resulting documentation will be stored in HTML format in directory
 ``docs/_build/html/``.
+
+
+Versioning schema
+-----------------
+
+Project employs `semantic versioning <http://semver.org/>`_ schema. In
+ short:
+
+- Each version is composed of major, minor, and patch number. For example, in
+  version ``1.2.3``, ``1`` is the major, ``2`` is the minor, and ``3`` is the
+  patch number.
+- Major number is bumped when making a backwards incompatible change.
+- Minor number is bumped when new features or changes are made without
+  breaking backwards compatibility.
+- Patch number is bumped when backporting bug or security fixes into
+  an older release.
+
+In addition to versioning schema, project employs a specific
+nomenclature for naming the branches:
+
+- All new development (both for features and bug/security fixes) uses
+  master branch as the base.
+- Features and bug/security fixes are implemented in a local branch
+  based on the master branch. Local branches are named after the
+  lower-cased issue number. For example, if the issuer number is
+  ``GC-43``, the implementation branch will be named
+  ``gc-43``. Normally these branches are only local, but if necessary
+  they can be pushed to central repository for collaboration or
+  preview purposes.
+- Patch releases are based off the maintenance branches. Mainteance
+  branches are named after the ``MAJOR`` and ``MINOR`` number of the
+  version - ``MAJOR.MINOR``. For example, if a new release is made
+  with version ``1.2.0``, the corresponding branch that is created for
+  maintenance will be named ``1.2`` (notice the absence of ``.0`` at
+  the end).
+
+
+Backporting fixes
+-----------------
+
+From time to time it might become useful to apply a bug/security fix
+to both the master branch, and to maintenace branch.
+
+When a bug should be applied to maintenance branch as well, procedure
+is as follows:
+
+1. Create a new bug report in `issue tracker
+   <https://projects.majic.rs/gimmecert>`_. Target version should be
+   either the next minor or next major release (i.e. whatver will get
+   released from the master branch).
+
+2. Create a copy of the bug report, modifying the issue title to include phrase
+   ``(backport to MAJOR.MINOR)`` at the end, with ``MAJOR`` and ``MINOR``
+   replaced with correct versioning information for the maintenance
+   branch. Make sure to set correct target version (patch release).
+
+3. Resolve the bug for next major/minor release.
+
+4. Resolve the bug in maintenace branch by backporting (cherry-picking
+   if possible) the fix into maintenace branch. Make sure to resign
+   (cherry-picking invalidates OpenPGP signature) and reword (to
+   reference the backport issue) the commit.
