@@ -213,3 +213,60 @@ is as follows:
    if possible) the fix into maintenace branch. Make sure to resign
    (cherry-picking invalidates OpenPGP signature) and reword (to
    reference the backport issue) the commit.
+
+
+Release notes
+-------------
+
+Release notes are written in parallel to resolving project issues, in
+the ``docs/releasenotes.rst`` file. In other words, any time a new
+feature, bug fix etc is implemented, an entry should be created in the
+relase notes file. This applies for tasks and user stories as well.
+
+By ensuring the release notes are always up-to-date, the release
+process is simpler, faster, and less error prone.
+
+Release notes are always added under section title **NEXT
+RELEASE**. This placeholder section title is replaced during the
+release process.
+
+Release notes for each version consist out of two parts - the general
+release description, and listing of resolved issues.
+
+General description provides a high-level overview of new
+functionality and fixes included in the release, and points to any
+important/breaking changes.
+
+The listing of resolved issues is split-up based on issue type, and
+lists all issues that have been resolved in the given release. Each
+issue in the list is provied as URL link pointing to issue URL in the
+issue tracker, with the link text in format ``ISSUE_NUMBER:
+ISSUE_TITLE``. Both issue number and issue title are taken from the
+issue tracker.
+
+To provide a more visual example, template for single release note is
+as follows::
+
+  NEXT RELEASE
+  ------------
+
+  [General description of release.]
+
+  Resolved issues:
+
+  - **User stories**:
+
+    - `ISSUER_NUMBER: ISSUE_TITLE <ISSUE_URL>`_
+    - `ISSUER_NUMBER: ISSUE_TITLE <ISSUE_URL>`_
+  - **Feature requests**:
+
+    - `ISSUER_NUMBER: ISSUE_TITLE <ISSUE_URL>`_
+    - `ISSUER_NUMBER: ISSUE_TITLE <ISSUE_URL>`_
+  - **Enhancements**:
+
+    - `ISSUER_NUMBER: ISSUE_TITLE <ISSUE_URL>`_
+    - `ISSUER_NUMBER: ISSUE_TITLE <ISSUE_URL>`_
+  - **Tasks**:
+
+    - `ISSUER_NUMBER: ISSUE_TITLE <ISSUE_URL>`_
+    - `ISSUER_NUMBER: ISSUE_TITLE <ISSUE_URL>`_
