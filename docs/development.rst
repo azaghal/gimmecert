@@ -157,7 +157,7 @@ Versioning schema
 -----------------
 
 Project employs `semantic versioning <http://semver.org/>`_ schema. In
- short:
+short:
 
 - Each version is composed of major, minor, and patch number. For example, in
   version ``1.2.3``, ``1`` is the major, ``2`` is the minor, and ``3`` is the
@@ -182,10 +182,10 @@ nomenclature for naming the branches:
   preview purposes.
 - Patch releases are based off the maintenance branches. Mainteance
   branches are named after the ``MAJOR`` and ``MINOR`` number of the
-  version - ``MAJOR.MINOR``. For example, if a new release is made
-  with version ``1.2.0``, the corresponding branch that is created for
-  maintenance will be named ``1.2`` (notice the absence of ``.0`` at
-  the end).
+  version - ``maintenance/MAJOR.MINOR``. For example, if a new release
+  is made with version ``1.2.0``, the corresponding branch that is
+  created for maintenance will be named ``maintenance/1.2`` (notice the absence of
+  ``.0`` at the end).
 
 
 Backporting fixes
