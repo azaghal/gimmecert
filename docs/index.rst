@@ -26,6 +26,7 @@ Contents
    installation
    usage
    development
+   releasenotes
 
 
 Indices and tables
