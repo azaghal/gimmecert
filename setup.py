@@ -45,11 +45,15 @@ test_requirements = [
     'pexpect>=4.5,<4.6',
 ]
 
+release_requirements = [
+    'twine',
+]
+
 setup_requirements = [
     'pytest-runner>=4.0,<4.1',
 ]
 
-development_requirements = doc_requirements + test_requirements + test_lint_requirements
+development_requirements = doc_requirements + test_requirements + test_lint_requirements + release_requirements
 
 extras_requirements = {
     'devel': development_requirements,
@@ -63,7 +67,7 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setup(
     name='gimmecert',
-    version='0.0-dev',
+    version='0.0.0',
     packages=find_packages(),
     include_package_data=True,
     license='GPLv3+',
