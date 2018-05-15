@@ -270,3 +270,81 @@ as follows::
 
     - `ISSUER_NUMBER: ISSUE_TITLE <ISSUE_URL>`_
     - `ISSUER_NUMBER: ISSUE_TITLE <ISSUE_URL>`_
+
+
+Release process
+---------------
+
+The release process for Gimmecert is centered around the use of
+included ``release.sh`` script. The script takes care of a number of
+tedious tasks, including:
+
+- Updating the version information in release notes and ``setup.py``.
+- Tagging a release.
+- Starting a new section in release notes.
+- Switching version back to development in ``setup.py``.
+- Publishing changes to origin Git repository and publishing release
+  to PyPI.
+
+When releasing a new major/minor version (from the master branch), the
+release script will take care of setting-up a maintenance branch as
+well.
+
+Patch releases should be done from maintenance branches. New
+major/minor releases should be done from the master branch.
+
+.. warning::
+   Keep in mind that the release script is interactive, it cannot be
+   run unattended.
+
+Perform the following steps in order to release new version of
+Gimmecert:
+
+1. Make sure that Git is correctly set-up for signing using GnuPG, and
+   that the necessary key material is available.
+
+2. Verify that there are no outstanding issues for this release in the
+   issue tracker.
+
+3. Switch to project virtual environment.
+
+4. Ensure that the repository is synchronised with origin, and that a
+   correct branch is checked out (master or maintenance).
+
+5. Go through release notes for ``NEXT VERSION``, and ensure the
+   general description and listed issues look fine. Make any necessary
+   changes, commit them, and push them to the origin.
+
+6. Prepare the release:
+
+   .. warning::
+      Make sure to provide correct version.
+
+   ::
+
+      ./release.sh prepare VERSION
+
+7. Verify that the preparation process was successful.
+
+8. Publish the release:
+
+   .. warning::
+      Make sure to provide correct version.
+
+   ::
+
+      ./release.sh publish VERSION
+
+9. Build release documentation on `Read the Docs project page
+   <https://readthedocs.org/projects/gimmecert/>`_, and update the
+   default version if this was a new major/minor release.
+
+10. Verify documentation looks good on `Read the Docs documentation
+    page <https://gimmecert.readthedocs.io/>`_.
+
+11. Mark the release issue as resolved in the issue tracker.
+
+12. Release the version via release center in the issue
+    tracker. Upload source archive from the ``dist/`` directory.
+
+13. Archive outdated releases in the issue tracker.
