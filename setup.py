@@ -68,7 +68,7 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 setup(
     name='gimmecert',
     version='0.0.0',
-    packages=find_packages(),
+    packages=find_packages(exclude=['tests', 'functional_tests']),
     include_package_data=True,
     license='GPLv3+',
     description='A simple tool for quickly issuing server and client certificates.',

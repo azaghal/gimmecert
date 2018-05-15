@@ -5,6 +5,7 @@
 # Ignore build artefacts.
 docs/_build/
 dist/
+build/
 
 # Ignore Python artefacts.
 .eggs/
