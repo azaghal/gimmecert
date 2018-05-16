@@ -246,7 +246,7 @@ ERROR_PYPI_FAILURE=16
 debug=0
 
 # Default URI to use for publishing to PyPI.
-pypi_repository_url="https://pypi.org/legacy/"
+pypi_repository_url="https://upload.pypi.org/legacy/"
 
 # Register our cleanup function, and request that no cleanup is
 # performed by default.
