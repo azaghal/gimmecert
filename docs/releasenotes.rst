@@ -2,8 +2,8 @@ Release notes
 =============
 
 
-NEXT RELEASE
-------------
+0.1.0
+-----
 
 First release of Gimmecert. Implements ability to set-up per-directory
 CA hierarchy that can then be used to issue server and client
