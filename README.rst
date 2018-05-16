@@ -29,7 +29,9 @@ The tool is useful for issuing certificates in:
 At time of this writing, Gimmecert is compatible with the following
 Python versions:
 
-- *Python 3.4+*
+- *Python 3.4*
+- *Python 3.5*
+- *Python 3.6*
 
 
 Why was this tool created?
@@ -74,13 +76,17 @@ In case of problems with the tool, please do not hesitate to contact
 the author at **gimmecert (at) majic.rs**. Known issues and planned
 features are tracked on website:
 
-* https://projects.majic.rs/gimmecert/
+- https://projects.majic.rs/gimmecert/
 
-The library is hosted on author's own server, alongside a mirror on
+The tool is hosted on author's own server, alongside a mirror on
 Github:
 
-* https://code.majic.rs/gimmecert
-* https://github.com/azaghal/gimmecert
+- https://code.majic.rs/gimmecert
+- https://github.com/azaghal/gimmecert
+
+Documentation is available on:
+
+- https://gimmecert.readthedocs.io/
 
 
 License
@@ -91,11 +97,11 @@ your option) any later version. You should have received the full copy of the
 GPLv3 license in the local file **LICENSE-GPLv3**, or you may read the full text
 of the license at:
 
-* https://www.gnu.org/licenses/gpl-3.0.txt
+- https://www.gnu.org/licenses/gpl-3.0.txt
 
 Gimmecert *documentation* is licensed under the terms of CC-BY-SA 3.0
 Unported license. You should have received the full copy of the CC-BY-SA 3.0
 Unported in the local file **LICENSE-CC-BY-SA-3.0-Unported**, or you may read
 the full text of the license at:
 
-https://creativecommons.org/licenses/by-sa/3.0/
+- https://creativecommons.org/licenses/by-sa/3.0/
