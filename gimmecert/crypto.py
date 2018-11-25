@@ -241,7 +241,7 @@ def issue_server_certificate(name, public_key, issuer_private_key, issuer_certif
     if not_after > issuer_certificate.not_valid_after:
         not_after = issuer_certificate.not_valid_after
 
-    certificate = issue_certificate(issuer_certificate.issuer, dn, issuer_private_key, public_key, not_before, not_after, extensions)
+    certificate = issue_certificate(issuer_certificate.subject, dn, issuer_private_key, public_key, not_before, not_after, extensions)
 
     return certificate
 
@@ -299,7 +299,7 @@ def issue_client_certificate(name, public_key, issuer_private_key, issuer_certif
     if not_after > issuer_certificate.not_valid_after:
         not_after = issuer_certificate.not_valid_after
 
-    certificate = issue_certificate(issuer_certificate.issuer, dn, issuer_private_key, public_key, not_before, not_after, extensions)
+    certificate = issue_certificate(issuer_certificate.subject, dn, issuer_private_key, public_key, not_before, not_after, extensions)
 
     return certificate
 

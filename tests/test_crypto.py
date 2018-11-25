@@ -317,8 +317,8 @@ def test_issue_server_certificate_sets_correct_extensions():
 
 
 def test_issue_server_certificate_has_correct_issuer_and_subject():
-    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
-    issuer_private_key, issuer_certificate = ca_hierarchy[0]
+    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 4)
+    issuer_private_key, issuer_certificate = ca_hierarchy[3]
 
     private_key = gimmecert.crypto.generate_private_key()
 
@@ -412,8 +412,8 @@ def test_issue_client_certificate_returns_certificate():
 
 
 def test_issue_client_certificate_has_correct_issuer_and_subject():
-    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
-    issuer_private_key, issuer_certificate = ca_hierarchy[0]
+    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 4)
+    issuer_private_key, issuer_certificate = ca_hierarchy[3]
 
     private_key = gimmecert.crypto.generate_private_key()
 
