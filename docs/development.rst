@@ -137,6 +137,44 @@ Tests can also be run using `tox <https://tox.readthedocs.io/>`_:
   tox -e doc,lint
 
 
+Running tests on all supproted Python versions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+With a range of different Python versions supported, it might be
+somewhat difficult to run the tests against all the posible versions
+of Python depending on distribution used for development.
+
+The projects comes with a `Vagrantfile <https://www.vagrantup.com/>`_
+to make this easier. To run all tests within a Vagrant machine,
+perform the following steps:
+
+1. Go to project root directory::
+
+     workon gimmecert
+
+2. Bring up the Vagrant machine (this may take a while since it will
+   build the necessary Python versions)::
+
+     vagrant up
+
+3. Log-in into the Vagrant machine::
+
+     vagrant ssh
+
+4. Change directory::
+
+     cd /vagrant
+
+5. Clean Python caches to ensure your main development machine files
+   do not interfere::
+
+     py3clean
+
+6. Run tests against all available environments::
+
+     tox
+
+
 Building documentation
 ----------------------
 

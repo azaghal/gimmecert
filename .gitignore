@@ -22,3 +22,6 @@ coverage/
 
 # Ignore project temporary directory.
 tmp/
+
+# Ignore Vagrant artifacts.
+.vagrant
