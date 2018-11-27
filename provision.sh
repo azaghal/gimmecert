@@ -23,53 +23,76 @@ apt-get install -qq -y git virtualenv
 # Install Python build dependencies.
 apt-get install -qq -y make build-essential libssl1.0-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev xz-utils tk-dev libxml2-dev libffi-dev
 
-# Clone the pyenv and pyenv-virtualenv tools for setting-up multiple
-# Python installations.
-if [[ ! -e /home/vagrant/.pyenv ]]; then
-    sudo -i -u vagrant git clone https://github.com/pyenv/pyenv/ /home/vagrant/.pyenv
-fi
+# Import public keys for validating Python releases.
+sudo -i -u vagrant gpg -q --import /vagrant/provision/python_releases_signing_keys.pub
 
-if [[ ! -e /home/vagrant/.pyenv/plugins/pyenv-virtualenv ]]; then
-    sudo -i -u vagrant git clone https://github.com/pyenv/pyenv-virtualenv.git /home/vagrant/.pyenv/plugins/pyenv-virtualenv
-fi
+# Download and build additional Python versions.
+python_versions=("3.4.9" "3.6.7" "3.7.1")
+work_directory="/home/vagrant/src"
 
-# Enable pyenv for the user.
-bash_profile="/home/vagrant/.bash_profile"
+echo "Setting-up work directory."
+sudo -i -u vagrant mkdir -p "$work_directory"
 
-if [[ ! -e $bash_profile ]] || ! grep -q "export PYENV_ROOT" "$bash_profile"; then
-    echo 'export PYENV_ROOT="$HOME/.pyenv"' >> "$bash_profile"
-fi
+for version in "${python_versions[@]}"; do
+    # Set-up information about Python version.
+    minor_version="${version%.[[:digit:]]}"
+    interpreter="/usr/local/bin/python${minor_version}"
+    source_archive_link="https://www.python.org/ftp/python/${version}/Python-${version}.tar.xz"
+    source_archive="$work_directory/Python-${version}.tar.xz"
+    source_signature_link="https://www.python.org/ftp/python/${version}/Python-${version}.tar.xz.asc"
+    source_signature="${source_archive}.asc"
+    source="$work_directory/Python-${version}"
 
-if [[ ! -e $bash_profile ]] || ! grep -q "export PATH=" "$bash_profile"; then
-    echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> "$bash_profile"
-fi
+    # Check if the Python version has already been installed or not.
+    if [[ ! -e $interpreter ]]; then
+        echo
+        echo
+        echo "Installing Python $version"
+        echo "=========================="
 
-if [[ ! -e $bash_profile ]] || ! grep -q 'pyenv init' "$bash_profile"; then
-    echo 'eval "$(pyenv init -)"' >> "$bash_profile"
-fi
+        echo "Downloading..."
+        sudo -i -u vagrant wget -q -c -O "$source_archive" "$source_archive_link"
+        sudo -i -u vagrant wget -q -c -O "$source_signature" "$source_signature_link"
 
-chown vagrant:vagrant "$bash_profile"
-chmod 0640 "$bash_profile"
+        echo "Verifying signature..."
+        sudo -i -u vagrant gpg --quiet --trust-model always --verify "$source_signature" "$source_archive"
 
-# List of Python versions to install.
-python_versions=("3.4.9" "3.5.6" "3.6.7" "3.7.1")
+        echo "Removing stale source files..."
+        rm -rf "$source"
 
-# Install various Python versions.
-for python_version in "${python_versions[@]}"; do
-    sudo -i -u vagrant pyenv install -s "$python_version"
+        echo "Unpacking source..."
+        sudo -i -u vagrant tar xf "$source_archive" -C "$work_directory"
+
+        echo "Configuring..."
+        sudo -i -u vagrant <<< "cd ${source}; ./configure --quiet"
+
+        echo "Building..."
+        sudo -i -u vagrant make --quiet -C "$source" -j3
+
+        echo "Installing..."
+        make --quiet -C "$source" altinstall
+
+        echo "Removing source files..."
+        rm -rf "$source"
+    fi
 done
 
-# Register them globally.
-sudo -i -u vagrant pyenv global system "${python_versions[@]}"
-
-# Set-up virtual environment for running tox.
+echo "Setting-up Python virtual environment for running tox."
 if [[ ! -f /home/vagrant/virtualenv-tox/bin/activate ]]; then
     sudo -i -u vagrant virtualenv --prompt '(tox) ' -q -p /usr/bin/python3 /home/vagrant/virtualenv-tox
 fi
 
+echo "Setting-up Python virtual environment activation on login."
+bash_profile="/home/vagrant/.bash_profile"
 if [[ ! -e $bash_profile ]] || ! grep -q "source /home/vagrant/virtualenv-tox/bin/activate" "$bash_profile"; then
     echo 'source /home/vagrant/virtualenv-tox/bin/activate' >> "$bash_profile"
 fi
 
-# Install development requirements.
+echo "Cleaning-up Python byte-compiled files from repository directory."
+sudo -i -u vagrant py3clean /vagrant/
+
+echo "Installing development requirements."
 sudo -i -u vagrant pip install -q -e "/vagrant[devel]"
+
+echo
+echo "SUCCESS: Ready for running tests."
