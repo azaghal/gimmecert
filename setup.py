@@ -25,24 +25,24 @@ from setuptools import setup, find_packages
 README = open(os.path.join(os.path.dirname(__file__), 'README.rst')).read()
 
 install_requirements = [
-    'cryptography>=2.1,<2.2',
-    'python-dateutil>=2.6,<2.7',
+    'cryptography>=2.4,<2.5',
+    'python-dateutil>=2.7,<2.8',
 ]
 
 doc_requirements = [
-    'sphinx>=1.7,<1.8',
+    'sphinx>=1.8,<1.9',
 ]
 
 test_lint_requirements = [
-    'flake8>=3.5,<3.6',
+    'flake8>=3.6,<3.7',
 ]
 
 test_requirements = [
     'freezegun>=0.3,<0.4',
-    'pytest>=3.4,<3.5',
-    'pytest-cov>=2.5,<2.6',
-    'tox>=2.9,<2.10',
-    'pexpect>=4.5,<4.6',
+    'pytest>=4.0,<4.1',
+    'pytest-cov>=2.6,<2.7',
+    'tox>=3.5,<3.6',
+    'pexpect>=4.6,<4.7',
 ]
 
 release_requirements = [
@@ -50,7 +50,7 @@ release_requirements = [
 ]
 
 setup_requirements = [
-    'pytest-runner>=4.0,<4.1',
+    'pytest-runner>=4.2,<4.3',
 ]
 
 development_requirements = doc_requirements + test_requirements + test_lint_requirements + release_requirements
