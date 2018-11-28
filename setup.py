@@ -24,6 +24,8 @@ from setuptools import setup, find_packages
 
 README = open(os.path.join(os.path.dirname(__file__), 'README.rst')).read()
 
+python_requirements = ">=3.4,<3.8"
+
 install_requirements = [
     'cryptography>=2.4,<2.5',
     'python-dateutil>=2.7,<2.8',
@@ -76,6 +78,7 @@ setup(
     url='http://projects.majic.rs/gimmecert',
     author='Branko Majic',
     author_email='branko@majic.rs',
+    python_requires=python_requirements,
     install_requires=install_requirements,
     setup_requires=setup_requirements,
     tests_require=test_requirements,
