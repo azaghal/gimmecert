@@ -20,6 +20,10 @@ Resolved issues:
   - `GC-28 - Vagrant set-up for running tests against multiple Python versions <https://projects.majic.rs/gimmecert/issues/GC-28>`_
   - `GC-30 - Support for Python 3.7 <https://projects.majic.rs/gimmecert/issues/GC-30>`_
 
+- **Tasks**
+
+  - `GC-27 - Update all requirements <https://projects.majic.rs/gimmecert/issues/GC-27>`_
+
 
 0.1.0
 -----
