@@ -448,7 +448,7 @@ def test_server_command_accepts_csr_from_stdin(tmpdir):
 
     # John reruns the command, this time passing-in the CSR and ending
     # the input with Ctrl-D.
-    prompt_failure, output, exit_code = run_interactive_command([('Please enter the CSR \(finish with Ctrl-D on an empty line\):', custom_csr + '\n\004')],
+    prompt_failure, output, exit_code = run_interactive_command([(r'Please enter the CSR \(finish with Ctrl-D on an empty line\):', custom_csr + '\n\004')],
                                                                 "gimmecert", "server", "--csr", "-", "myserver1")
 
     # The operation is successful, and he is presented with
@@ -509,7 +509,7 @@ def test_client_command_accepts_csr_from_stdin(tmpdir):
 
     # John reruns the command, this time passing-in the CSR and ending
     # the input with Ctrl-D.
-    prompt_failure, output, exit_code = run_interactive_command([('Please enter the CSR \(finish with Ctrl-D on an empty line\):', custom_csr + '\n\004')],
+    prompt_failure, output, exit_code = run_interactive_command([(r'Please enter the CSR \(finish with Ctrl-D on an empty line\):', custom_csr + '\n\004')],
                                                                 "gimmecert", "client", "--csr", "-", "myclient1")
 
     # The operation is successful, and he is presented with
@@ -614,12 +614,12 @@ def test_renew_command_accepts_csr_from_stdin(tmpdir):
     # John reruns renewal commands, this time passing-in the CSR and
     # ending the input with Ctrl-D.
     renew_server_prompt_failure, renew_server_output, renew_server_exit_code = run_interactive_command(
-        [('Please enter the CSR \(finish with Ctrl-D on an empty line\):', server_csr + '\n\004')],
+        [(r'Please enter the CSR \(finish with Ctrl-D on an empty line\):', server_csr + '\n\004')],
         "gimmecert", "renew", "--csr", "-", "server", "myserver"
     )
 
     renew_client_prompt_failure, renew_client_output, renew_client_exit_code = run_interactive_command(
-        [('Please enter the CSR \(finish with Ctrl-D on an empty line\):', client_csr + '\n\004')],
+        [(r'Please enter the CSR \(finish with Ctrl-D on an empty line\):', client_csr + '\n\004')],
         "gimmecert", "renew", "--csr", "-", "client", "myclient"
     )
 
