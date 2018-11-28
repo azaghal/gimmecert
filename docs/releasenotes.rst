@@ -17,6 +17,7 @@ Resolved issues:
 
 - **Feature requests**
 
+  - `GC-29 - Prevent installation on unsupported Python versions <https://projects.majic.rs/gimmecert/issues/GC-29>`_
   - `GC-28 - Vagrant set-up for running tests against multiple Python versions <https://projects.majic.rs/gimmecert/issues/GC-28>`_
   - `GC-30 - Support for Python 3.7 <https://projects.majic.rs/gimmecert/issues/GC-30>`_
 
