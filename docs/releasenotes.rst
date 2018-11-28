@@ -5,6 +5,21 @@ Release notes
 NEXT RELEASE
 ------------
 
+This release is mostly oriented towards smaller bug-fixes, updates of
+package dependencies, and improving the ease of testing during
+development.
+
+Resolved issues:
+
+- **Bugs**:
+
+  - `GC-26 - Wrong issuer DN for end entity certificates when CA hierarchy depth is 2 or more  <https://projects.majic.rs/gimmecert/issues/GC-26>`_
+
+- **Feature requests**
+
+  - `GC-28 - Vagrant set-up for running tests against multiple Python versions <https://projects.majic.rs/gimmecert/issues/GC-28>`_
+  - `GC-30 - Support for Python 3.7 <https://projects.majic.rs/gimmecert/issues/GC-30>`_
+
 
 0.1.0
 -----
