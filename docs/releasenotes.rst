@@ -2,8 +2,8 @@ Release notes
 =============
 
 
-NEXT RELEASE
-------------
+0.2.0
+-----
 
 This release is mostly oriented towards smaller bug-fixes, updates of
 package dependencies, and improving the ease of testing during

@@ -69,7 +69,7 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setup(
     name='gimmecert',
-    version='0.0.0',
+    version='0.2.0',
     packages=find_packages(exclude=['tests', 'functional_tests']),
     include_package_data=True,
     license='GPLv3+',
