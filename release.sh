@@ -473,6 +473,12 @@ elif [[ $operation == "publish" ]]; then
     read -p "Do you want to continue? (y/N) " confirm_release
     echo
 
+    # Abort on user's request.
+    if ! [[ $confirm_release == "y" || $confirm_release == "Y" ]]; then
+        error "Aborting the preparation process as requested by user."
+        exit "$ERROR_USER_ABORTED"
+    fi
+
     # Clean-up the local build directories.
     rm -rf dist/
     rm -rf build/
