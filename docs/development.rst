@@ -165,14 +165,22 @@ perform the following steps:
 
      cd /vagrant
 
-5. Clean Python caches to ensure your main development machine files
-   do not interfere::
+5. Run tests against all available environments:
 
-     py3clean .
+.. warning::
+   The ``--workdir`` option should be used in order to avoid mixing of
+   Python cache files from the host and the Vagrant virtual
+   machine, and to avoid getting the error ``ERROR: Could
+   not install packages due to an EnvironmentError: [Errno 39]
+   Directory not empty: '__pycache__'`` during installation of
+   Gimmecert package inside of Tox virtual environment. It is unclear
+   at time of this writing why such an error would be triggered, but
+   it could have something to do with the ``vboxsf`` filesystem used
+   for sharing the ``/vagrant`` directory.
 
-6. Run tests against all available environments::
+::
 
-     tox
+     tox --workdir /tmp/
 
 
 Building documentation
