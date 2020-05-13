@@ -27,7 +27,7 @@ apt-get install -qq -y make build-essential libssl1.0-dev zlib1g-dev libbz2-dev 
 sudo -i -u vagrant gpg -q --import /vagrant/provision/python_releases_signing_keys.pub
 
 # Download and build additional Python versions.
-python_versions=("3.4.9" "3.6.7" "3.7.1")
+python_versions=("3.5.9" "3.6.10" "3.7.7")
 work_directory="/home/vagrant/src"
 
 echo "Setting-up work directory."

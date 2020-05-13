@@ -28,7 +28,7 @@ tailored for a GNU/Linux system.
 Before proceeding, ensure you have the following system-wide packages
 installed:
 
-- `Python, version 3.4+ <https://www.python.org/>`_.
+- `Python, version 3.5+ <https://www.python.org/>`_.
 - `virtualenvwrapper <https://virtualenvwrapper.readthedocs.io/>`_.
 
 With those in place, do the following:

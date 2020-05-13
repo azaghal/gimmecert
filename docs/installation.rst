@@ -14,7 +14,7 @@ Installation
 Gimmecert can be easily installed using ``pip``. Before installing it,
 make sure the following requirements have been met:
 
-- You are running *Python 3.4+*.
+- You are running *Python 3.5+*.
 
 In order to install latest stable release of *Gimmecert* using *pip*, run the
 following command::

@@ -29,9 +29,9 @@ The tool is useful for issuing certificates in:
 At time of this writing, Gimmecert is compatible with the following
 Python versions:
 
-- *Python 3.4*
 - *Python 3.5*
 - *Python 3.6*
+- *Python 3.7*
 
 
 Why was this tool created?
