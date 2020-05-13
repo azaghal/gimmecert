@@ -2,6 +2,10 @@ Release notes
 =============
 
 
+NEXT RELEASE
+------------
+
+
 0.3.0
 -----
 
