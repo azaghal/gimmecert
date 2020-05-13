@@ -698,7 +698,8 @@ def test_status_reports_ca_hierarchy_information(tmpdir):
     with freeze_time('2018-01-01 00:15:00'):
         gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, depth)
 
-    status_code = gimmecert.commands.status(stdout_stream, stderr_stream, tmpdir.strpath)
+    with freeze_time('2018-06-01 00:15:00'):
+        status_code = gimmecert.commands.status(stdout_stream, stderr_stream, tmpdir.strpath)
 
     stdout = stdout_stream.getvalue()
     stdout_lines = stdout.split("\n")
@@ -757,7 +758,8 @@ def test_status_reports_server_certificate_information(tmpdir):
     with freeze_time('2018-04-01 00:15:00'):
         gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver3', None, myserver3_csr_file.strpath)
 
-    status_code = gimmecert.commands.status(stdout_stream, stderr_stream, tmpdir.strpath)
+    with freeze_time('2018-06-01 00:15:00'):
+        status_code = gimmecert.commands.status(stdout_stream, stderr_stream, tmpdir.strpath)
 
     stdout = stdout_stream.getvalue()
     stdout_lines = stdout.split("\n")
@@ -826,7 +828,8 @@ def test_status_reports_client_certificate_information(tmpdir):
     with freeze_time('2018-04-01 00:15:00'):
         gimmecert.commands.client(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myclient3', myclient3_csr_file.strpath)
 
-    status_code = gimmecert.commands.status(stdout_stream, stderr_stream, tmpdir.strpath)
+    with freeze_time('2018-06-01 00:15:00'):
+        status_code = gimmecert.commands.status(stdout_stream, stderr_stream, tmpdir.strpath)
 
     stdout = stdout_stream.getvalue()
     stdout_lines = stdout.split("\n")
