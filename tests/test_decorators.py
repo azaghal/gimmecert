@@ -19,7 +19,7 @@
 #
 
 
-import collections
+import collections.abc
 
 import gimmecert.decorators
 
@@ -30,7 +30,7 @@ def test_get_subcommand_parser_setup_functions_returns_list():
 
     registered_functions = gimmecert.decorators.get_subcommand_parser_setup_functions()
 
-    assert isinstance(registered_functions, collections.Iterable)
+    assert isinstance(registered_functions, collections.abc.Iterable)
 
 
 def test_subcommand_parser_decorator_registers_function():
