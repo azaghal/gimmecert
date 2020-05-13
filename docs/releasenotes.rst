@@ -2,8 +2,8 @@ Release notes
 =============
 
 
-NEXT RELEASE
-------------
+0.3.0
+-----
 
 This release adds support for Python 3.8, drops support for Python
 3.4, and updates the package requirements.
