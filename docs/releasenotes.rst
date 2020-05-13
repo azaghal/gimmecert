@@ -25,7 +25,6 @@ Resolved issues:
   - `GC-35: Drop support for Python 3.4 <https://projects.majic.rs/gimmecert/issues/GC-35>`_
 
 
-
 0.2.0
 -----
 
