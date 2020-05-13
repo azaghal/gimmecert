@@ -5,6 +5,9 @@ Release notes
 NEXT RELEASE
 ------------
 
+This release adds support for Python 3.8, drops support for Python
+3.4, and updates the package requirements.
+
 .. warning::
 
    This release contains the following breaking changes:
@@ -17,8 +20,11 @@ Resolved issues:
 
 - **Tasks**:
 
-  - `GC-35: Drop support for Python 3.4 <https://projects.majic.rs/gimmecert/issues/GC-35>`_
+  - `GC-32: Support for Python 3.8 <https://projects.majic.rs/gimmecert/issues/GC-32>`_
   - `GC-33: Update all requirements <https://projects.majic.rs/gimmecert/issues/GC-33>`_
+  - `GC-35: Drop support for Python 3.4 <https://projects.majic.rs/gimmecert/issues/GC-35>`_
+
+
 
 0.2.0
 -----
