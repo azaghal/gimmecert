@@ -168,7 +168,7 @@ perform the following steps:
 5. Clean Python caches to ensure your main development machine files
    do not interfere::
 
-     py3clean
+     py3clean .
 
 6. Run tests against all available environments::
 
