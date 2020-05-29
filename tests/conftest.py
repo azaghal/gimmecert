@@ -161,3 +161,29 @@ def sample_project_directory(tmpdir):
         gimmecert.commands.client(io.StringIO(), io.StringIO(), tmpdir.strpath, entity_name, custom_csr_path)
 
     return tmpdir
+
+
+@pytest.fixture
+def gctmpdir(tmpdir):
+    """
+    Fixture that initialises Gimmecert project within tmpdir with a
+    simple CA hierarchy.
+
+    Initialised CA hierarchy is 1 level deep, with basename used being
+    identical to temporary directory base name.
+
+    The fixture is useful in testing of commands where the CA
+    hierarchy does not matter (almost anything except init/status
+    commands).
+
+    :param tmpdir: Temporary directory (normally pytest tmpdir fixture) created for running the test.
+    :type tmpdir: py.path.local
+
+    :returs: Parent directory where Gimmecert has been initialised. Essentially the tmpdir fixture.
+    :rtype: py.path.local
+    """
+
+    # Initialise one-level deep hierarchy.
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 1)
+
+    return tmpdir
