@@ -58,7 +58,7 @@ def test_initialisation_on_fresh_directory(tmpdir):
     # text to John that the directory has been initialised.
     assert exit_code == 0
     assert stderr == ""
-    assert "CA hierarchy initialised" in stdout
+    assert "CA hierarchy initialised using 2048-bit RSA keys." in stdout
 
     # The tool also points John to generated key and certificate material.
     assert ".gimmecert/ca/level1.key.pem" in stdout
@@ -149,7 +149,7 @@ def test_initialisation_with_custom_base_name(tmpdir):
     # his CA hierarchy has been initialised..
     assert exit_code == 0
     assert stderr == ""
-    assert "CA hierarchy initialised." in stdout
+    assert "CA hierarchy initialised using 2048-bit RSA keys." in stdout
 
     # Just before he starts using the CA certificates further, he
     # decides to double-check the results. He runs a couple of
@@ -193,7 +193,7 @@ def test_initialisation_with_custom_hierarchy_depth(tmpdir):
     # more CA artifacts listed now.
     assert exit_code == 0
     assert stderr == ""
-    assert "CA hierarchy initialised." in stdout
+    assert "CA hierarchy initialised using 2048-bit RSA keys." in stdout
     assert ".gimmecert/ca/level1.key.pem" in stdout
     assert ".gimmecert/ca/level1.cert.pem" in stdout
     assert ".gimmecert/ca/level2.key.pem" in stdout
@@ -284,3 +284,55 @@ def test_initialisation_with_custom_hierarchy_depth(tmpdir):
 
     # He is happy to see that verification succeeds.
     assert error_code == 0
+
+
+def test_initialisation_with_rsa_private_key_specificiation(tmpdir):
+    # John is looking into improving the security of one of his
+    # projects. Amongst other things, John is interested in using
+    # stronger private keys for his TLS services - which he wants to
+    # try out in his test envioronment first.
+
+    # John knows that the Gimmecert tool uses 2048-bit RSA keys for
+    # the CA hierarchy, but what he would really like to do is specify
+    # himself what kind of private key should be generated
+    # instead. He checks-out the help for the init command first.
+    stdout, _, _ = run_command('gimmecert', 'init', '-h')
+
+    # John noticies there is an option to provide a custom key
+    # specification to the tool, that he can specify the length of
+    # the RSA private keys, and that the default is "rsa:2048".
+    assert "--key-specification" in stdout
+    assert " -k" in stdout
+    assert "rsa:BIT_LENGTH" in stdout
+    assert "Default is rsa:2048" in stdout
+
+    # John switches to his project directory.
+    tmpdir.chdir()
+
+    # He initalises the CA hierarchy, requesting to use 4096-bit RSA
+    # keys.
+    stdout, stderr, exit_code = run_command('gimmecert', 'init', '--key-specification', 'rsa:4096')
+
+    # Command finishes execution with success, and John notices that
+    # the tool has informed him of what the private key algorithm is
+    # in use for the CA hierarchy.
+    assert exit_code == 0
+    assert stderr == ""
+    assert "CA hierarchy initialised using 4096-bit RSA keys." in stdout
+
+    # John goes ahead and inspects the CA private key to ensure his
+    # private key specification has been accepted.
+    stdout, stderr, exit_code = run_command('openssl', 'rsa', '-noout', '-text', '-in', '.gimmecert/ca/level1.key.pem')
+
+    assert exit_code == 0
+    assert stderr == ""
+    assert "Private-Key: (4096 bit)" in stdout
+
+    # John also does a quick check on the generated certificate's
+    # signing and public key algorithm.
+    stdout, stderr, exit_code = run_command('openssl', 'x509', '-noout', '-text', '-in', '.gimmecert/ca/level1.cert.pem')
+
+    assert exit_code == 0
+    assert stderr == ""
+    assert "Signature Algorithm: sha256WithRSAEncryption" in stdout
+    assert "Public-Key: (4096 bit)" in stdout

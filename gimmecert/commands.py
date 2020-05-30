@@ -33,6 +33,7 @@ class ExitCode:
     """
 
     SUCCESS = 0
+    ERROR_ARGUMENTS = 2
     ERROR_ALREADY_INITIALISED = 10
     ERROR_NOT_INITIALISED = 11
     ERROR_CERTIFICATE_ALREADY_ISSUED = 12
@@ -46,7 +47,7 @@ class InvalidCommandInvocation(Exception):
     pass
 
 
-def init(stdout, stderr, project_directory, ca_base_name, ca_hierarchy_depth):
+def init(stdout, stderr, project_directory, ca_base_name, ca_hierarchy_depth, key_generator):
     """
     Initialises the necessary directory and CA hierarchies for use in
     the specified directory.
@@ -66,6 +67,9 @@ def init(stdout, stderr, project_directory, ca_base_name, ca_hierarchy_depth):
     :param ca_hierarchy_depth: Length/depths of CA hierarchy that should be initialised. E.g. total number of CAs in chain.
     :type ca_hierarchy_depth: int
 
+    :param key_generator: Callable for generating private keys.
+    :type key_generator: callable[[], cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey]
+
     :returns: Status code, one from gimmecert.commands.ExitCode.
     :rtype: int
     """
@@ -82,7 +86,7 @@ def init(stdout, stderr, project_directory, ca_base_name, ca_hierarchy_depth):
     gimmecert.storage.initialise_storage(project_directory)
 
     # Generate the CA hierarchy.
-    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy(ca_base_name, ca_hierarchy_depth)
+    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy(ca_base_name, ca_hierarchy_depth, key_generator)
 
     # Output the CA private keys and certificates.
     for level, (private_key, certificate) in enumerate(ca_hierarchy, 1):
@@ -96,7 +100,7 @@ def init(stdout, stderr, project_directory, ca_base_name, ca_hierarchy_depth):
     full_chain_path = os.path.join(ca_directory, 'chain-full.cert.pem')
     gimmecert.storage.write_certificate_chain(full_chain, full_chain_path)
 
-    print("CA hierarchy initialised. Generated artefacts:", file=stdout)
+    print("CA hierarchy initialised using %s keys. Generated artefacts:" % str(key_generator), file=stdout)
     for level in range(1, ca_hierarchy_depth+1):
         print("    CA Level %d private key: .gimmecert/ca/level%d.key.pem" % (level, level), file=stdout)
         print("    CA Level %d certificate: .gimmecert/ca/level%d.cert.pem" % (level, level), file=stdout)

@@ -86,7 +86,8 @@ def sample_project_directory(tmpdir):
     CSR).
 
     Initialised CA hierarchy is 1 level deep, with basename used being
-    identical to temporary directory base name.
+    identical to temporary directory base name, and it uses 2048-bit
+    RSA keys.
 
     The following server certificates are issued:
 
@@ -142,7 +143,7 @@ def sample_project_directory(tmpdir):
         gimmecert.storage.write_csr(csr, custom_csr_dir.join("%s.csr.pem" % name).strpath)
 
     # Initialise one-level deep hierarchy.
-    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 1)
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
 
     # Issue a bunch of certificates.
     for i in range(1, per_type_count + 1):
@@ -170,7 +171,8 @@ def gctmpdir(tmpdir):
     simple CA hierarchy.
 
     Initialised CA hierarchy is 1 level deep, with basename used being
-    identical to temporary directory base name.
+    identical to temporary directory base name, and it uses 2048-bit
+    RSA keys.
 
     The fixture is useful in testing of commands where the CA
     hierarchy does not matter (almost anything except init/status
@@ -184,6 +186,6 @@ def gctmpdir(tmpdir):
     """
 
     # Initialise one-level deep hierarchy.
-    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 1)
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
 
     return tmpdir

@@ -27,6 +27,7 @@ from dateutil.relativedelta import relativedelta
 
 import gimmecert.crypto
 
+import pytest
 from freezegun import freeze_time
 
 
@@ -107,7 +108,7 @@ def test_generate_ca_hierarchy_returns_list_with_3_elements_for_depth_3():
     base_name = 'My Project'
     depth = 3
 
-    hierarchy = gimmecert.crypto.generate_ca_hierarchy(base_name, depth)
+    hierarchy = gimmecert.crypto.generate_ca_hierarchy(base_name, depth, gimmecert.crypto.KeyGenerator("rsa:2048"))
 
     assert isinstance(hierarchy, list)
     assert len(hierarchy) == depth
@@ -117,7 +118,7 @@ def test_generate_ca_hierarchy_returns_list_with_1_element_for_depth_1():
     base_name = 'My Project'
     depth = 1
 
-    hierarchy = gimmecert.crypto.generate_ca_hierarchy(base_name, depth)
+    hierarchy = gimmecert.crypto.generate_ca_hierarchy(base_name, depth, gimmecert.crypto.KeyGenerator("rsa:2048"))
 
     assert isinstance(hierarchy, list)
     assert len(hierarchy) == depth
@@ -127,7 +128,7 @@ def test_generate_ca_hierarchy_returns_list_of_private_key_certificate_pairs():
     base_name = 'My Project'
     depth = 3
 
-    hierarchy = gimmecert.crypto.generate_ca_hierarchy(base_name, depth)
+    hierarchy = gimmecert.crypto.generate_ca_hierarchy(base_name, depth, gimmecert.crypto.KeyGenerator("rsa:2048"))
 
     for private_key, certificate in hierarchy:
         assert isinstance(private_key, cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey)
@@ -137,8 +138,9 @@ def test_generate_ca_hierarchy_returns_list_of_private_key_certificate_pairs():
 def test_generate_ca_hierarchy_subject_dns_have_correct_value():
     base_name = 'My Project'
     depth = 3
+    key_generator = gimmecert.crypto.KeyGenerator("rsa:2048")
 
-    level1, level2, level3 = [certificate for _, certificate in gimmecert.crypto.generate_ca_hierarchy(base_name, depth)]
+    level1, level2, level3 = [certificate for _, certificate in gimmecert.crypto.generate_ca_hierarchy(base_name, depth, key_generator)]
 
     assert level1.subject == cryptography.x509.Name(gimmecert.crypto.get_dn('My Project Level 1 CA'))
     assert level2.subject == cryptography.x509.Name(gimmecert.crypto.get_dn('My Project Level 2 CA'))
@@ -149,7 +151,7 @@ def test_generate_ca_hierarchy_issuer_dns_have_correct_value():
     base_name = 'My Project'
     depth = 3
 
-    hierarchy = gimmecert.crypto.generate_ca_hierarchy(base_name, depth)
+    hierarchy = gimmecert.crypto.generate_ca_hierarchy(base_name, depth, gimmecert.crypto.KeyGenerator("rsa:2048"))
 
     level1_key, level1_certificate = hierarchy[0]
     level2_key, level2_certificate = hierarchy[1]
@@ -164,7 +166,7 @@ def test_generate_ca_hierarchy_private_keys_match_with_public_keys_in_certificat
     base_name = 'My Project'
     depth = 3
 
-    hierarchy = gimmecert.crypto.generate_ca_hierarchy(base_name, depth)
+    hierarchy = gimmecert.crypto.generate_ca_hierarchy(base_name, depth, gimmecert.crypto.KeyGenerator("rsa:2048"))
 
     level1_private_key, level1_certificate = hierarchy[0]
     level2_private_key, level2_certificate = hierarchy[1]
@@ -179,7 +181,7 @@ def test_generate_ca_hierarchy_cas_have_differing_keys():
     base_name = 'My Project'
     depth = 3
 
-    hierarchy = gimmecert.crypto.generate_ca_hierarchy(base_name, depth)
+    hierarchy = gimmecert.crypto.generate_ca_hierarchy(base_name, depth, gimmecert.crypto.KeyGenerator("rsa:2048"))
 
     level1_private_key, _ = hierarchy[0]
     level2_private_key, _ = hierarchy[1]
@@ -198,7 +200,7 @@ def test_generate_ca_hierarchy_certificates_have_same_validity():
     base_name = 'My Project'
     depth = 3
 
-    hierarchy = gimmecert.crypto.generate_ca_hierarchy(base_name, depth)
+    hierarchy = gimmecert.crypto.generate_ca_hierarchy(base_name, depth, gimmecert.crypto.KeyGenerator("rsa:2048"))
 
     _, level1_certificate = hierarchy[0]
     _, level2_certificate = hierarchy[1]
@@ -248,7 +250,7 @@ def test_generate_ca_hierarchy_produces_certificates_with_ca_basic_constraints()
     base_name = 'My test'
     depth = 3
 
-    hierarchy = gimmecert.crypto.generate_ca_hierarchy(base_name, depth)
+    hierarchy = gimmecert.crypto.generate_ca_hierarchy(base_name, depth, gimmecert.crypto.KeyGenerator("rsa:2048"))
 
     for _, certificate in hierarchy:
         stored_extension = certificate.extensions.get_extension_for_class(cryptography.x509.BasicConstraints)
@@ -261,7 +263,7 @@ def test_generate_ca_hierarchy_produces_certificates_with_ca_basic_constraints()
 
 
 def test_issue_server_certificate_returns_certificate():
-    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
     issuer_private_key, issuer_certificate = ca_hierarchy[0]
 
     private_key = gimmecert.crypto.generate_private_key()
@@ -272,7 +274,7 @@ def test_issue_server_certificate_returns_certificate():
 
 
 def test_issue_server_certificate_sets_correct_extensions():
-    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
     issuer_private_key, issuer_certificate = ca_hierarchy[0]
 
     private_key = gimmecert.crypto.generate_private_key()
@@ -317,7 +319,7 @@ def test_issue_server_certificate_sets_correct_extensions():
 
 
 def test_issue_server_certificate_has_correct_issuer_and_subject():
-    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 4)
+    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 4, gimmecert.crypto.KeyGenerator("rsa:2048"))
     issuer_private_key, issuer_certificate = ca_hierarchy[3]
 
     private_key = gimmecert.crypto.generate_private_key()
@@ -329,7 +331,7 @@ def test_issue_server_certificate_has_correct_issuer_and_subject():
 
 
 def test_issue_server_certificate_has_correct_public_key():
-    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
     issuer_private_key, issuer_certificate = ca_hierarchy[0]
 
     private_key = gimmecert.crypto.generate_private_key()
@@ -341,7 +343,7 @@ def test_issue_server_certificate_has_correct_public_key():
 
 @freeze_time('2018-01-01 00:15:00')
 def test_issue_server_certificate_not_before_is_15_minutes_in_past():
-    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
     issuer_private_key, issuer_certificate = ca_hierarchy[0]
 
     private_key = gimmecert.crypto.generate_private_key()
@@ -353,7 +355,7 @@ def test_issue_server_certificate_not_before_is_15_minutes_in_past():
 
 def test_issue_server_certificate_not_before_does_not_exceed_ca_validity():
     with freeze_time('2018-01-01 00:15:00'):
-        ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+        ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
 
     issuer_private_key, issuer_certificate = ca_hierarchy[0]
 
@@ -367,7 +369,7 @@ def test_issue_server_certificate_not_before_does_not_exceed_ca_validity():
 
 def test_issue_server_certificate_not_after_does_not_exceed_ca_validity():
     with freeze_time('2018-01-01 00:15:00'):
-        ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+        ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
 
     issuer_private_key, issuer_certificate = ca_hierarchy[0]
 
@@ -380,7 +382,7 @@ def test_issue_server_certificate_not_after_does_not_exceed_ca_validity():
 
 
 def test_issue_server_certificate_incorporates_additional_dns_subject_alternative_names():
-    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
     issuer_private_key, issuer_certificate = ca_hierarchy[0]
 
     private_key = gimmecert.crypto.generate_private_key()
@@ -401,7 +403,7 @@ def test_issue_server_certificate_incorporates_additional_dns_subject_alternativ
 
 
 def test_issue_client_certificate_returns_certificate():
-    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
     issuer_private_key, issuer_certificate = ca_hierarchy[0]
 
     private_key = gimmecert.crypto.generate_private_key()
@@ -412,7 +414,7 @@ def test_issue_client_certificate_returns_certificate():
 
 
 def test_issue_client_certificate_has_correct_issuer_and_subject():
-    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 4)
+    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 4, gimmecert.crypto.KeyGenerator("rsa:2048"))
     issuer_private_key, issuer_certificate = ca_hierarchy[3]
 
     private_key = gimmecert.crypto.generate_private_key()
@@ -424,7 +426,7 @@ def test_issue_client_certificate_has_correct_issuer_and_subject():
 
 
 def test_issue_client_certificate_sets_correct_extensions():
-    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
     issuer_private_key, issuer_certificate = ca_hierarchy[0]
 
     private_key = gimmecert.crypto.generate_private_key()
@@ -461,7 +463,7 @@ def test_issue_client_certificate_sets_correct_extensions():
 
 
 def test_issue_client_certificate_has_correct_public_key():
-    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
     issuer_private_key, issuer_certificate = ca_hierarchy[0]
 
     private_key = gimmecert.crypto.generate_private_key()
@@ -473,7 +475,7 @@ def test_issue_client_certificate_has_correct_public_key():
 
 @freeze_time('2018-01-01 00:15:00')
 def test_issue_client_certificate_not_before_is_15_minutes_in_past():
-    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
     issuer_private_key, issuer_certificate = ca_hierarchy[0]
 
     private_key = gimmecert.crypto.generate_private_key()
@@ -485,7 +487,7 @@ def test_issue_client_certificate_not_before_is_15_minutes_in_past():
 
 def test_issue_client_certificate_not_before_does_not_exceed_ca_validity():
     with freeze_time('2018-01-01 00:15:00'):
-        ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+        ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
 
     issuer_private_key, issuer_certificate = ca_hierarchy[0]
 
@@ -499,7 +501,7 @@ def test_issue_client_certificate_not_before_does_not_exceed_ca_validity():
 
 def test_issue_client_certificate_not_after_does_not_exceed_ca_validity():
     with freeze_time('2018-01-01 00:15:00'):
-        ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+        ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
 
     issuer_private_key, issuer_certificate = ca_hierarchy[0]
 
@@ -512,7 +514,7 @@ def test_issue_client_certificate_not_after_does_not_exceed_ca_validity():
 
 
 def test_renew_certificate_returns_certificate():
-    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
     issuer_private_key, issuer_certificate = ca_hierarchy[0]
 
     private_key = gimmecert.crypto.generate_private_key()
@@ -524,7 +526,7 @@ def test_renew_certificate_returns_certificate():
 
 
 def test_renew_certificate_has_correct_content():
-    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+    ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
     issuer_private_key, issuer_certificate = ca_hierarchy[0]
 
     private_key = gimmecert.crypto.generate_private_key()
@@ -544,7 +546,7 @@ def test_renew_certificate_not_before_is_15_minutes_in_past():
 
     # Initial server certificate.
     with freeze_time('2018-01-01 00:15:00'):
-        ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+        ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
         issuer_private_key, issuer_certificate = ca_hierarchy[0]
 
         private_key = gimmecert.crypto.generate_private_key()
@@ -561,7 +563,7 @@ def test_renew_certificate_not_before_does_not_exceed_ca_validity():
 
     # Initial server certificate.
     with freeze_time('2018-01-01 00:15:00'):
-        ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+        ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
         issuer_private_key, issuer_certificate = ca_hierarchy[0]
 
         private_key = gimmecert.crypto.generate_private_key()
@@ -578,7 +580,7 @@ def test_renew_certificate_not_after_does_not_exceed_ca_validity():
 
     # Initial server certificate.
     with freeze_time('2018-01-01 00:15:00'):
-        ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1)
+        ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
         issuer_private_key, issuer_certificate = ca_hierarchy[0]
 
         private_key = gimmecert.crypto.generate_private_key()
@@ -614,3 +616,75 @@ def test_generate_csr_returns_csr_with_passed_in_name():
 
     assert csr.public_key().public_numbers() == private_key.public_key().public_numbers()
     assert csr.subject == expected_subject_dn
+
+
+@pytest.mark.parametrize("key_specification", [
+    "",
+    "rsa",
+    "rsa:not_a_number",
+    "unsupported:algorithm",
+])
+def test_KeyGenerator_raises_exception_for_invalid_specification(key_specification):
+
+    with pytest.raises(ValueError) as e_info:
+        gimmecert.crypto.KeyGenerator(key_specification)
+
+    assert str(e_info.value) == "Invalid key specification: '%s'" % key_specification
+
+
+@pytest.mark.parametrize("key_specification", [
+    "rsa:1024",
+    "rsa:2048",
+    "rsa:4096",
+])
+def test_KeyGenerator_accepts_valid_specifications(key_specification):
+
+    gimmecert.crypto.KeyGenerator(key_specification)  # should not raise
+
+
+def test_KeyGenerator_stores_specification():
+
+    key_generator = gimmecert.crypto.KeyGenerator("rsa:2048")
+
+    assert key_generator._algorithm == "rsa"
+    assert key_generator._parameters == 2048
+
+
+@pytest.mark.parametrize("key_specification, string_representation", [
+    ("rsa:1024", "1024-bit RSA"),
+    ("rsa:2048", "2048-bit RSA"),
+    ("rsa:4096", "4096-bit RSA"),
+])
+def test_KeyGenerator_string_representation(key_specification, string_representation):
+
+    key_generator = gimmecert.crypto.KeyGenerator(key_specification)
+    assert str(key_generator) == string_representation
+
+
+def test_KeyGenerator_instance_returns_rsa_private_key():
+
+    key_generator_1 = gimmecert.crypto.KeyGenerator("rsa:1024")
+    key_generator_2 = gimmecert.crypto.KeyGenerator("rsa:2048")
+
+    private_key_1 = key_generator_1()
+    private_key_2 = key_generator_2()
+
+    assert isinstance(private_key_1, cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey)
+    assert isinstance(private_key_2, cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey)
+
+    assert private_key_1.key_size == 1024
+    assert private_key_2.key_size == 2048
+
+
+@pytest.mark.parametrize("key_generator, expected_bit_size", [
+    (gimmecert.crypto.KeyGenerator("rsa:1024"), 1024),
+    (gimmecert.crypto.KeyGenerator("rsa:2048"), 2048),
+])
+def test_generate_ca_hierarchy_uses_correct_rsa_bit_size(key_generator, expected_bit_size):
+    base_name = "My Test"
+    depth = 3
+
+    hierarchy = gimmecert.crypto.generate_ca_hierarchy(base_name, depth, key_generator)
+
+    for private_key, _ in hierarchy:
+        assert private_key.key_size == expected_bit_size

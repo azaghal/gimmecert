@@ -25,6 +25,73 @@ import cryptography.x509
 from dateutil.relativedelta import relativedelta
 
 
+class KeyGenerator:
+    """
+    Provides abstract factory-like interface for generating private
+    keys. Algorithm and parameters for the private key are provided
+    during instance initialisation by passing-in a specification.
+
+    Instances are callable objects that generate and return the
+    private key according to key specification passed-in during the
+    instance initialisation.
+    """
+
+    def __init__(self, specification):
+        """
+        Initialises an instance.
+
+        :param specification: Specification describing the private keys that that instance should be generating.
+                              For RSA keys, use syntax "rsa:BIT_LENGTH".
+        :type specification: str
+
+        :raises ValueError: If passed-in specification is invalid.
+        """
+
+        try:
+            # This will throw ValueError if we can't get two values
+            # assigned via split.
+            key_type, key_parameters = specification.split(":", 2)
+
+            if key_type == "rsa" and key_parameters.isnumeric():
+                self._algorithm = "rsa"
+                self._parameters = int(key_parameters)
+            else:
+                raise ValueError()
+
+        except ValueError:
+            raise ValueError("Invalid key specification: '%s'" % specification)
+
+    def __str__(self):
+        """
+        Returns string (human-readable) representation of stored key
+        algorithm and parameters.
+
+        :returns: String representation of object.
+        :rtype: str
+        """
+
+        return "%d-bit RSA" % self._parameters
+
+    def __call__(self):
+        """
+        Generates RSA private key. Key size is deterimened by instance's
+        key specification (passed-in during instance creation).
+
+        :returns: RSA private key.
+        :rtype: cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey
+        """
+
+        rsa_public_exponent = 65537
+
+        private_key = cryptography.hazmat.primitives.asymmetric.rsa.generate_private_key(
+            public_exponent=rsa_public_exponent,
+            key_size=self._parameters,
+            backend=cryptography.hazmat.backends.default_backend()
+        )
+
+        return private_key
+
+
 def generate_private_key():
     """
     Generates a 2048-bit RSA private key.
@@ -136,13 +203,16 @@ def issue_certificate(issuer_dn, subject_dn, signing_key, public_key, not_before
     return certificate
 
 
-def generate_ca_hierarchy(base_name, depth):
+def generate_ca_hierarchy(base_name, depth, key_generator):
     """
     Generates CA hierarchy with specified depth, using the provided
     naming as basis for the DNs.
 
     :param base_name: Base name for constructing the CA DNs. Resulting DNs are of format 'BASE Level N'.
     :type base_name: str
+
+    :param key_generator: Callable for generating private keys.
+    :type key_generator: callable[[], cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey]
 
     :returns: List of CA private key and certificate pairs, starting with the level 1 (root) CA, and ending with the leaf CA.
     :rtype: list[(cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey, cryptography.x509.Certificate)]
@@ -163,7 +233,7 @@ def generate_ca_hierarchy(base_name, depth):
     for level in range(1, depth+1):
         # Generate info for the new CA.
         dn = get_dn("%s Level %d CA" % (base_name, level))
-        private_key = generate_private_key()
+        private_key = key_generator()
 
         # First certificate issued needs to be self-signed.
         issuer_dn = issuer_dn or dn

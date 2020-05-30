@@ -224,6 +224,10 @@ VALID_CLI_INVOCATIONS = [
     ("gimmecert.cli.init", ["gimmecert", "init", "--ca-hierarchy-depth", "3"]),
     ("gimmecert.cli.init", ["gimmecert", "init", "-d", "3"]),
 
+    # init, key specification long and short option
+    ("gimmecert.cli.init", ["gimmecert", "init", "--key-specification", "rsa:4096"]),
+    ("gimmecert.cli.init", ["gimmecert", "init", "-k", "rsa:4096"]),
+
     # server, no options
     ("gimmecert.cli.server", ["gimmecert", "server", "myserver"]),
 
@@ -299,6 +303,52 @@ def test_parser_commands_and_options_are_available(tmpdir, command_function, cli
         gimmecert.cli.main()  # Should not raise
 
 
+# List of _invalid_ CLI invocations to use in
+# test_invalid_parser_commands_and_options_produce_error.
+#
+# Each element in this list should be a tuple where first element is
+# the command function (relative to CLI module) that should be mocked,
+# while second element is list of CLI arguments for invoking the
+# command from CLI. See test documentation for more details.
+INVALID_CLI_INVOCATIONS = [
+    # init, invalid key specification
+    ("gimmecert.cli.init", ["gimmecert", "init", "-k", "rsa"]),
+    ("gimmecert.cli.init", ["gimmecert", "init", "-k", "rsa:not_a_number"]),
+    ("gimmecert.cli.init", ["gimmecert", "init", "-k", "unsupported:algorithm"]),
+]
+
+
+@pytest.mark.parametrize("command_function, cli_invocation", INVALID_CLI_INVOCATIONS)
+def test_invalid_parser_commands_and_options_produce_error(tmpdir, command_function, cli_invocation):
+    """
+    Tests handling of invalid CLI invocations by top-level and command
+    parsers.
+
+    This test helps greatly reduce duplication of code, at the expense
+    of some flexibility.
+
+    The passed-in command_function is mocked and set-up to return a
+    success exit code, since the main point is to ensure the CLI
+    supports specific commands and parameters. E.g. the parser should
+    be the one producing errors.
+
+    To add a new valid invocation of CLI, update the
+    INVALID_CLI_INVOCATIONS variable above.
+    """
+
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
+    with mock.patch(command_function) as mock_command_function, mock.patch('sys.argv', cli_invocation):
+        mock_command_function.return_value = gimmecert.commands.ExitCode.SUCCESS
+
+        with pytest.raises(SystemExit) as e_info:
+            gimmecert.cli.main()
+
+        assert e_info.value.code == gimmecert.commands.ExitCode.ERROR_ARGUMENTS
+
+
 @pytest.mark.parametrize("command", ["help", "init", "server", "client", "renew", "status"])
 @pytest.mark.parametrize("help_option", ["--help", "-h"])
 def test_command_exists_and_accepts_help_flag(tmpdir, command, help_option):
@@ -326,7 +376,8 @@ def test_command_exists_and_accepts_help_flag(tmpdir, command, help_option):
 
 @mock.patch('sys.argv', ['gimmecert', 'init'])
 @mock.patch('gimmecert.cli.init')
-def test_init_command_invoked_with_correct_parameters_no_options(mock_init, tmpdir):
+@mock.patch('gimmecert.cli.KeyGenerator')
+def test_init_command_invoked_with_correct_parameters_no_options(mock_key_generator, mock_init, tmpdir):
     # This should ensure we don't accidentally create artifacts
     # outside of test directory.
     tmpdir.chdir()
@@ -335,14 +386,18 @@ def test_init_command_invoked_with_correct_parameters_no_options(mock_init, tmpd
 
     default_depth = 1
 
+    mock_key_generator.return_value = mock.Mock()
+
     gimmecert.cli.main()
 
-    mock_init.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, tmpdir.basename, default_depth)
+    mock_key_generator.assert_called_once_with("rsa:2048")
+    mock_init.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, tmpdir.basename, default_depth, mock_key_generator.return_value)
 
 
 @mock.patch('sys.argv', ['gimmecert', 'init', '-b', 'My Project'])
 @mock.patch('gimmecert.cli.init')
-def test_init_command_invoked_with_correct_parameters_with_options(mock_init, tmpdir):
+@mock.patch('gimmecert.cli.KeyGenerator')
+def test_init_command_invoked_with_correct_parameters_with_options(mock_key_generator, mock_init, tmpdir):
     # This should ensure we don't accidentally create artifacts
     # outside of test directory.
     tmpdir.chdir()
@@ -351,9 +406,11 @@ def test_init_command_invoked_with_correct_parameters_with_options(mock_init, tm
 
     default_depth = 1
 
+    mock_key_generator.return_value = mock.Mock()
+
     gimmecert.cli.main()
 
-    mock_init.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'My Project', default_depth)
+    mock_init.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'My Project', default_depth, mock_key_generator.return_value)
 
 
 @mock.patch('sys.argv', ['gimmecert', 'server'])

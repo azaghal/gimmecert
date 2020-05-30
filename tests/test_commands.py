@@ -26,6 +26,7 @@ import sys
 import cryptography.x509
 
 import gimmecert.commands
+import gimmecert.crypto
 
 import pytest
 from unittest import mock
@@ -37,7 +38,7 @@ def test_init_sets_up_directory_structure(tmpdir):
     ca_dir = tmpdir.join('.gimmecert', 'ca')
     server_dir = tmpdir.join('.gimmecert', 'server')
 
-    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 1)
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
 
     assert os.path.exists(base_dir.strpath)
     assert os.path.exists(ca_dir.strpath)
@@ -45,7 +46,7 @@ def test_init_sets_up_directory_structure(tmpdir):
 
 
 def test_init_generates_single_ca_artifact_for_depth_1(tmpdir):
-    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 1)
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
 
     assert os.path.exists(tmpdir.join('.gimmecert', 'ca', 'level1.key.pem').strpath)
     assert os.path.exists(tmpdir.join('.gimmecert', 'ca', 'level1.cert.pem').strpath)
@@ -53,7 +54,7 @@ def test_init_generates_single_ca_artifact_for_depth_1(tmpdir):
 
 
 def test_init_generates_three_ca_artifacts_for_depth_3(tmpdir):
-    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 3)
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 3, gimmecert.crypto.KeyGenerator("rsa:2048"))
 
     assert os.path.exists(tmpdir.join('.gimmecert', 'ca', 'level1.key.pem').strpath)
     assert os.path.exists(tmpdir.join('.gimmecert', 'ca', 'level1.cert.pem').strpath)
@@ -65,7 +66,7 @@ def test_init_generates_three_ca_artifacts_for_depth_3(tmpdir):
 
 
 def test_init_outputs_full_chain_for_depth_1(tmpdir):
-    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 1)
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
 
     level1_certificate = tmpdir.join('.gimmecert', 'ca', 'level1.cert.pem').read()
     full_chain = tmpdir.join('.gimmecert', 'ca', 'chain-full.cert.pem').read()
@@ -74,7 +75,7 @@ def test_init_outputs_full_chain_for_depth_1(tmpdir):
 
 
 def test_init_outputs_full_chain_for_depth_3(tmpdir):
-    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 3)
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 3, gimmecert.crypto.KeyGenerator("rsa:2048"))
 
     level1_certificate = tmpdir.join('.gimmecert', 'ca', 'level1.cert.pem').read()
     level2_certificate = tmpdir.join('.gimmecert', 'ca', 'level2.cert.pem').read()
@@ -87,26 +88,26 @@ def test_init_outputs_full_chain_for_depth_3(tmpdir):
 
 
 def test_init_returns_success_if_directory_has_not_been_previously_initialised(tmpdir):
-    status_code = gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 1)
+    status_code = gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
 
     assert status_code == gimmecert.commands.ExitCode.SUCCESS
 
 
 def test_init_returns_error_code_if_directory_has_been_previously_initialised(tmpdir):
-    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 1)
-    status_code = gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 1)
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
+    status_code = gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
 
     assert status_code == gimmecert.commands.ExitCode.ERROR_ALREADY_INITIALISED
 
 
 def test_init_does_not_overwrite_artifcats_if_already_initialised(tmpdir):
-    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 1)
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
 
     level1_private_key_before = tmpdir.join('.gimmecert', 'ca', 'level1.key.pem').read()
     level1_certificate_before = tmpdir.join('.gimmecert', 'ca', 'level1.cert.pem').read()
     full_chain_before = tmpdir.join('.gimmecert', 'ca', 'chain-full.cert.pem').read()
 
-    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 1)
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
 
     level1_private_key_after = tmpdir.join('.gimmecert', 'ca', 'level1.key.pem').read()
     level1_certificate_after = tmpdir.join('.gimmecert', 'ca', 'level1.cert.pem').read()
@@ -249,29 +250,29 @@ def test_init_command_stdout_and_stderr_for_single_ca(tmpdir):
     stdout_stream = io.StringIO()
     stderr_stream = io.StringIO()
 
-    gimmecert.commands.init(stdout_stream, stderr_stream, tmpdir.strpath, "myproject", 1)
+    gimmecert.commands.init(stdout_stream, stderr_stream, tmpdir.strpath, "myproject", 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
 
     stdout = stdout_stream.getvalue()
     stderr = stderr_stream.getvalue()
 
     assert stderr == ""
-    assert "CA hierarchy initialised" in stdout
+    assert "CA hierarchy initialised using 2048-bit RSA keys" in stdout
     assert ".gimmecert/ca/level1.cert.pem" in stdout
     assert ".gimmecert/ca/level1.key.pem" in stdout
     assert ".gimmecert/ca/chain-full.cert.pem" in stdout
 
 
-def test_init_command_stdout_and_stderr_for_multiple_cas(tmpdir):
+def test_init_command_stdout_and_stderr_for_multiple_cas_with_rsa_1024(tmpdir):
     stdout_stream = io.StringIO()
     stderr_stream = io.StringIO()
 
-    gimmecert.commands.init(stdout_stream, stderr_stream, tmpdir.strpath, "myproject", 3)
+    gimmecert.commands.init(stdout_stream, stderr_stream, tmpdir.strpath, "myproject", 3, gimmecert.crypto.KeyGenerator("rsa:1024"))
 
     stdout = stdout_stream.getvalue()
     stderr = stderr_stream.getvalue()
 
     assert stderr == ""
-    assert "CA hierarchy initialised" in stdout
+    assert "CA hierarchy initialised using 1024-bit RSA keys" in stdout
     assert ".gimmecert/ca/level1.cert.pem" in stdout
     assert ".gimmecert/ca/level1.key.pem" in stdout
     assert ".gimmecert/ca/level2.cert.pem" in stdout
@@ -285,9 +286,9 @@ def test_init_command_stdout_and_stderr_if_hierarchy_already_initialised(tmpdir)
     stdout_stream = io.StringIO()
     stderr_stream = io.StringIO()
 
-    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, "myproject", 1)
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, "myproject", 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
 
-    gimmecert.commands.init(stdout_stream, stderr_stream, tmpdir.strpath, "myproject", 1)
+    gimmecert.commands.init(stdout_stream, stderr_stream, tmpdir.strpath, "myproject", 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
 
     stdout = stdout_stream.getvalue()
     stderr = stderr_stream.getvalue()
@@ -627,7 +628,7 @@ def test_status_reports_ca_hierarchy_information(tmpdir):
     stderr_stream = io.StringIO()
 
     with freeze_time('2018-01-01 00:15:00'):
-        gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 3)
+        gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 3, gimmecert.crypto.KeyGenerator("rsa:2048"))
 
     with freeze_time('2018-06-01 00:15:00'):
         status_code = gimmecert.commands.status(stdout_stream, stderr_stream, tmpdir.strpath)
@@ -676,7 +677,7 @@ def test_status_reports_server_certificate_information(tmpdir):
     gimmecert.storage.write_csr(myserver3_csr, myserver3_csr_file.strpath)
 
     with freeze_time('2018-01-01 00:15:00'):
-        gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 3)
+        gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 3, gimmecert.crypto.KeyGenerator("rsa:2048"))
 
     with freeze_time('2018-02-01 00:15:00'):
         gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver1', None, None)
@@ -744,7 +745,7 @@ def test_status_reports_client_certificate_information(tmpdir):
     gimmecert.storage.write_csr(myclient3_csr, myclient3_csr_file.strpath)
 
     with freeze_time('2018-01-01 00:15:00'):
-        gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 3)
+        gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 3, gimmecert.crypto.KeyGenerator("rsa:2048"))
 
     with freeze_time('2018-02-01 00:15:00'):
         gimmecert.commands.client(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myclient1', None)
@@ -802,7 +803,7 @@ def test_status_reports_no_server_certificates_were_issued(tmpdir):
 
     # Just create some sample data, but no server certificates.
     with freeze_time('2018-01-01 00:15:00'):
-        gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 1)
+        gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
         gimmecert.commands.client(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myclient1', None)
         gimmecert.commands.client(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myclient2', None)
 
@@ -823,7 +824,7 @@ def test_status_reports_no_client_certificates_were_issued(tmpdir):
 
     # Just create some sample data, but no client certificates.
     with freeze_time('2018-01-01 00:15:00'):
-        gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 1)
+        gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
         gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver1', None, None)
         gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver2', None, None)
 
@@ -862,7 +863,7 @@ def test_certificate_marked_as_not_valid_or_expired_as_appropriate(tmpdir, subje
 
     # Perform action on our fixed issuance date.
     with freeze_time(issuance_date):
-        gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, "My Project", 1)
+        gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, "My Project", 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
         gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None, None)
         gimmecert.commands.client(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myclient', None)
 

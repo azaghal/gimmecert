@@ -25,8 +25,10 @@ import sys
 
 from .decorators import subcommand_parser, get_subcommand_parser_setup_functions
 from .commands import client, help_, init, renew, server, status, usage, ExitCode
+from .crypto import KeyGenerator
 
 
+ERROR_ARGUMENTS = 2
 ERROR_GENERIC = 10
 
 
@@ -81,13 +83,16 @@ def setup_init_subcommand_parser(parser, subparsers):
     subparser = subparsers.add_parser('init', description='Initialise CA hierarchy.')
     subparser.add_argument('--ca-base-name', '-b', help="Base name to use for CA naming. Default is to use the working directory base name.")
     subparser.add_argument('--ca-hierarchy-depth', '-d', type=int, help="Depth of CA hierarchy to generate. Default is 1", default=1)
+    subparser.add_argument('--key-specification', '-k', type=KeyGenerator,
+                           help='''Default specification/parameters to use for private key generation. \
+    For RSA keys, use format rsa:BIT_LENGTH. Default is rsa:2048.''', default="rsa:2048")
 
     def init_wrapper(args):
         project_directory = os.getcwd()
         if args.ca_base_name is None:
             args.ca_base_name = os.path.basename(project_directory)
 
-        return init(sys.stdout, sys.stderr, project_directory, args.ca_base_name, args.ca_hierarchy_depth)
+        return init(sys.stdout, sys.stderr, project_directory, args.ca_base_name, args.ca_hierarchy_depth, args.key_specification)
 
     subparser.set_defaults(func=init_wrapper)
 
