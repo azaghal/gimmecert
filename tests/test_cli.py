@@ -253,6 +253,10 @@ VALID_CLI_INVOCATIONS = [
     ("gimmecert.cli.client", ["gimmecert", "client", "--csr", "myclient.csr.pem", "myclient"]),
     ("gimmecert.cli.client", ["gimmecert", "client", "-c", "myclient.csr.pem", "myclient"]),
 
+    # client, key specification long and short option
+    ("gimmecert.cli.client", ["gimmecert", "client", "--key-specification", "rsa:4096", "myclient"]),
+    ("gimmecert.cli.client", ["gimmecert", "client", "-k", "rsa:1024", "myclient"]),
+
     # renew, no options
     ("gimmecert.cli.renew", ["gimmecert", "renew", "server", "myserver"]),
     ("gimmecert.cli.renew", ["gimmecert", "renew", "client", "myclient"]),
@@ -324,6 +328,11 @@ INVALID_CLI_INVOCATIONS = [
     ("gimmecert.cli.server", ["gimmecert", "server", "-k", "rsa", "myserver"]),
     ("gimmecert.cli.server", ["gimmecert", "server", "-k", "rsa:not_a_number", "myserver"]),
     ("gimmecert.cli.server", ["gimmecert", "server", "-k", "unsupported:algorithm", "myserver"]),
+
+    # client, invalid key specification
+    ("gimmecert.cli.client", ["gimmecert", "client", "-k", "rsa", "myclient"]),
+    ("gimmecert.cli.client", ["gimmecert", "client", "-k", "rsa:not_a_number", "myclient"]),
+    ("gimmecert.cli.client", ["gimmecert", "client", "-k", "unsupported:algorithm", "myclient"]),
 ]
 
 
@@ -556,7 +565,7 @@ def test_client_command_invoked_with_correct_parameters(mock_client, tmpdir):
 
     gimmecert.cli.main()
 
-    mock_client.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'myclient', None)
+    mock_client.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'myclient', None, None)
 
 
 @mock.patch('sys.argv', ['gimmecert', 'renew'])
@@ -737,3 +746,17 @@ def test_key_specification_returns_algorithm_and_parameters_for_valid_specificat
     algorithm, parameters = gimmecert.cli.key_specification(key_specification)  # should not raise
 
     assert (algorithm, parameters) == expected_return_value
+
+
+@mock.patch('sys.argv', ['gimmecert', 'client', '-k', 'rsa:1024', 'myclient'])
+@mock.patch('gimmecert.cli.client')
+def test_client_command_invoked_with_correct_parameters_with_key_specification(mock_client, tmpdir):
+    # This should ensure we don't accidentally create artifacts
+    # outside of test directory.
+    tmpdir.chdir()
+
+    mock_client.return_value = gimmecert.commands.ExitCode.SUCCESS
+
+    gimmecert.cli.main()
+
+    mock_client.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'myclient', None, ('rsa', 1024))

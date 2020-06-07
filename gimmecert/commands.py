@@ -138,8 +138,8 @@ def server(stdout, stderr, project_directory, entity_name, extra_dns_names, cust
     :param extra_dns_names: List of additional DNS names to include in the subject alternative name.
     :type extra_dns_names: list[str]
 
-    :param custom_csr_path: Path to custom certificate signing request to use for issuing client certificate. Set to None or "" to generate private key.
-                            Do not use together with key_specification.
+    :param custom_csr_path: Path to custom certificate signing request to use for issuing server certificate. Set to None or "" to generate private key.
+                            Always overrides passed-in key specification.
     :type custom_csr_path: str or None
 
     :param key_specification: Key specification to use when generating private keys for the server. Ignored if custom_csr_path is specified. Set to None to
@@ -255,7 +255,7 @@ def usage(stdout, stderr, parser):
     return ExitCode.SUCCESS
 
 
-def client(stdout, stderr, project_directory, entity_name, custom_csr_path):
+def client(stdout, stderr, project_directory, entity_name, custom_csr_path, key_specification):
     """
     Issues a client certificate using the CA hierarchy initialised
     within the specified directory.
@@ -280,7 +280,12 @@ def client(stdout, stderr, project_directory, entity_name, custom_csr_path):
     :type entity_name: str
 
     :param custom_csr_path: Path to custom certificate signing request to use for issuing client certificate. Set to None or "" to generate private key.
+                            Always overrides passed-in key specification.
     :type custom_csr_path: str or None
+
+    :param key_specification: Key specification to use when generating private keys for the client. Ignored if custom_csr_path is specified. Set to None to
+                              default to issuing CA hiearchy algorithm and parameters.
+    :type key_specification: tuple(str, int) or None
 
     :returns: Status code, one from gimmecert.commands.ExitCode.
     :rtype: int
@@ -314,7 +319,10 @@ def client(stdout, stderr, project_directory, entity_name, custom_csr_path):
         csr = gimmecert.storage.read_csr(custom_csr_path)
         public_key = csr.public_key()
     else:
-        private_key = gimmecert.crypto.generate_private_key()
+        if not key_specification:
+            key_specification = gimmecert.crypto.key_specification_from_public_key(issuer_private_key.public_key())
+        key_generator = gimmecert.crypto.KeyGenerator(key_specification[0], key_specification[1])
+        private_key = key_generator()
         public_key = private_key.public_key()
 
     # Issue certificate using the passed-in information and

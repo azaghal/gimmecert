@@ -44,7 +44,7 @@ def test_client_command_available_with_help():
     assert exit_code == 0
     assert stderr == ""
     assert stdout.startswith("usage: gimmecert client")
-    assert stdout.split('\n')[0].endswith(" entity_name")  # First line of help.
+    assert stdout.split('\n')[2].endswith(" entity_name")  # Third line of help.
 
 
 def test_client_command_requires_initialised_hierarchy(tmpdir):

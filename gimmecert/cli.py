@@ -165,11 +165,14 @@ def setup_client_subcommand_parser(parser, subparsers):
     subparser.add_argument('entity_name', help='Name of the client entity.')
     subparser.add_argument('--csr', '-c', type=str, default=None, help='''Do not generate client private key locally, and use the passed-in \
     certificate signing request (CSR) instead. Use dash (-) to read from standard input. Only the public key is taken from the CSR.''')
+    subparser.add_argument('--key-specification', '-k', type=key_specification,
+                           help='''Specification/parameters to use for private key generation. \
+    For RSA keys, use format rsa:BIT_LENGTH. Default is to use same algorithm/parameters as used by CA hierarchy.''', default=None)
 
     def client_wrapper(args):
         project_directory = os.getcwd()
 
-        return client(sys.stdout, sys.stderr, project_directory, args.entity_name, args.csr)
+        return client(sys.stdout, sys.stderr, project_directory, args.entity_name, args.csr, args.key_specification)
 
     subparser.set_defaults(func=client_wrapper)
 

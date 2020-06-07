@@ -155,11 +155,11 @@ def sample_project_directory(tmpdir):
         gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, entity_name, None, custom_csr_path, None)
 
         entity_name = "client-with-privkey-%d" % i
-        gimmecert.commands.client(io.StringIO(), io.StringIO(), tmpdir.strpath, entity_name, None)
+        gimmecert.commands.client(io.StringIO(), io.StringIO(), tmpdir.strpath, entity_name, None, None)
 
         entity_name = "client-with-csr-%d" % i
         custom_csr_path = custom_csr_dir.join("client-with-csr-%d.csr.pem" % i).strpath
-        gimmecert.commands.client(io.StringIO(), io.StringIO(), tmpdir.strpath, entity_name, custom_csr_path)
+        gimmecert.commands.client(io.StringIO(), io.StringIO(), tmpdir.strpath, entity_name, custom_csr_path, None)
 
     return tmpdir
 
