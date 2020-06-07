@@ -242,6 +242,10 @@ VALID_CLI_INVOCATIONS = [
     ("gimmecert.cli.server", ["gimmecert", "server", "--csr", "myserver.csr.pem", "myserver"]),
     ("gimmecert.cli.server", ["gimmecert", "server", "-c", "myserver.csr.pem", "myserver"]),
 
+    # server, key specification long and short option
+    ("gimmecert.cli.server", ["gimmecert", "server", "--key-specification", "rsa:4096", "myserver"]),
+    ("gimmecert.cli.server", ["gimmecert", "server", "-k", "rsa:1024", "myserver"]),
+
     # client, no options
     ("gimmecert.cli.client", ["gimmecert", "client", "myclient"]),
 
@@ -315,6 +319,11 @@ INVALID_CLI_INVOCATIONS = [
     ("gimmecert.cli.init", ["gimmecert", "init", "-k", "rsa"]),
     ("gimmecert.cli.init", ["gimmecert", "init", "-k", "rsa:not_a_number"]),
     ("gimmecert.cli.init", ["gimmecert", "init", "-k", "unsupported:algorithm"]),
+
+    # server, invalid key specification
+    ("gimmecert.cli.server", ["gimmecert", "server", "-k", "rsa", "myserver"]),
+    ("gimmecert.cli.server", ["gimmecert", "server", "-k", "rsa:not_a_number", "myserver"]),
+    ("gimmecert.cli.server", ["gimmecert", "server", "-k", "unsupported:algorithm", "myserver"]),
 ]
 
 
@@ -429,12 +438,12 @@ def test_server_command_invoked_with_correct_parameters_without_extra_dns_names(
 
     gimmecert.cli.main()
 
-    mock_server.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'myserver', [], None)
+    mock_server.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'myserver', [], None, None)
 
 
-@mock.patch('sys.argv', ['gimmecert', 'server', 'myserver', 'service.local', 'service.example.com'])
+@mock.patch('sys.argv', ['gimmecert', 'server', '-k', 'rsa:1024', 'myserver', 'service.local', 'service.example.com'])
 @mock.patch('gimmecert.cli.server')
-def test_server_command_invoked_with_correct_parameters_with_extra_dns_names(mock_server, tmpdir):
+def test_server_command_invoked_with_correct_parameters_with_extra_dns_names_and_key_specification(mock_server, tmpdir):
     # This should ensure we don't accidentally create artifacts
     # outside of test directory.
     tmpdir.chdir()
@@ -443,7 +452,7 @@ def test_server_command_invoked_with_correct_parameters_with_extra_dns_names(moc
 
     gimmecert.cli.main()
 
-    mock_server.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'myserver', ['service.local', 'service.example.com'], None)
+    mock_server.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'myserver', ['service.local', 'service.example.com'], None, ("rsa", 1024))
 
 
 @mock.patch('sys.argv', ['gimmecert', 'help'])
