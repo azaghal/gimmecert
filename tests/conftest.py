@@ -143,7 +143,7 @@ def sample_project_directory(tmpdir):
         gimmecert.storage.write_csr(csr, custom_csr_dir.join("%s.csr.pem" % name).strpath)
 
     # Initialise one-level deep hierarchy.
-    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 1, ("rsa", 2048))
 
     # Issue a bunch of certificates.
     for i in range(1, per_type_count + 1):
@@ -186,6 +186,6 @@ def gctmpdir(tmpdir):
     """
 
     # Initialise one-level deep hierarchy.
-    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 1, ("rsa", 2048))
 
     return tmpdir

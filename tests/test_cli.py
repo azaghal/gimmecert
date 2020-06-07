@@ -376,8 +376,7 @@ def test_command_exists_and_accepts_help_flag(tmpdir, command, help_option):
 
 @mock.patch('sys.argv', ['gimmecert', 'init'])
 @mock.patch('gimmecert.cli.init')
-@mock.patch('gimmecert.cli.KeyGenerator')
-def test_init_command_invoked_with_correct_parameters_no_options(mock_key_generator, mock_init, tmpdir):
+def test_init_command_invoked_with_correct_parameters_no_options(mock_init, tmpdir):
     # This should ensure we don't accidentally create artifacts
     # outside of test directory.
     tmpdir.chdir()
@@ -386,18 +385,14 @@ def test_init_command_invoked_with_correct_parameters_no_options(mock_key_genera
 
     default_depth = 1
 
-    mock_key_generator.return_value = mock.Mock()
-
     gimmecert.cli.main()
 
-    mock_key_generator.assert_called_once_with("rsa:2048")
-    mock_init.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, tmpdir.basename, default_depth, mock_key_generator.return_value)
+    mock_init.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, tmpdir.basename, default_depth, ('rsa', 2048))
 
 
-@mock.patch('sys.argv', ['gimmecert', 'init', '-b', 'My Project'])
+@mock.patch('sys.argv', ['gimmecert', 'init', '-b', 'My Project', '-k', 'rsa:4096'])
 @mock.patch('gimmecert.cli.init')
-@mock.patch('gimmecert.cli.KeyGenerator')
-def test_init_command_invoked_with_correct_parameters_with_options(mock_key_generator, mock_init, tmpdir):
+def test_init_command_invoked_with_correct_parameters_with_options(mock_init, tmpdir):
     # This should ensure we don't accidentally create artifacts
     # outside of test directory.
     tmpdir.chdir()
@@ -406,11 +401,9 @@ def test_init_command_invoked_with_correct_parameters_with_options(mock_key_gene
 
     default_depth = 1
 
-    mock_key_generator.return_value = mock.Mock()
-
     gimmecert.cli.main()
 
-    mock_init.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'My Project', default_depth, mock_key_generator.return_value)
+    mock_init.assert_called_once_with(sys.stdout, sys.stderr, tmpdir.strpath, 'My Project', default_depth, ('rsa', 4096))
 
 
 @mock.patch('sys.argv', ['gimmecert', 'server'])
@@ -709,3 +702,29 @@ def test_renew_command_fails_if_both_new_private_key_and_csr_options_are_specifi
 
     assert mock_renew.called is False
     assert e_info.value.code != 0
+
+
+@pytest.mark.parametrize("key_specification", [
+    "",
+    "rsa",
+    "rsa:not_a_number",
+    "unsupported:algorithm",
+])
+def test_key_specification_raises_exception_for_invalid_specification(key_specification):
+
+    with pytest.raises(ValueError) as e_info:
+        gimmecert.cli.key_specification(key_specification)
+
+    assert str(e_info.value) == "Invalid key specification: '%s'" % key_specification
+
+
+@pytest.mark.parametrize("key_specification, expected_return_value", [
+    ("rsa:1024", ("rsa", 1024)),
+    ("rsa:2048", ("rsa", 2048)),
+    ("rsa:4096", ("rsa", 4096)),
+])
+def test_key_specification_returns_algorithm_and_parameters_for_valid_specification(key_specification, expected_return_value):
+
+    algorithm, parameters = gimmecert.cli.key_specification(key_specification)  # should not raise
+
+    assert (algorithm, parameters) == expected_return_value

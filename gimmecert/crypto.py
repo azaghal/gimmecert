@@ -36,35 +36,24 @@ class KeyGenerator:
     instance initialisation.
     """
 
-    def __init__(self, specification):
+    def __init__(self, algorithm, parameters):
         """
         Initialises an instance.
 
-        :param specification: Specification describing the private keys that that instance should be generating.
-                              For RSA keys, use syntax "rsa:BIT_LENGTH".
-        :type specification: str
+        :param algorithm: Algorithm to use. Supported algorithms: 'rsa'.
+        :type algorithm: str
 
-        :raises ValueError: If passed-in specification is invalid.
+        :param parameters: Parameters for generating the keys using the specified algorithm. For RSA keys this is key size.
+        :type parameters: int
         """
 
-        try:
-            # This will throw ValueError if we can't get two values
-            # assigned via split.
-            key_type, key_parameters = specification.split(":", 2)
-
-            if key_type == "rsa" and key_parameters.isnumeric():
-                self._algorithm = "rsa"
-                self._parameters = int(key_parameters)
-            else:
-                raise ValueError()
-
-        except ValueError:
-            raise ValueError("Invalid key specification: '%s'" % specification)
+        self._algorithm = algorithm
+        self._parameters = parameters
 
     def __str__(self):
         """
-        Returns string (human-readable) representation of stored key
-        algorithm and parameters.
+        Returns string (human-readable) representation of stored algorithm
+        and parameters.
 
         :returns: String representation of object.
         :rtype: str

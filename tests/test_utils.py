@@ -75,7 +75,7 @@ def test_date_range_to_str():
 
 
 def test_get_dns_names_returns_empty_list_if_no_dns_names():
-    issuer_private_key, issuer_certificate = gimmecert.crypto.generate_ca_hierarchy('My Test', 1, gimmecert.crypto.KeyGenerator("rsa:2048"))[0]
+    issuer_private_key, issuer_certificate = gimmecert.crypto.generate_ca_hierarchy('My Test', 1, gimmecert.crypto.KeyGenerator("rsa", 2048))[0]
     private_key = gimmecert.crypto.generate_private_key()
 
     certificate = gimmecert.crypto.issue_client_certificate(
@@ -91,7 +91,7 @@ def test_get_dns_names_returns_empty_list_if_no_dns_names():
 
 def test_get_dns_names_returns_list_of_dns_names():
 
-    issuer_private_key, issuer_certificate = gimmecert.crypto.generate_ca_hierarchy('My Test', 1, gimmecert.crypto.KeyGenerator("rsa:2048"))[0]
+    issuer_private_key, issuer_certificate = gimmecert.crypto.generate_ca_hierarchy('My Test', 1, gimmecert.crypto.KeyGenerator("rsa", 2048))[0]
     private_key = gimmecert.crypto.generate_private_key()
 
     certificate = gimmecert.crypto.issue_server_certificate(

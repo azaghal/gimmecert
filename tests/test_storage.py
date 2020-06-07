@@ -80,7 +80,7 @@ def test_write_certificate(tmpdir):
 
 def test_write_certificate_chain(tmpdir):
     output_file = tmpdir.join('chain.cert.pem')
-    certificate_chain = [certificate for _, certificate in gimmecert.crypto.generate_ca_hierarchy('My Project', 3, gimmecert.crypto.KeyGenerator("rsa:2048"))]
+    certificate_chain = [certificate for _, certificate in gimmecert.crypto.generate_ca_hierarchy('My Project', 3, gimmecert.crypto.KeyGenerator("rsa", 2048))]
     level1_pem, level2_pem, level3_pem = [gimmecert.utils.certificate_to_pem(certificate) for certificate in certificate_chain]
 
     gimmecert.storage.write_certificate_chain(certificate_chain, output_file.strpath)
@@ -106,7 +106,7 @@ def test_is_initialised_returns_false_if_directory_is_not_initialised(tmpdir):
 
 def test_read_ca_hierarchy_returns_list_of_ca_private_key_and_certificate_pairs_for_single_ca(tmpdir):
     tmpdir.chdir()
-    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, 'My Project', 1, gimmecert.crypto.KeyGenerator("rsa:2048"))
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, 'My Project', 1, ("rsa", 2048))
 
     ca_hierarchy = gimmecert.storage.read_ca_hierarchy(tmpdir.join('.gimmecert', 'ca').strpath)
 
@@ -146,7 +146,7 @@ def test_read_certificate_returns_certificate(tmpdir):
 
 def test_read_ca_hierarchy_returns_list_of_ca_private_key_and_certificate_pairs_in_hierarchy_order_for_multiple_cas(tmpdir):
     tmpdir.chdir()
-    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, 'My Project', 4, gimmecert.crypto.KeyGenerator("rsa:2048"))
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, 'My Project', 4, ("rsa", 2048))
 
     ca_hierarchy = gimmecert.storage.read_ca_hierarchy(tmpdir.join('.gimmecert', 'ca').strpath)
 

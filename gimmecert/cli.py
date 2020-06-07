@@ -25,7 +25,6 @@ import sys
 
 from .decorators import subcommand_parser, get_subcommand_parser_setup_functions
 from .commands import client, help_, init, renew, server, status, usage, ExitCode
-from .crypto import KeyGenerator
 
 
 ERROR_ARGUMENTS = 2
@@ -78,12 +77,40 @@ Examples:
 """
 
 
+def key_specification(specification):
+    """
+    Verifies and parses the passed-in key specification. This is a
+    small utility function for use with the Python argument parser.
+
+    :param specification: Key specification. Currently supported formats are: "rsa:KEY_SIZE".
+    :type specification: str
+
+    :returns: Parsed key algorithm and parameter(s) for the algorithm. For RSA, parameter is the RSA key size.
+    :rtype: tuple(str, int)
+
+    :raises ValueError: If passed-in specification is invalid.
+    """
+
+    try:
+        algorithm, parameters = specification.split(":", 2)
+
+        if algorithm == "rsa":
+            parameters = int(parameters)
+        else:
+            raise ValueError()
+
+    except ValueError:
+        raise ValueError("Invalid key specification: '%s'" % specification)
+
+    return algorithm, parameters
+
+
 @subcommand_parser
 def setup_init_subcommand_parser(parser, subparsers):
     subparser = subparsers.add_parser('init', description='Initialise CA hierarchy.')
     subparser.add_argument('--ca-base-name', '-b', help="Base name to use for CA naming. Default is to use the working directory base name.")
     subparser.add_argument('--ca-hierarchy-depth', '-d', type=int, help="Depth of CA hierarchy to generate. Default is 1", default=1)
-    subparser.add_argument('--key-specification', '-k', type=KeyGenerator,
+    subparser.add_argument('--key-specification', '-k', type=key_specification,
                            help='''Default specification/parameters to use for private key generation. \
     For RSA keys, use format rsa:BIT_LENGTH. Default is rsa:2048.''', default="rsa:2048")
 

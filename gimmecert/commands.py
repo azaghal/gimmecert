@@ -47,7 +47,7 @@ class InvalidCommandInvocation(Exception):
     pass
 
 
-def init(stdout, stderr, project_directory, ca_base_name, ca_hierarchy_depth, key_generator):
+def init(stdout, stderr, project_directory, ca_base_name, ca_hierarchy_depth, key_specification):
     """
     Initialises the necessary directory and CA hierarchies for use in
     the specified directory.
@@ -67,8 +67,8 @@ def init(stdout, stderr, project_directory, ca_base_name, ca_hierarchy_depth, ke
     :param ca_hierarchy_depth: Length/depths of CA hierarchy that should be initialised. E.g. total number of CAs in chain.
     :type ca_hierarchy_depth: int
 
-    :param key_generator: Callable for generating private keys.
-    :type key_generator: callable[[], cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey]
+    :param key_specification: Key specification to use when generating private keys for the hierarchy.
+    :type key_specification: tuple(str, int)
 
     :returns: Status code, one from gimmecert.commands.ExitCode.
     :rtype: int
@@ -86,6 +86,7 @@ def init(stdout, stderr, project_directory, ca_base_name, ca_hierarchy_depth, ke
     gimmecert.storage.initialise_storage(project_directory)
 
     # Generate the CA hierarchy.
+    key_generator = gimmecert.crypto.KeyGenerator(key_specification[0], key_specification[1])
     ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy(ca_base_name, ca_hierarchy_depth, key_generator)
 
     # Output the CA private keys and certificates.
