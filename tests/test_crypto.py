@@ -652,3 +652,25 @@ def test_generate_ca_hierarchy_uses_correct_rsa_bit_size(key_generator, expected
 
     for private_key, _ in hierarchy:
         assert private_key.key_size == expected_bit_size
+
+
+@pytest.mark.parametrize("specification", [
+    ("rsa", 1024),
+    ("rsa", 2048)
+])
+def test_key_specification_from_public_key_returns_correct_algorithm_and_parameters(specification):
+    key_generator = gimmecert.crypto.KeyGenerator(specification[0], specification[1])
+    public_key = key_generator().public_key()
+
+    algorithm, parameters = gimmecert.crypto.key_specification_from_public_key(public_key)
+
+    assert (algorithm, parameters) == specification
+
+
+def test_key_specification_raises_exception_for_invalid_public_key():
+    public_key = "not_a_public_key_instance"
+
+    with pytest.raises(ValueError) as e_info:
+        gimmecert.crypto.key_specification_from_public_key(public_key)
+
+    assert str(e_info.value) == "Unsupported public key instance passed-in: \"not_a_public_key_instance\" (<class 'str'>)"

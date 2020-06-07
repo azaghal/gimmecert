@@ -432,3 +432,24 @@ def generate_csr(name, private_key):
     )
 
     return csr
+
+
+def key_specification_from_public_key(public_key):
+    """
+    Derives key specification (algorithm and associated parameters)
+    from the passed-in public key. Key specification can be used for
+    generating the private keys via KeyGenerator instances.
+
+    :param public_key: Public
+    :type public_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPublicKey
+
+    :returns: Key algorithm and parameter(s) for generating same type of keys as the passed-in public key.
+    :rtype: tuple(str, int)
+
+    :raises ValueError: If algorithm/parameters could not be derived from the passed-in public key.
+    """
+
+    if isinstance(public_key, cryptography.hazmat.primitives.asymmetric.rsa.RSAPublicKey):
+        return "rsa", public_key.key_size
+
+    raise ValueError("Unsupported public key instance passed-in: \"%s\" (%s)" % (str(public_key), type(public_key)))

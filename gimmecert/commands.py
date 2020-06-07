@@ -160,6 +160,10 @@ def server(stdout, stderr, project_directory, entity_name, extra_dns_names, cust
         print("Refusing to overwrite existing data. Certificate has already been issued for server %s." % entity_name, file=stderr)
         return ExitCode.ERROR_CERTIFICATE_ALREADY_ISSUED
 
+    # Grab the issuing CA private key and certificate.
+    ca_hierarchy = gimmecert.storage.read_ca_hierarchy(os.path.join(project_directory, '.gimmecert', 'ca'))
+    issuer_private_key, issuer_certificate = ca_hierarchy[-1]
+
     # Grab the private key or CSR, and extract public key.
     if custom_csr_path == "-":
         csr_pem = gimmecert.utils.read_input(sys.stdin, stderr, "Please enter the CSR")
@@ -171,13 +175,11 @@ def server(stdout, stderr, project_directory, entity_name, extra_dns_names, cust
         public_key = csr.public_key()
         private_key = None
     else:
-        private_key = gimmecert.crypto.generate_private_key()
+        key_specification = gimmecert.crypto.key_specification_from_public_key(issuer_private_key.public_key())
+        key_generator = gimmecert.crypto.KeyGenerator(key_specification[0], key_specification[1])
+        private_key = key_generator()
         public_key = private_key.public_key()
         csr = None
-
-    # Grab the issuing CA private key and certificate.
-    ca_hierarchy = gimmecert.storage.read_ca_hierarchy(os.path.join(project_directory, '.gimmecert', 'ca'))
-    issuer_private_key, issuer_certificate = ca_hierarchy[-1]
 
     # Issue the certificate.
     certificate = gimmecert.crypto.issue_server_certificate(entity_name, public_key, issuer_private_key, issuer_certificate, extra_dns_names)
