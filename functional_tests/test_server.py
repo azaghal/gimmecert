@@ -204,7 +204,7 @@ def test_server_command_does_not_overwrite_existing_artifacts(tmpdir):
     assert tmpdir.join(".gimmecert", "server", "myserver.cert.pem").read() == certificate
 
 
-def test_server_command_uses_same_rsa_key_size_as_ca_hierarchy(tmpdir):
+def test_server_command_key_specification(tmpdir):
     # John is setting-up a quick and dirty project to test some
     # functionality revolving around X.509 certificates. Since he does
     # not care much about the strength of private keys for it, he
@@ -216,7 +216,7 @@ def test_server_command_uses_same_rsa_key_size_as_ca_hierarchy(tmpdir):
     run_command("gimmecert", "init", "--key-specification", "rsa:1024")
 
     # John issues a server certificates.
-    stdout, stderr, exit_code = run_command('gimmecert', 'server', 'myserver')
+    stdout, stderr, exit_code = run_command('gimmecert', 'server', 'myserver1')
 
     # John observes that the process was completed successfully.
     assert exit_code == 0
@@ -224,14 +224,14 @@ def test_server_command_uses_same_rsa_key_size_as_ca_hierarchy(tmpdir):
 
     # He runs a command to see details about the generated private
     # key.
-    stdout, _, _ = run_command('openssl', 'rsa', '-noout', '-text', '-in', '.gimmecert/server/myserver.key.pem')
+    stdout, _, _ = run_command('openssl', 'rsa', '-noout', '-text', '-in', '.gimmecert/server/myserver1.key.pem')
 
     # And indeed, the generated private key uses the same size as the
     # one he specified for the CA hierarchy.
     assert "Private-Key: (1024 bit)" in stdout
 
     # He then has a look at the certificate.
-    stdout, _, _ = run_command('openssl', 'x509', '-noout', '-text', '-in', '.gimmecert/server/myserver.cert.pem')
+    stdout, _, _ = run_command('openssl', 'x509', '-noout', '-text', '-in', '.gimmecert/server/myserver1.cert.pem')
 
     # Likewise with the private key, the certificate is also using the
     # 1024-bit RSA key.
