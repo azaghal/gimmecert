@@ -209,10 +209,21 @@ def setup_renew_subcommand_parser(parser, subparsers):
     existing certificate, and use the passed-in certificate signing request (CSR) instead. Use dash (-) to read from standard input. \
     If private key exists, it will be removed. Mutually exclusive with the --new-private-key option. Only the public key is taken from the CSR.''')
 
+    subparser.add_argument('--key-specification', '-k', type=key_specification,
+                           help='''Specification/parameters to use for private key generation. \
+    For RSA keys, use format rsa:BIT_LENGTH. Default is to use same specification as used for current certificate.''', default=None)
+
     def renew_wrapper(args):
+        # This is a workaround for having the key specification option
+        # be dependant on new private key option, since argparse
+        # cannot provide such verification on its own.
+        if args.key_specification and not args.new_private_key:
+            subparser.error("argument --key-specification/-k: must be used with --new-private-key/-p")
+
         project_directory = os.getcwd()
 
-        return renew(sys.stdout, sys.stderr, project_directory, args.entity_type, args.entity_name, args.new_private_key, args.csr, args.dns_names)
+        return renew(sys.stdout, sys.stderr, project_directory, args.entity_type, args.entity_name, args.new_private_key, args.csr, args.dns_names,
+                     args.key_specification)
 
     subparser.set_defaults(func=renew_wrapper)
 

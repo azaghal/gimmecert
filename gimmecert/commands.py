@@ -350,7 +350,7 @@ def client(stdout, stderr, project_directory, entity_name, custom_csr_path, key_
     return ExitCode.SUCCESS
 
 
-def renew(stdout, stderr, project_directory, entity_type, entity_name, generate_new_private_key, custom_csr_path, dns_names):
+def renew(stdout, stderr, project_directory, entity_type, entity_name, generate_new_private_key, custom_csr_path, dns_names, key_specification):
     """
     Renews existing certificate, while optionally generating a new
     private key in the process. Naming and extensions are preserved.
@@ -379,6 +379,10 @@ def renew(stdout, stderr, project_directory, entity_type, entity_name, generate_
     :param dns_names: List of additional DNS names to use as replacement when renewing a server certificate. To remove additional DNS names,
         set the value to empty list. To keep the existing DNS names, set the value to None. Valid only for server certificates.
     :type dns_names: list[str] or None
+
+    :param key_specification: Key specification to use when generating new private key. Ignored if custom_csr_path is specified. Set to None to
+                              default to same algorithm and parameters currently used for the entity.
+    :type key_specification: tuple(str, int) or None
 
     :returns: Status code, one from gimmecert.commands.ExitCode.
     :rtype: int
@@ -419,7 +423,14 @@ def renew(stdout, stderr, project_directory, entity_type, entity_name, generate_
     # certificate. Otherwise just reuse existing public key in
     # certificate.
     if generate_new_private_key:
-        private_key = gimmecert.crypto.generate_private_key()
+
+        if key_specification:
+            key_generator = gimmecert.crypto.KeyGenerator(key_specification[0], key_specification[1])
+        else:
+            key_size = old_certificate.public_key().key_size
+            key_generator = gimmecert.crypto.KeyGenerator('rsa', key_size)
+
+        private_key = key_generator()
         gimmecert.storage.write_private_key(private_key, private_key_path)
         public_key = private_key.public_key()
     elif custom_csr_path == '-':
