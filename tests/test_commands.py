@@ -626,12 +626,16 @@ def test_status_reports_uninitialised_directory(tmpdir):
     assert "CA hierarchy has not been initialised in current directory." in stdout
 
 
-def test_status_reports_ca_hierarchy_information(tmpdir):
+@pytest.mark.parametrize('ca_key_specification,ca_key_representation', [
+    (('rsa', 1024), '1024-bit RSA'),
+    (('rsa', 2048), '2048-bit RSA'),
+])
+def test_status_reports_ca_hierarchy_information(tmpdir, ca_key_specification, ca_key_representation):
     stdout_stream = io.StringIO()
     stderr_stream = io.StringIO()
 
     with freeze_time('2018-01-01 00:15:00'):
-        gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 3, ("rsa", 2048))
+        gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 3, ca_key_specification)
 
     with freeze_time('2018-06-01 00:15:00'):
         status_code = gimmecert.commands.status(stdout_stream, stderr_stream, tmpdir.strpath)
@@ -644,12 +648,13 @@ def test_status_reports_ca_hierarchy_information(tmpdir):
     assert stderr == ""
     assert "CA hierarchy\n------------\n" in stdout
 
+    index_ca_key_algorithm = stdout_lines.index("Default key algorithm: %s" % ca_key_representation)  # Should not raise
     index_ca_1 = stdout_lines.index("CN=%s Level 1 CA" % tmpdir.basename)  # Should not raise
     index_ca_2 = stdout_lines.index("CN=%s Level 2 CA" % tmpdir.basename)  # Should not raise
     index_ca_3 = stdout_lines.index("CN=%s Level 3 CA [END ENTITY ISSUING CA]" % tmpdir.basename)  # Should not raise
     full_chain = stdout_lines.index("Full certificate chain: .gimmecert/ca/chain-full.cert.pem")  # Shold not raise
 
-    assert full_chain > index_ca_3 > index_ca_2 > index_ca_1, "Output ordering for CA section is wrong:\n%s" % stdout
+    assert full_chain > index_ca_3 > index_ca_2 > index_ca_1 > index_ca_key_algorithm, "Output ordering for CA section is wrong:\n%s" % stdout
 
     ca_1_validity = stdout_lines[index_ca_1 + 1]
     ca_1_certificate_path = stdout_lines[index_ca_1 + 2]
@@ -683,7 +688,7 @@ def test_status_reports_server_certificate_information(tmpdir):
         gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 3, ("rsa", 2048))
 
     with freeze_time('2018-02-01 00:15:00'):
-        gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver1', None, None, None)
+        gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver1', None, None, ("rsa", 1024))
 
     with freeze_time('2018-03-01 00:15:00'):
         gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver2', ['myservice1.example.com', 'myservice2.example.com'], None, None)
@@ -709,31 +714,37 @@ def test_status_reports_server_certificate_information(tmpdir):
 
     myserver1_validity = stdout_lines[index_myserver1 + 1]
     myserver1_dns = stdout_lines[index_myserver1 + 2]
-    myserver1_private_key_path = stdout_lines[index_myserver1 + 3]
-    myserver1_certificate_path = stdout_lines[index_myserver1 + 4]
+    myserver1_key_algorithm = stdout_lines[index_myserver1 + 3]
+    myserver1_private_key_path = stdout_lines[index_myserver1 + 4]
+    myserver1_certificate_path = stdout_lines[index_myserver1 + 5]
 
     myserver2_validity = stdout_lines[index_myserver2 + 1]
     myserver2_dns = stdout_lines[index_myserver2 + 2]
-    myserver2_private_key_path = stdout_lines[index_myserver2 + 3]
-    myserver2_certificate_path = stdout_lines[index_myserver2 + 4]
+    myserver2_key_algorithm = stdout_lines[index_myserver2 + 3]
+    myserver2_private_key_path = stdout_lines[index_myserver2 + 4]
+    myserver2_certificate_path = stdout_lines[index_myserver2 + 5]
 
     myserver3_validity = stdout_lines[index_myserver3 + 1]
     myserver3_dns = stdout_lines[index_myserver3 + 2]
-    myserver3_csr_path = stdout_lines[index_myserver3 + 3]
-    myserver3_certificate_path = stdout_lines[index_myserver3 + 4]
+    myserver3_key_algorithm = stdout_lines[index_myserver3 + 3]
+    myserver3_csr_path = stdout_lines[index_myserver3 + 4]
+    myserver3_certificate_path = stdout_lines[index_myserver3 + 5]
 
     assert myserver1_validity == "    Validity: 2018-02-01 00:00:00 UTC - 2019-01-01 00:15:00 UTC"
     assert myserver1_dns == "    DNS: myserver1"
+    assert myserver1_key_algorithm == "    Key algorithm: 1024-bit RSA"
     assert myserver1_private_key_path == "    Private key: .gimmecert/server/myserver1.key.pem"
     assert myserver1_certificate_path == "    Certificate: .gimmecert/server/myserver1.cert.pem"
 
     assert myserver2_validity == "    Validity: 2018-03-01 00:00:00 UTC - 2019-01-01 00:15:00 UTC"
     assert myserver2_dns == "    DNS: myserver2, myservice1.example.com, myservice2.example.com"
+    assert myserver2_key_algorithm == "    Key algorithm: 2048-bit RSA"
     assert myserver2_private_key_path == "    Private key: .gimmecert/server/myserver2.key.pem"
     assert myserver2_certificate_path == "    Certificate: .gimmecert/server/myserver2.cert.pem"
 
     assert myserver3_validity == "    Validity: 2018-04-01 00:00:00 UTC - 2019-01-01 00:15:00 UTC"
     assert myserver3_dns == "    DNS: myserver3"
+    assert myserver3_key_algorithm == "    Key algorithm: 2048-bit RSA"
     assert myserver3_csr_path == "    CSR: .gimmecert/server/myserver3.csr.pem"
     assert myserver3_certificate_path == "    Certificate: .gimmecert/server/myserver3.cert.pem"
 
@@ -751,7 +762,7 @@ def test_status_reports_client_certificate_information(tmpdir):
         gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 3, ("rsa", 2048))
 
     with freeze_time('2018-02-01 00:15:00'):
-        gimmecert.commands.client(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myclient1', None, None)
+        gimmecert.commands.client(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myclient1', None, ("rsa", 1024))
 
     with freeze_time('2018-03-01 00:15:00'):
         gimmecert.commands.client(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myclient2', None, None)
@@ -776,26 +787,32 @@ def test_status_reports_client_certificate_information(tmpdir):
     index_myclient3 = stdout_lines.index("CN=myclient3")  # Should not raise
 
     myclient1_validity = stdout_lines[index_myclient1 + 1]
-    myclient1_private_key_path = stdout_lines[index_myclient1 + 2]
-    myclient1_certificate_path = stdout_lines[index_myclient1 + 3]
+    myclient1_key_algorithm = stdout_lines[index_myclient1 + 2]
+    myclient1_private_key_path = stdout_lines[index_myclient1 + 3]
+    myclient1_certificate_path = stdout_lines[index_myclient1 + 4]
 
     myclient2_validity = stdout_lines[index_myclient2 + 1]
-    myclient2_private_key_path = stdout_lines[index_myclient2 + 2]
-    myclient2_certificate_path = stdout_lines[index_myclient2 + 3]
+    myclient2_key_algorithm = stdout_lines[index_myclient2 + 2]
+    myclient2_private_key_path = stdout_lines[index_myclient2 + 3]
+    myclient2_certificate_path = stdout_lines[index_myclient2 + 4]
 
     myclient3_validity = stdout_lines[index_myclient3 + 1]
-    myclient3_csr_path = stdout_lines[index_myclient3 + 2]
-    myclient3_certificate_path = stdout_lines[index_myclient3 + 3]
+    myclient3_key_algorithm = stdout_lines[index_myclient3 + 2]
+    myclient3_csr_path = stdout_lines[index_myclient3 + 3]
+    myclient3_certificate_path = stdout_lines[index_myclient3 + 4]
 
     assert myclient1_validity == "    Validity: 2018-02-01 00:00:00 UTC - 2019-01-01 00:15:00 UTC"
+    assert myclient1_key_algorithm == "    Key algorithm: 1024-bit RSA"
     assert myclient1_private_key_path == "    Private key: .gimmecert/client/myclient1.key.pem"
     assert myclient1_certificate_path == "    Certificate: .gimmecert/client/myclient1.cert.pem"
 
     assert myclient2_validity == "    Validity: 2018-03-01 00:00:00 UTC - 2019-01-01 00:15:00 UTC"
+    assert myclient2_key_algorithm == "    Key algorithm: 2048-bit RSA"
     assert myclient2_private_key_path == "    Private key: .gimmecert/client/myclient2.key.pem"
     assert myclient2_certificate_path == "    Certificate: .gimmecert/client/myclient2.cert.pem"
 
     assert myclient3_validity == "    Validity: 2018-04-01 00:00:00 UTC - 2019-01-01 00:15:00 UTC"
+    assert myclient3_key_algorithm == "    Key algorithm: 2048-bit RSA"
     assert myclient3_csr_path == "    CSR: .gimmecert/client/myclient3.csr.pem"
     assert myclient3_certificate_path == "    Certificate: .gimmecert/client/myclient3.cert.pem"
 

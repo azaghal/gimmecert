@@ -542,6 +542,11 @@ def status(stdout, stderr, project_directory):
 
     ca_hierarchy = gimmecert.storage.read_ca_hierarchy(os.path.join(project_directory, '.gimmecert', 'ca'))
 
+    # Derive key specification from the issuing CA certificate.
+    key_algorithm = gimmecert.crypto.KeyGenerator('rsa', ca_hierarchy[-1][1].public_key().key_size)
+    print("", file=stdout)  # Separator
+    print("Default key algorithm: %s" % key_algorithm, file=stdout)
+
     for i, (_, certificate) in enumerate(ca_hierarchy, 1):
         # Separator.
         print("", file=stdout)
@@ -580,6 +585,7 @@ def status(stdout, stderr, project_directory):
             certificate = gimmecert.storage.read_certificate(os.path.join(project_directory, '.gimmecert', 'server', certificate_file))
             private_key_path = os.path.join(project_directory, '.gimmecert', 'server', certificate_file.replace('.cert.pem', '.key.pem'))
             csr_path = os.path.join(project_directory, '.gimmecert', 'server', certificate_file.replace('.cert.pem', '.csr.pem'))
+            key_algorithm = str(gimmecert.crypto.KeyGenerator("rsa", certificate.public_key().key_size))
 
             # Separator.
             print("", file=stdout)
@@ -597,6 +603,7 @@ def status(stdout, stderr, project_directory):
                                           validity_status), file=stdout)
             print("    DNS: %s" % ", ".join(gimmecert.utils.get_dns_names(certificate)), file=stdout)
 
+            print("    Key algorithm: %s" % key_algorithm, file=stdout)
             if os.path.exists(private_key_path):
                 print("    Private key: .gimmecert/server/%s" % certificate_file.replace('.cert.pem', '.key.pem'), file=stdout)
             elif os.path.exists(csr_path):
@@ -620,6 +627,7 @@ def status(stdout, stderr, project_directory):
             certificate = gimmecert.storage.read_certificate(os.path.join(project_directory, '.gimmecert', 'client', certificate_file))
             private_key_path = os.path.join(project_directory, '.gimmecert', 'client', certificate_file.replace('.cert.pem', '.key.pem'))
             csr_path = os.path.join(project_directory, '.gimmecert', 'client', certificate_file.replace('.cert.pem', '.csr.pem'))
+            key_algorithm = str(gimmecert.crypto.KeyGenerator("rsa", certificate.public_key().key_size))
 
             # Separator.
             print("", file=stdout)
@@ -636,6 +644,7 @@ def status(stdout, stderr, project_directory):
                                                                             certificate.not_valid_after),
                                           validity_status), file=stdout)
 
+            print("    Key algorithm: %s" % key_algorithm, file=stdout)
             if os.path.exists(private_key_path):
                 print("    Private key: .gimmecert/client/%s" % certificate_file.replace('.cert.pem', '.key.pem'), file=stdout)
             elif os.path.exists(csr_path):
