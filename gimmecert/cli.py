@@ -23,6 +23,8 @@ import argparse
 import os
 import sys
 
+from cryptography.hazmat.primitives.asymmetric import ec
+
 from .decorators import subcommand_parser, get_subcommand_parser_setup_functions
 from .commands import client, help_, init, renew, server, status, usage, ExitCode
 
@@ -82,24 +84,37 @@ def key_specification(specification):
     Verifies and parses the passed-in key specification. This is a
     small utility function for use with the Python argument parser.
 
-    :param specification: Key specification. Currently supported formats are: "rsa:KEY_SIZE".
+    :param specification: Key specification. Currently supported formats are: "rsa:KEY_SIZE" and "ecdsa:CURVE_NAME".
     :type specification: str
 
     :returns: Parsed key algorithm and parameter(s) for the algorithm. For RSA, parameter is the RSA key size.
-    :rtype: tuple(str, int)
+    :rtype: tuple(str, int or cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve)
 
     :raises ValueError: If passed-in specification is invalid.
     """
 
+    available_curves = {
+        "secp192r1": ec.SECP192R1,
+        "secp224r1": ec.SECP224R1,
+        "secp256k1": ec.SECP256K1,
+        "secp256r1": ec.SECP256R1,
+        "secp384r1": ec.SECP384R1,
+        "secp521r1": ec.SECP521R1,
+    }
+
     try:
         algorithm, parameters = specification.split(":", 2)
+        algorithm = algorithm.lower()
 
         if algorithm == "rsa":
             parameters = int(parameters)
+        elif algorithm == "ecdsa":
+            parameters = str(parameters).lower()
+            parameters = available_curves[parameters]
         else:
             raise ValueError()
 
-    except ValueError:
+    except (ValueError, KeyError):
         raise ValueError("Invalid key specification: '%s'" % specification)
 
     return algorithm, parameters
@@ -112,7 +127,9 @@ def setup_init_subcommand_parser(parser, subparsers):
     subparser.add_argument('--ca-hierarchy-depth', '-d', type=int, help="Depth of CA hierarchy to generate. Default is 1", default=1)
     subparser.add_argument('--key-specification', '-k', type=key_specification,
                            help='''Default specification/parameters to use for private key generation. \
-    For RSA keys, use format rsa:BIT_LENGTH. Default is rsa:2048.''', default="rsa:2048")
+                           For RSA keys, use format rsa:BIT_LENGTH. For ECDSA keys, use format ecdsa:CURVE_NAME. \
+                           Supported curves: secp192r1, secp224r1, secp256k1, secp256r1, secp384r1, secp521r1. \
+                           Default is rsa:2048.''', default="rsa:2048")
 
     def init_wrapper(args):
         project_directory = os.getcwd()

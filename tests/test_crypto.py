@@ -622,6 +622,12 @@ def test_generate_csr_returns_csr_with_passed_in_name():
     ("rsa", 1024, "1024-bit RSA"),
     ("rsa", 2048, "2048-bit RSA"),
     ("rsa", 4096, "4096-bit RSA"),
+    ("ecdsa", cryptography.hazmat.primitives.asymmetric.ec.SECP192R1, "secp192r1 ECDSA"),
+    ("ecdsa", cryptography.hazmat.primitives.asymmetric.ec.SECP224R1, "secp224r1 ECDSA"),
+    ("ecdsa", cryptography.hazmat.primitives.asymmetric.ec.SECP256K1, "secp256k1 ECDSA"),
+    ("ecdsa", cryptography.hazmat.primitives.asymmetric.ec.SECP256R1, "secp256r1 ECDSA"),
+    ("ecdsa", cryptography.hazmat.primitives.asymmetric.ec.SECP384R1, "secp384r1 ECDSA"),
+    ("ecdsa", cryptography.hazmat.primitives.asymmetric.ec.SECP521R1, "secp521r1 ECDSA"),
 ])
 def test_KeyGenerator_string_representation(algorithm, parameters, string_representation):
 
@@ -638,6 +644,24 @@ def test_KeyGenerator_instance_returns_rsa_private_key_of_correct_size(key_size)
 
     assert isinstance(private_key, cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey)
     assert private_key.key_size == key_size
+
+
+@pytest.mark.parametrize("curve", [
+    cryptography.hazmat.primitives.asymmetric.ec.SECP192R1,
+    cryptography.hazmat.primitives.asymmetric.ec.SECP224R1,
+    cryptography.hazmat.primitives.asymmetric.ec.SECP256K1,
+    cryptography.hazmat.primitives.asymmetric.ec.SECP256R1,
+    cryptography.hazmat.primitives.asymmetric.ec.SECP384R1,
+    cryptography.hazmat.primitives.asymmetric.ec.SECP521R1,
+])
+def test_KeyGenerator_instance_returns_ecdsa_private_with_correct_curve(curve):
+
+    key_generator = gimmecert.crypto.KeyGenerator("ecdsa", curve)
+
+    private_key = key_generator()
+
+    assert isinstance(private_key, cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey)
+    assert isinstance(private_key.curve, curve)
 
 
 @pytest.mark.parametrize("key_generator, expected_bit_size", [

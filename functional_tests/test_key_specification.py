@@ -320,3 +320,67 @@ def test_renew_command_key_specification(tmpdir):
     # checks-out for it as well.
     stdout, _, _ = run_command('openssl', 'rsa', '-noout', '-text', '-in', '.gimmecert/client/myclient2.key.pem')
     assert "Private-Key: (3072 bit)" in stdout
+
+
+def test_initialisation_with_ecdsa_key_specification(tmpdir):
+    # John is looking into using ECDSA keys in his latest project. He
+    # is already aware that Gimmecert supports use of RSA keys, but he
+    # hasn't tried using it with ECDSA yet.
+
+    # He checks the help for the init command first to see if he can
+    # somehow request ECDSA keys to be used instead of RSA.
+    stdout, _, _ = run_command('gimmecert', 'init', '-h')
+
+    # John noticies there is an option to provide a custom key
+    # specification to the tool, and that he can request ECDSA keys to
+    # be used with a specific curve.
+    assert "--key-specification" in stdout
+    assert " -k" in stdout
+    assert "rsa:BIT_LENGTH" in stdout
+    assert "ecdsa:CURVE_NAME" in stdout
+
+    # John can see a number of curves listed as supported.
+    assert "Supported curves: " in stdout
+    assert "secp192r1" in stdout
+    assert "secp224r1" in stdout
+    assert "secp256k1" in stdout
+    assert "secp256r1" in stdout
+    assert "secp384r1" in stdout
+    assert "secp521r1" in stdout
+
+    # John switches to his project directory.
+    tmpdir.chdir()
+
+    # After a short deliberation, he opts to use the secp256r1 curve,
+    # and initialises his CA hierarchy.
+    stdout, stderr, exit_code = run_command('gimmecert', 'init', '--key-specification', 'ecdsa:secp256r1')
+
+    # Command finishes execution with success, and John notices that
+    # the tool has informed him of what the private key algorithm is
+    # in use for the CA hierarchy.
+    assert exit_code == 0
+    assert stderr == ""
+    assert "CA hierarchy initialised using secp256r1 ECDSA keys." in stdout
+
+    # John goes ahead and inspects the CA private key to ensure his
+    # private key specification has been accepted.
+    stdout, stderr, exit_code = run_command('openssl', 'ec', '-noout', '-text', '-in', '.gimmecert/ca/level1.key.pem')
+
+    assert exit_code == 0
+    assert stderr == "read EC key\n"  # OpenSSL print this out to stderr no matter what.
+
+    # He notices that although he requested secp256r1, the output from
+    # OpenSSL tool uses its older name from RFC3279 -
+    # prime256v1. However, he understands this is just an alternate
+    # name for the curve.
+    assert "ASN1 OID: prime256v1" in stdout
+
+    # John also does a quick check on the generated certificate's
+    # signing and public key algorithm.
+    stdout, stderr, exit_code = run_command('openssl', 'x509', '-noout', '-text', '-in', '.gimmecert/ca/level1.cert.pem')
+
+    assert exit_code == 0
+    assert stderr == ""
+    assert "Signature Algorithm: ecdsa-with-SHA256" in stdout
+    assert "Public Key Algorithm: id-ecPublicKey" in stdout
+    assert "ASN1 OID: prime256v1" in stdout

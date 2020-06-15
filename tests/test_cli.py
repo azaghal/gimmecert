@@ -25,6 +25,8 @@ import sys
 import gimmecert.cli
 import gimmecert.decorators
 
+import cryptography.hazmat.primitives.asymmetric.ec
+
 import pytest
 from unittest import mock
 
@@ -224,9 +226,23 @@ VALID_CLI_INVOCATIONS = [
     ("gimmecert.cli.init", ["gimmecert", "init", "--ca-hierarchy-depth", "3"]),
     ("gimmecert.cli.init", ["gimmecert", "init", "-d", "3"]),
 
-    # init, key specification long and short option
+    # init, RSA key specification long and short option
     ("gimmecert.cli.init", ["gimmecert", "init", "--key-specification", "rsa:4096"]),
     ("gimmecert.cli.init", ["gimmecert", "init", "-k", "rsa:4096"]),
+
+    # init, ECDSA key specification long and short option
+    ("gimmecert.cli.init", ["gimmecert", "init", "--key-specification", "ecdsa:secp192r1"]),
+    ("gimmecert.cli.init", ["gimmecert", "init", "-k", "ecdsa:secp192r1"]),
+    ("gimmecert.cli.init", ["gimmecert", "init", "--key-specification", "ecdsa:secp224r1"]),
+    ("gimmecert.cli.init", ["gimmecert", "init", "-k", "ecdsa:secp224r1"]),
+    ("gimmecert.cli.init", ["gimmecert", "init", "--key-specification", "ecdsa:secp256k1"]),
+    ("gimmecert.cli.init", ["gimmecert", "init", "-k", "ecdsa:secp256k1"]),
+    ("gimmecert.cli.init", ["gimmecert", "init", "--key-specification", "ecdsa:secp256r1"]),
+    ("gimmecert.cli.init", ["gimmecert", "init", "-k", "ecdsa:secp256r1"]),
+    ("gimmecert.cli.init", ["gimmecert", "init", "--key-specification", "ecdsa:secp384r1"]),
+    ("gimmecert.cli.init", ["gimmecert", "init", "-k", "ecdsa:secp384r1"]),
+    ("gimmecert.cli.init", ["gimmecert", "init", "--key-specification", "ecdsa:secp521r1"]),
+    ("gimmecert.cli.init", ["gimmecert", "init", "-k", "ecdsa:secp521r1"]),
 
     # server, no options
     ("gimmecert.cli.server", ["gimmecert", "server", "myserver"]),
@@ -330,7 +346,9 @@ INVALID_CLI_INVOCATIONS = [
     # init, invalid key specification
     ("gimmecert.cli.init", ["gimmecert", "init", "-k", "rsa"]),
     ("gimmecert.cli.init", ["gimmecert", "init", "-k", "rsa:not_a_number"]),
-    ("gimmecert.cli.init", ["gimmecert", "init", "-k", "unsupported:algorithm"]),
+    ("gimmecert.cli.init", ["gimmecert", "init", "-k", "ecdsa"]),
+    ("gimmecert.cli.init", ["gimmecert", "init", "-k", "ecdsa:not_a_valid_curve"]),
+    ("gimmecert.cli.init", ["gimmecert", "init", "-k", "ecdsa:BrainpoolP256R1"]),  # Not supported by Gimmecert in spite of being available in Cryptography.
 
     # server, invalid key specification
     ("gimmecert.cli.server", ["gimmecert", "server", "-k", "rsa", "myserver"]),
@@ -739,6 +757,9 @@ def test_renew_command_fails_if_both_new_private_key_and_csr_options_are_specifi
     "rsa",
     "rsa:not_a_number",
     "unsupported:algorithm",
+    "ecdsa",
+    "ecdsa:not_a_valid_curve",
+    "ecdsa:BrainpoolP256R1",
 ])
 def test_key_specification_raises_exception_for_invalid_specification(key_specification):
 
@@ -752,6 +773,15 @@ def test_key_specification_raises_exception_for_invalid_specification(key_specif
     ("rsa:1024", ("rsa", 1024)),
     ("rsa:2048", ("rsa", 2048)),
     ("rsa:4096", ("rsa", 4096)),
+    ("RSA:4096", ("rsa", 4096)),  # Should ignore case.
+    ("RSa:4096", ("rsa", 4096)),  # Should ignore case.
+    ("ecdsa:secp192r1", ("ecdsa", cryptography.hazmat.primitives.asymmetric.ec.SECP192R1)),
+    ("ecdsa:secp224r1", ("ecdsa", cryptography.hazmat.primitives.asymmetric.ec.SECP224R1)),
+    ("ecdsa:secp256k1", ("ecdsa", cryptography.hazmat.primitives.asymmetric.ec.SECP256K1)),
+    ("ecdsa:secp384r1", ("ecdsa", cryptography.hazmat.primitives.asymmetric.ec.SECP384R1)),
+    ("ecdsa:secp521r1", ("ecdsa", cryptography.hazmat.primitives.asymmetric.ec.SECP521R1)),
+    ("EcDSa:secp521r1", ("ecdsa", cryptography.hazmat.primitives.asymmetric.ec.SECP521R1)),  # Should ignore case.
+    ("EcDSa:sEcP521R1", ("ecdsa", cryptography.hazmat.primitives.asymmetric.ec.SECP521R1)),  # Should ignore case.
 ])
 def test_key_specification_returns_algorithm_and_parameters_for_valid_specification(key_specification, expected_return_value):
 

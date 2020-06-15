@@ -40,11 +40,12 @@ class KeyGenerator:
         """
         Initialises an instance.
 
-        :param algorithm: Algorithm to use. Supported algorithms: 'rsa'.
+        :param algorithm: Algorithm to use. Supported algorithms: 'rsa', 'ecdsa'.
         :type algorithm: str
 
         :param parameters: Parameters for generating the keys using the specified algorithm. For RSA keys this is key size.
-        :type parameters: int
+                           For ECDSA, this is an instance of cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve.
+        :type parameters: int or cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve
         """
 
         self._algorithm = algorithm
@@ -59,24 +60,38 @@ class KeyGenerator:
         :rtype: str
         """
 
-        return "%d-bit RSA" % self._parameters
+        if self._algorithm == "rsa":
+
+            return "%d-bit RSA" % self._parameters
+
+        elif self._algorithm == "ecdsa":
+
+            return "%s ECDSA" % self._parameters.name
 
     def __call__(self):
         """
-        Generates RSA private key. Key size is deterimened by instance's
-        key specification (passed-in during instance creation).
+        Generates private key. Key algorithm and parameters are
+        deterimened by instance's key specification (passed-in during
+        instance creation).
 
-        :returns: RSA private key.
-        :rtype: cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey
+        :returns: Private key.
+        :rtype: cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey or cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey
         """
 
-        rsa_public_exponent = 65537
+        if self._algorithm == "rsa":
 
-        private_key = cryptography.hazmat.primitives.asymmetric.rsa.generate_private_key(
-            public_exponent=rsa_public_exponent,
-            key_size=self._parameters,
-            backend=cryptography.hazmat.backends.default_backend()
-        )
+            rsa_public_exponent = 65537
+
+            private_key = cryptography.hazmat.primitives.asymmetric.rsa.generate_private_key(
+                public_exponent=rsa_public_exponent,
+                key_size=self._parameters,
+                backend=cryptography.hazmat.backends.default_backend()
+            )
+        else:
+            private_key = cryptography.hazmat.primitives.asymmetric.ec.generate_private_key(
+                curve=self._parameters,
+                backend=cryptography.hazmat.backends.default_backend()
+            )
 
         return private_key
 
@@ -204,7 +219,8 @@ def generate_ca_hierarchy(base_name, depth, key_generator):
     :type key_generator: callable[[], cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey]
 
     :returns: List of CA private key and certificate pairs, starting with the level 1 (root) CA, and ending with the leaf CA.
-    :rtype: list[(cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey, cryptography.x509.Certificate)]
+    :rtype: list[(cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey or
+                  cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey, cryptography.x509.Certificate)]
     """
 
     hierarchy = []
