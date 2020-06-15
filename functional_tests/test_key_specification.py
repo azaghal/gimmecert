@@ -74,18 +74,19 @@ def test_initialisation_with_rsa_private_key_specification(tmpdir):
     assert "Public-Key: (4096 bit)" in stdout
 
 
-def test_server_command_key_specification(tmpdir):
-    # John is setting-up a quick and dirty project to test some
-    # functionality revolving around X.509 certificates. Since he does
-    # not care much about the strength of private keys for it, he
-    # wants to use 1024-bit RSA keys.
+def test_server_command_default_key_specification_with_rsa(tmpdir):
+    # John is setting-up a project to test some functionality
+    # revolving around X.509 certificates. Since he does not care much
+    # about the strength of private keys for it, he wants to use
+    # 1024-bit RSA keys for both CA hierarchy and server certificates
+    # to speed-up the key generation process.
 
     # He switches to his project directory, and initialises the CA
     # hierarchy, requesting that 1024-bit RSA keys should be used.
     tmpdir.chdir()
     run_command("gimmecert", "init", "--key-specification", "rsa:1024")
 
-    # John issues a server certificates.
+    # John issues a server certificate.
     stdout, stderr, exit_code = run_command('gimmecert', 'server', 'myserver1')
 
     # John observes that the process was completed successfully.
@@ -100,20 +101,20 @@ def test_server_command_key_specification(tmpdir):
     # one he specified for the CA hierarchy.
     assert "Private-Key: (1024 bit)" in stdout
 
-    # He then has a look at the certificate.
-    stdout, _, _ = run_command('openssl', 'x509', '-noout', '-text', '-in', '.gimmecert/server/myserver1.cert.pem')
 
-    # Likewise with the private key, the certificate is also using the
-    # 1024-bit RSA key.
-    assert "Public-Key: (1024 bit)" in stdout
+def test_server_command_key_specification_with_rsa(tmpdir):
+    # John is setting-up a project where he needs to test performance
+    # when using different RSA private key sizes.
 
-    # At some point John realises that to cover all bases, he needs to
-    # have a test with a server that uses 2048-bit RSA keys as
-    # well. He does not want to regenerate all of the X.509 artefacts,
-    # and would like to instead issues a single 2048-bit RSA key for a
-    # specific server instead.
+    # He switches to his project directory, and initialises the CA
+    # hierarchy, requesting that 3072-bit RSA keys should be used.
+    tmpdir.chdir()
+    run_command("gimmecert", "init", "--key-specification", "rsa:3072")
 
-    # He starts off by having a look at the help for the server command.
+    # Very soon he realizes that he needs to test performance using
+    # smaller RSA key sizes for proper comparison. He starts off by
+    # having a look at the help for the server command to see if there
+    # is an option that will satisfy his needs.
     stdout, stderr, exit_code = run_command("gimmecert", "server", "-h")
 
     # John notices the option for passing-in a key specification.
@@ -122,14 +123,14 @@ def test_server_command_key_specification(tmpdir):
 
     # John goes ahead and tries to issue a server certificate using
     # key specification option.
-    stdout, stderr, exit_code = run_command("gimmecert", "server", "--key-specification", "rsas:2048", "myserver2")
+    stdout, stderr, exit_code = run_command("gimmecert", "server", "--key-specification", "rsas:2048", "myserver1")
 
     # Unfortunately, the command fails due to John's typo.
     assert exit_code != 0
     assert "invalid key_specification" in stderr
 
     # John tries again, fixing his typo.
-    stdout, stderr, exit_code = run_command("gimmecert", "server", "--key-specification", "rsa:2048", "myserver2")
+    stdout, stderr, exit_code = run_command("gimmecert", "server", "--key-specification", "rsa:2048", "myserver1")
 
     # This time around he succeeds.
     assert exit_code == 0
@@ -137,7 +138,7 @@ def test_server_command_key_specification(tmpdir):
 
     # He runs a command to see details about the generated private
     # key.
-    stdout, _, _ = run_command('openssl', 'rsa', '-noout', '-text', '-in', '.gimmecert/server/myserver2.key.pem')
+    stdout, _, _ = run_command('openssl', 'rsa', '-noout', '-text', '-in', '.gimmecert/server/myserver1.key.pem')
 
     # He nods with his head, observing that the generated private key
     # uses the same key size as he has specified.
