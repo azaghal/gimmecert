@@ -216,37 +216,49 @@ def test_client_command_key_specification_with_rsa(tmpdir):
     assert "Private-Key: (2048 bit)" in stdout
 
 
-def test_renew_command_key_specification(tmpdir):
+def test_renew_command_key_specification_with_rsa(tmpdir):
     # John has set-up a project where he has issued a couple of
-    # certificates.
+    # certificates. For some of them he has used externally-generated
+    # private keys.
     tmpdir.chdir()
+
+    run_command("openssl", "req", "-newkey", "rsa:3072", "-nodes", "-keyout", "myserver2.key.pem",
+                "-new", "-subj", "/CN=myserver2", "-out", "myserver2.csr.pem")
+    run_command("openssl", "req", "-newkey", "rsa:3072", "-nodes", "-keyout", "myclient2.key.pem",
+                "-new", "-subj", "/CN=myclient2", "-out", "myclient2.csr.pem")
+
     run_command("gimmecert", "init")
 
     run_command('gimmecert', 'server', 'myserver1')
     run_command('gimmecert', 'client', 'myclient1')
 
-    # However, soon he realizes that he needs to perform some tests
-    # using a different RSA key size. John knows that Gimmecert comes
-    # with a renew command, so he has a quick look at its help.
+    run_command("gimmecert", "server", "--csr", "myserver2.csr.pem", "myserver2")
+    run_command("gimmecert", "client", "--csr", "myclient2.csr.pem", "myclient2")
+
+    # After some testing he realises that he needs to perform some
+    # tests using a different RSA key size. John has a look at the
+    # renew command options to see if he can request new private keys
+    # to be generated with different key sizes.
     stdout, stderr, exit_code = run_command("gimmecert", "renew", "-h")
 
     # John notices the option for passing-in custom key specification.
     assert " --key-specification" in stdout
     assert " -k" in stdout
 
-    # He goes ahead and tries to renew his server certificate.
-    stdout, stderr, exit_code = run_command("gimmecert", "renew", "server", "-k", "rsa:1024", "myserver1")
+    # He tries to renew the server certificate, specifying the desired
+    # RSA key size.
+    stdout, stderr, exit_code = run_command("gimmecert", "renew", "server", "--key-specification", "rsa:1024", "myserver1")
 
-    # However, Gimmecert informs him that the key specification option
-    # can only be used when requesting a new private key to be
-    # generated as well.
+    # Gimmecert informs him that the key specification option can only
+    # be used when requesting a new private key to be generated as
+    # well.
     assert exit_code != 0
     assert "argument --key-specification/-k: must be used with --new-private-key/-p" in stderr
 
-    # John goes ahead and adds that argument as well to his command.
-    stdout, stderr, exit_code = run_command("gimmecert", "renew", "server", "-k", "rsa:1024", "-p", "myserver1")
+    # John updates his command to include the additional option.
+    stdout, stderr, exit_code = run_command("gimmecert", "renew", "server", "--new-private-key", "--key-specification", "rsa:1024", "-p", "myserver1")
 
-    # This time everything goes without a hitch.
+    # Command suceeds.
     assert exit_code == 0
     assert stderr == ""
 
@@ -262,14 +274,13 @@ def test_renew_command_key_specification(tmpdir):
     assert exit_code == 0
     assert stderr == ""
 
-    # And once again, everything seems to check-out.
+    # And once again, Gimmecert has created the key with correct size.
     stdout, _, _ = run_command('openssl', 'rsa', '-noout', '-text', '-in', '.gimmecert/client/myclient1.key.pem')
     assert "Private-Key: (1024 bit)" in stdout
 
-    # After some further testing, John decides to renew both of his
-    # certificates, together with generation of new private keys. He
-    # forgets to use the key specification option, though. Both
-    # commands succeed without errors.
+    # After some further testing, John decides to renew the
+    # certificates that have been issued using a CSR. He requests new
+    # private keys to be generated as well.
     stdout, stderr, exit_code = run_command("gimmecert", "renew", "server", "-p", "myserver1")
     assert exit_code == 0
     assert stderr == ""
@@ -282,44 +293,37 @@ def test_renew_command_key_specification(tmpdir):
     # however. So he goes ahead and has a look at the server key.
     stdout, _, _ = run_command('openssl', 'rsa', '-noout', '-text', '-in', '.gimmecert/server/myserver1.key.pem')
 
-    # And everything seems to be fine.
+    # The renew command has used the same key specification for the
+    # new private key as for the old private key.
     assert "Private-Key: (1024 bit)" in stdout
 
     # He performs the same check on the client key.
     stdout, _, _ = run_command('openssl', 'rsa', '-noout', '-text', '-in', '.gimmecert/client/myclient1.key.pem')
 
-    # No problems here either.
+    # The renew command has used the same key specification for the
+    # new private key as for the old private key.
     assert "Private-Key: (1024 bit)" in stdout
 
-    # Finally, John generates a couple of private keys directly on one
-    # of his managed machines, and issues certificates for them via
-    # CSRs.
-    run_command("openssl", "req", "-newkey", "rsa:3072", "-nodes", "-keyout", "myserver2.key.pem",
-                "-new", "-subj", "/CN=myserver2", "-out", "myserver2.csr.pem")
-    run_command("openssl", "req", "-newkey", "rsa:3072", "-nodes", "-keyout", "myclient2.key.pem",
-                "-new", "-subj", "/CN=myclient2", "-out", "myclient2.csr.pem")
-    run_command("gimmecert", "server", "--csr", "myserver2.csr.pem", "myserver2")
-    run_command("gimmecert", "client", "--csr", "myclient2.csr.pem", "myclient2")
-
-    # After using his generated private keys for a while, John
-    # accidentally deletes them from his managed machine. Instead of
-    # redoing the whole process with CSRs, he decides to simply
+    # After using his manually generated private keys for a while,
+    # John accidentally deletes them from his managed machine. Instead
+    # of redoing the whole process with CSRs, he decides to simply
     # regenerate the private keys and certificates and copy them over.
     run_command('gimmecert', 'renew', 'server', '--new-private-key', 'myserver2')
     run_command('gimmecert', 'renew', 'client', '--new-private-key', 'myclient2')
 
     # John realizes that the original private keys he generated used
     # 3072-bit RSA, while the CA hierarchy uses 2048-bit RSA. He
-    # decides to check if the generated key ended-up using CA-defaults
-    # or his own specification from before.
+    # decides to check if the generated key ended-up using CA
+    # hierarchy defaults, or the same key size he used when generating
+    # the keys manually.
     #
     # He checks the server private key, and everything seems right -
-    # his own key specficiation from the old private key was used.
+    # same key size is used as in case of the old private key.
     stdout, stderr, _ = run_command('openssl', 'rsa', '-noout', '-text', '-in', '.gimmecert/server/myserver2.key.pem')
     assert "Private-Key: (3072 bit)" in stdout
 
-    # Then he has a look at the client private key, and everything
-    # checks-out for it as well.
+    # Then he has a look at the client private key, and that one is
+    # also using the same key size as the old private key.
     stdout, _, _ = run_command('openssl', 'rsa', '-noout', '-text', '-in', '.gimmecert/client/myclient2.key.pem')
     assert "Private-Key: (3072 bit)" in stdout
 
