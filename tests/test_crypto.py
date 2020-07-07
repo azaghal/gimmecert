@@ -21,6 +21,7 @@
 
 import datetime
 
+import cryptography.hazmat.primitives.asymmetric.ec
 import cryptography.hazmat.primitives.asymmetric.rsa
 import cryptography.x509
 from dateutil.relativedelta import relativedelta
@@ -680,7 +681,13 @@ def test_generate_ca_hierarchy_uses_correct_rsa_bit_size(key_generator, expected
 
 @pytest.mark.parametrize("specification", [
     ("rsa", 1024),
-    ("rsa", 2048)
+    ("rsa", 2048),
+    ("ecdsa", cryptography.hazmat.primitives.asymmetric.ec.SECP192R1),
+    ("ecdsa", cryptography.hazmat.primitives.asymmetric.ec.SECP224R1),
+    ("ecdsa", cryptography.hazmat.primitives.asymmetric.ec.SECP256K1),
+    ("ecdsa", cryptography.hazmat.primitives.asymmetric.ec.SECP256R1),
+    ("ecdsa", cryptography.hazmat.primitives.asymmetric.ec.SECP384R1),
+    ("ecdsa", cryptography.hazmat.primitives.asymmetric.ec.SECP521R1),
 ])
 def test_key_specification_from_public_key_returns_correct_algorithm_and_parameters(specification):
     key_generator = gimmecert.crypto.KeyGenerator(specification[0], specification[1])

@@ -258,9 +258,23 @@ VALID_CLI_INVOCATIONS = [
     ("gimmecert.cli.server", ["gimmecert", "server", "--csr", "myserver.csr.pem", "myserver"]),
     ("gimmecert.cli.server", ["gimmecert", "server", "-c", "myserver.csr.pem", "myserver"]),
 
-    # server, key specification long and short option
+    # server, RSA key specification long and short option
     ("gimmecert.cli.server", ["gimmecert", "server", "--key-specification", "rsa:4096", "myserver"]),
     ("gimmecert.cli.server", ["gimmecert", "server", "-k", "rsa:1024", "myserver"]),
+
+    # server, ECDSA key specification long and short option
+    ("gimmecert.cli.server", ["gimmecert", "server", "--key-specification", "ecdsa:secp192r1", "myserver"]),
+    ("gimmecert.cli.server", ["gimmecert", "server", "-k", "ecdsa:secp192r1", "myserver"]),
+    ("gimmecert.cli.server", ["gimmecert", "server", "--key-specification", "ecdsa:secp224r1", "myserver"]),
+    ("gimmecert.cli.server", ["gimmecert", "server", "-k", "ecdsa:secp224r1", "myserver"]),
+    ("gimmecert.cli.server", ["gimmecert", "server", "--key-specification", "ecdsa:secp256k1", "myserver"]),
+    ("gimmecert.cli.server", ["gimmecert", "server", "-k", "ecdsa:secp256k1", "myserver"]),
+    ("gimmecert.cli.server", ["gimmecert", "server", "--key-specification", "ecdsa:secp256r1", "myserver"]),
+    ("gimmecert.cli.server", ["gimmecert", "server", "-k", "ecdsa:secp256r1", "myserver"]),
+    ("gimmecert.cli.server", ["gimmecert", "server", "--key-specification", "ecdsa:secp384r1", "myserver"]),
+    ("gimmecert.cli.server", ["gimmecert", "server", "-k", "ecdsa:secp384r1", "myserver"]),
+    ("gimmecert.cli.server", ["gimmecert", "server", "--key-specification", "ecdsa:secp521r1", "myserver"]),
+    ("gimmecert.cli.server", ["gimmecert", "server", "-k", "ecdsa:secp521r1", "myserver"]),
 
     # client, no options
     ("gimmecert.cli.client", ["gimmecert", "client", "myclient"]),
@@ -354,6 +368,7 @@ INVALID_CLI_INVOCATIONS = [
     ("gimmecert.cli.server", ["gimmecert", "server", "-k", "rsa", "myserver"]),
     ("gimmecert.cli.server", ["gimmecert", "server", "-k", "rsa:not_a_number", "myserver"]),
     ("gimmecert.cli.server", ["gimmecert", "server", "-k", "unsupported:algorithm", "myserver"]),
+    ("gimmecert.cli.server", ["gimmecert", "server", "-k", "ecdsa:unsupported_curve", "myserver"]),
 
     # client, invalid key specification
     ("gimmecert.cli.client", ["gimmecert", "client", "-k", "rsa", "myclient"]),

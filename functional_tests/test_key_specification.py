@@ -346,7 +346,7 @@ def test_initialisation_with_ecdsa_key_specification(tmpdir):
     assert "ecdsa:CURVE_NAME" in stdout
 
     # John can see a number of curves listed as supported.
-    assert "Supported curves: " in stdout
+    assert "curves: " in stdout
     assert "secp192r1" in stdout
     assert "secp224r1" in stdout
     assert "secp256k1" in stdout
@@ -390,3 +390,85 @@ def test_initialisation_with_ecdsa_key_specification(tmpdir):
     assert "Signature Algorithm: ecdsa-with-SHA256" in stdout
     assert "Public Key Algorithm: id-ecPublicKey" in stdout
     assert "ASN1 OID: prime256v1" in stdout
+
+
+def test_server_command_default_key_specification_with_ecdsa(tmpdir):
+    # John is setting-up a project to test some functionality
+    # revolving around X.509 certificates. He has used RSA extensively
+    # before, but now he wants to switch to using ECDSA private keys
+    # instead.
+
+    # He switches to his project directory, and initialises the CA
+    # hierarchy, requesting that secp256r1 ECDSA keys should be used.
+    tmpdir.chdir()
+    run_command("gimmecert", "init", "--key-specification", "ecdsa:secp384r1")
+
+    # John issues a server certificate.
+    stdout, stderr, exit_code = run_command('gimmecert', 'server', 'myserver1')
+
+    # John observes that the process was completed successfully.
+    assert exit_code == 0
+    assert stderr == ""
+
+    # He runs a command to see details about the generated private
+    # key.
+    stdout, _, _ = run_command('openssl', 'ec', '-noout', '-text', '-in', '.gimmecert/server/myserver1.key.pem')
+
+    # And indeed, the generated private key uses the same algorithm as
+    # the one he specified for the CA hierarchy.
+    assert "ASN1 OID: secp384r1" in stdout
+
+
+def test_server_command_key_specification_with_ecdsa(tmpdir):
+    # John is setting-up a project where he needs to test performance
+    # when using different ECDSA private key sizes.
+
+    # He switches to his project directory, and initialises the CA
+    # hierarchy, requesting that secp192r1 ECDSA keys should be used.
+    tmpdir.chdir()
+    run_command("gimmecert", "init", "--key-specification", "ecdsa:secp192r1")
+
+    # Very soon he realizes that he needs to test performance using
+    # different elliptic curve algorithms for proper comparison. He
+    # starts off by having a look at the help for the server command
+    # to see if there is an option that will satisfy his needs.
+    stdout, stderr, exit_code = run_command("gimmecert", "server", "-h")
+
+    # John notices the option for passing-in a key specification, and
+    # that he can request ECDSA keys to be used with a specific curve.
+    assert " --key-specification" in stdout
+    assert " -k" in stdout
+    assert "rsa:BIT_LENGTH" in stdout
+    assert "ecdsa:CURVE_NAME" in stdout
+
+    # John can see a number of curves listed as supported.
+    assert "curves: " in stdout
+    assert "secp192r1" in stdout
+    assert "secp224r1" in stdout
+    assert "secp256k1" in stdout
+    assert "secp256r1" in stdout
+    assert "secp384r1" in stdout
+    assert "secp521r1" in stdout
+
+    # John goes ahead and tries to issue a server certificate using
+    # key specification option.
+    stdout, stderr, exit_code = run_command("gimmecert", "server", "--key-specification", "ecdsa:secp224r11", "myserver1")
+
+    # Unfortunately, the command fails due to John's typo.
+    assert exit_code != 0
+    assert "invalid key_specification" in stderr
+
+    # John tries again, fixing his typo.
+    stdout, stderr, exit_code = run_command("gimmecert", "server", "--key-specification", "ecdsa:secp224r1", "myserver1")
+
+    # This time around he succeeds.
+    assert exit_code == 0
+    assert stderr == ""
+
+    # He runs a command to see details about the generated private
+    # key.
+    stdout, _, _ = run_command('openssl', 'ec', '-noout', '-text', '-in', '.gimmecert/server/myserver1.key.pem')
+
+    # He nods with his head, observing that the generated private key
+    # uses the same algorithm as he has specified.
+    assert "ASN1 OID: secp224r1" in stdout
