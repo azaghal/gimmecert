@@ -186,7 +186,9 @@ def setup_client_subcommand_parser(parser, subparsers):
     certificate signing request (CSR) instead. Use dash (-) to read from standard input. Only the public key is taken from the CSR.''')
     subparser.add_argument('--key-specification', '-k', type=key_specification,
                            help='''Specification/parameters to use for private key generation. \
-    For RSA keys, use format rsa:BIT_LENGTH. Default is to use same algorithm/parameters as used by CA hierarchy.''', default=None)
+                           For RSA keys, use format rsa:BIT_LENGTH. For ECDSA keys, use format ecdsa:CURVE_NAME. \
+                           Supported curves: secp192r1, secp224r1, secp256k1, secp256r1, secp384r1, secp521r1. \
+                           Default is rsa:2048. Default is to use same algorithm/parameters as used by CA hierarchy.''', default=None)
 
     def client_wrapper(args):
         project_directory = os.getcwd()

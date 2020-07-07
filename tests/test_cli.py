@@ -283,9 +283,23 @@ VALID_CLI_INVOCATIONS = [
     ("gimmecert.cli.client", ["gimmecert", "client", "--csr", "myclient.csr.pem", "myclient"]),
     ("gimmecert.cli.client", ["gimmecert", "client", "-c", "myclient.csr.pem", "myclient"]),
 
-    # client, key specification long and short option
+    # client, RSA key specification long and short option
     ("gimmecert.cli.client", ["gimmecert", "client", "--key-specification", "rsa:4096", "myclient"]),
     ("gimmecert.cli.client", ["gimmecert", "client", "-k", "rsa:1024", "myclient"]),
+
+    # client, ECDSA key specification long and short option
+    ("gimmecert.cli.client", ["gimmecert", "client", "--key-specification", "ecdsa:secp192r1", "myclient"]),
+    ("gimmecert.cli.client", ["gimmecert", "client", "-k", "ecdsa:secp192r1", "myclient"]),
+    ("gimmecert.cli.client", ["gimmecert", "client", "--key-specification", "ecdsa:secp224r1", "myclient"]),
+    ("gimmecert.cli.client", ["gimmecert", "client", "-k", "ecdsa:secp224r1", "myclient"]),
+    ("gimmecert.cli.client", ["gimmecert", "client", "--key-specification", "ecdsa:secp256k1", "myclient"]),
+    ("gimmecert.cli.client", ["gimmecert", "client", "-k", "ecdsa:secp256k1", "myclient"]),
+    ("gimmecert.cli.client", ["gimmecert", "client", "--key-specification", "ecdsa:secp256r1", "myclient"]),
+    ("gimmecert.cli.client", ["gimmecert", "client", "-k", "ecdsa:secp256r1", "myclient"]),
+    ("gimmecert.cli.client", ["gimmecert", "client", "--key-specification", "ecdsa:secp384r1", "myclient"]),
+    ("gimmecert.cli.client", ["gimmecert", "client", "-k", "ecdsa:secp384r1", "myclient"]),
+    ("gimmecert.cli.client", ["gimmecert", "client", "--key-specification", "ecdsa:secp521r1", "myclient"]),
+    ("gimmecert.cli.client", ["gimmecert", "client", "-k", "ecdsa:secp521r1", "myclient"]),
 
     # renew, no options
     ("gimmecert.cli.renew", ["gimmecert", "renew", "server", "myserver"]),
@@ -374,6 +388,7 @@ INVALID_CLI_INVOCATIONS = [
     ("gimmecert.cli.client", ["gimmecert", "client", "-k", "rsa", "myclient"]),
     ("gimmecert.cli.client", ["gimmecert", "client", "-k", "rsa:not_a_number", "myclient"]),
     ("gimmecert.cli.client", ["gimmecert", "client", "-k", "unsupported:algorithm", "myclient"]),
+    ("gimmecert.cli.server", ["gimmecert", "client", "-k", "ecdsa:unsupported_curve", "myserver"]),
 
     # renew, key specification without new private key option
     ("gimmecert.cli.renew", ["gimmecert", "renew", "-k", "rsa:1024", "server", "myserver"]),
