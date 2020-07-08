@@ -920,3 +920,102 @@ def test_renew_certificate_originally_issued_with_private_key_using_csr_ecdsa(tm
     assert client_new_certificate != client_old_certificate
     assert client_stored_csr == client_csr
     assert client_new_certificate_public_key == client_csr_public_key
+
+
+def test_renew_certificate_originally_issued_with_csr_using_private_key_ecdsa(tmpdir):
+    # John has an existing project where he has generated a server and
+    # client private key with corresponding CSR.
+    tmpdir.chdir()
+
+    run_command("openssl", "ecparam", "-genkey", "-noout", "-out", "myserver.key.pem", "-name", "secp256r1")
+    run_command("openssl", "req", "-new", "-key", "myserver.key.pem", "-subj", "/CN=myserver", "-out", "mycustomserver.csr.pem")
+
+    run_command("openssl", "ecparam", "-genkey", "-noout", "-out", "myclient.key.pem", "-name", "secp256r1")
+    run_command("openssl", "req", "-new", "-key", "myclient.key.pem", "-subj", "/CN=myserver", "-out", "mycustomclient.csr.pem")
+
+    # He wants to grab some certificates for those, so he goes ahead
+    # and initialises the CA hierarchy.
+    tmpdir.chdir()
+    run_command("gimmecert", "init")
+
+    # He proceeds to issue a server and client certificate using the
+    # CSRs.
+    run_command("gimmecert", "server", "--csr", "mycustomserver.csr.pem", "myserver")
+    run_command("gimmecert", "client", "--csr", "mycustomserver.csr.pem", "myclient")
+
+    # John has a look at generated artefacts.
+    server_old_certificate = tmpdir.join(".gimmecert", "server", "myserver.cert.pem").read()
+    server_old_certificate_public_key, _, _ = run_command("openssl", "x509", "-noout", "-pubkey", "-in", ".gimmecert/server/myserver.cert.pem")
+
+    client_old_certificate = tmpdir.join(".gimmecert", "client", "myclient.cert.pem").read()
+    client_old_certificate_public_key, _, _ = run_command("openssl", "x509", "-noout", "-pubkey", "-in", ".gimmecert/client/myclient.cert.pem")
+
+    # John accidentally removes the generated private keys.
+    tmpdir.join('myserver.key.pem').remove()
+    tmpdir.join('myclient.key.pem').remove()
+
+    # He realises that the issued certificates are now useless to him,
+    # and decides to renew the certificates and let Gimmecert generate
+    # private keys for him.
+
+    # He goes ahead and renews the server certificate first,
+    # requesting a new private key along the way.
+    stdout, stderr, exit_code = run_command("gimmecert", "renew", "--new-private-key", "server", "myserver")
+
+    # No errors are shown, and John is informed about generated
+    # artefacts, and that the CSR has been replaced with a generated
+    # private key.
+    assert exit_code == 0
+    assert stderr == ""
+    assert "Generated new private key and renewed certificate for server myserver." in stdout
+    assert "CSR used for issuance of previous certificate has been removed, and a private key has been generated in its place." in stdout
+    assert ".gimmecert/server/myserver.key.pem" in stdout
+    assert ".gimmecert/server/myserver.cert.pem" in stdout
+    assert ".gimmecert/server/myserver.csr.pem" not in stdout
+
+    # John has a look at generated artefacts.
+    server_generated_private_key_public_key, _, _ = run_command("openssl", "ec", "-pubout", "-in", ".gimmecert/server/myserver.key.pem")
+
+    server_new_certificate = tmpdir.join(".gimmecert", "server", "myserver.cert.pem").read()
+    server_new_certificate_public_key, _, _ = run_command("openssl", "x509", "-noout", "-pubkey", "-in", ".gimmecert/server/myserver.cert.pem")
+
+    # John notices that, for start, the CSR has indeed been removed
+    # from the filesystem, that the content of the certificate has
+    # changed, that the old public key is not the same as the new one,
+    # and that public key from the certificate matches with the
+    # private key.
+    assert not tmpdir.join(".gimmecert", "server", "myserver.csr.pem").check()
+    assert server_new_certificate != server_old_certificate
+    assert server_old_certificate_public_key != server_generated_private_key_public_key
+    assert server_new_certificate_public_key == server_generated_private_key_public_key
+
+    # He goes ahead and renews the client certificate first,
+    # requesting a new private key along the way.
+    stdout, stderr, exit_code = run_command("gimmecert", "renew", "--new-private-key", "client", "myclient")
+
+    # No errors are shown, and John is informed about generated
+    # artefacts, and that the CSR has been replaced with a generated
+    # private key.
+    assert exit_code == 0
+    assert stderr == ""
+    assert "Generated new private key and renewed certificate for client myclient." in stdout
+    assert "CSR used for issuance of previous certificate has been removed, and a private key has been generated in its place." in stdout
+    assert ".gimmecert/client/myclient.key.pem" in stdout
+    assert ".gimmecert/client/myclient.cert.pem" in stdout
+    assert ".gimmecert/client/myclient.csr.pem" not in stdout
+
+    # John has a look at generated artefacts.
+    client_generated_private_key_public_key, _, _ = run_command("openssl", "ec", "-pubout", "-in", ".gimmecert/client/myclient.key.pem")
+
+    client_new_certificate = tmpdir.join(".gimmecert", "client", "myclient.cert.pem").read()
+    client_new_certificate_public_key, _, _ = run_command("openssl", "x509", "-noout", "-pubkey", "-in", ".gimmecert/client/myclient.cert.pem")
+
+    # John notices that, for start, the CSR has indeed been removed
+    # from the filesystem, that the content of the certificate has
+    # changed, that the old public key is not the same as the new one,
+    # and that public key from the certificate matches with the
+    # private key.
+    assert not tmpdir.join(".gimmecert", "client", "myclient.csr.pem").check()
+    assert client_new_certificate != client_old_certificate
+    assert client_old_certificate_public_key != client_generated_private_key_public_key
+    assert client_new_certificate_public_key == client_generated_private_key_public_key

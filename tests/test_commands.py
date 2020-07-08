@@ -596,14 +596,16 @@ def test_renew_generates_new_private_key_if_requested(gctmpdir):
 
     gimmecert.commands.server(io.StringIO(), io.StringIO(), gctmpdir.strpath, 'myserver', None, None, None)
     private_key_after_issuance = private_key_file.read()
-    private_key_size_after_issuance = gimmecert.storage.read_private_key(private_key_file.strpath).key_size
+    public_key_after_issuance = gimmecert.storage.read_private_key(private_key_file.strpath).public_key()
+    key_specification_after_issuance = gimmecert.crypto.key_specification_from_public_key(public_key_after_issuance)
 
     gimmecert.commands.renew(io.StringIO(), io.StringIO(), gctmpdir.strpath, 'server', 'myserver', True, None, None, None)
     private_key_after_renewal = private_key_file.read()
-    private_key_size_after_renewal = gimmecert.storage.read_private_key(private_key_file.strpath).key_size
+    public_key_after_renewal = gimmecert.storage.read_private_key(private_key_file.strpath).public_key()
+    key_specification_after_renewal = gimmecert.crypto.key_specification_from_public_key(public_key_after_renewal)
 
     assert private_key_after_issuance != private_key_after_renewal
-    assert private_key_size_after_issuance == private_key_size_after_renewal
+    assert key_specification_after_issuance == key_specification_after_renewal
 
 
 def test_status_returns_status_code(tmpdir):
@@ -1501,20 +1503,6 @@ def test_client_uses_passed_in_private_key_algorithm_and_parameters_when_generat
     assert private_key.key_size == 1024
 
 
-def test_renew_generates_new_private_key_with_same_size_as_old_one(gctmpdir):
-    private_key_file = gctmpdir.join('.gimmecert', 'server', 'myserver.key.pem')
-
-    gimmecert.commands.server(io.StringIO(), io.StringIO(), gctmpdir.strpath, 'myserver', None, None, ('rsa', 1024))
-    private_key_after_issuance = private_key_file.read()
-
-    gimmecert.commands.renew(io.StringIO(), io.StringIO(), gctmpdir.strpath, 'server', 'myserver', True, None, None, None)
-    private_key_after_renewal = private_key_file.read()
-    private_key_size_after_renewal = gimmecert.storage.read_private_key(private_key_file.strpath).key_size
-
-    assert private_key_after_issuance != private_key_after_renewal
-    assert private_key_size_after_renewal == 1024
-
-
 def test_renew_generates_new_private_key_with_different_size_if_requested(gctmpdir):
     private_key_file = gctmpdir.join('.gimmecert', 'server', 'myserver.key.pem')
 
@@ -1525,3 +1513,23 @@ def test_renew_generates_new_private_key_with_different_size_if_requested(gctmpd
     private_key_size_after_renewal = gimmecert.storage.read_private_key(private_key_file.strpath).key_size
 
     assert private_key_size_after_renewal == 1024
+
+
+@pytest.mark.parametrize("key_specification", [
+    ('rsa', 1024),
+    ('ecdsa', cryptography.hazmat.primitives.asymmetric.ec.SECP256K1),
+])
+def test_renew_generates_new_private_key_with_same_key_specification_as_old_one(gctmpdir, key_specification):
+    private_key_file = gctmpdir.join('.gimmecert', 'server', 'myserver.key.pem')
+
+    gimmecert.commands.server(io.StringIO(), io.StringIO(), gctmpdir.strpath, 'myserver', None, None, key_specification)
+    private_key_after_issuance = private_key_file.read()
+
+    gimmecert.commands.renew(io.StringIO(), io.StringIO(), gctmpdir.strpath, 'server', 'myserver', True, None, None, None)
+    private_key_after_renewal = private_key_file.read()
+
+    public_key_after_renewal = gimmecert.storage.read_private_key(private_key_file.strpath).public_key()
+    key_specification_after_renewal = gimmecert.crypto.key_specification_from_public_key(public_key_after_renewal)
+
+    assert private_key_after_issuance != private_key_after_renewal
+    assert key_specification_after_renewal == key_specification

@@ -424,12 +424,11 @@ def renew(stdout, stderr, project_directory, entity_type, entity_name, generate_
     # certificate.
     if generate_new_private_key:
 
-        if key_specification:
-            key_generator = gimmecert.crypto.KeyGenerator(key_specification[0], key_specification[1])
-        else:
-            key_size = old_certificate.public_key().key_size
-            key_generator = gimmecert.crypto.KeyGenerator('rsa', key_size)
+        # Use key specification identical to the old key.
+        if not key_specification:
+            key_specification = gimmecert.crypto.key_specification_from_public_key(old_certificate.public_key())
 
+        key_generator = gimmecert.crypto.KeyGenerator(key_specification[0], key_specification[1])
         private_key = key_generator()
         gimmecert.storage.write_private_key(private_key, private_key_path)
         public_key = private_key.public_key()
