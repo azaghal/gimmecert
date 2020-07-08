@@ -72,6 +72,7 @@ def test_status_on_uninitialised_directory(tmpdir):
 
 @pytest.mark.parametrize("ca_key_specification, default_key_representation", [
     ("rsa:2048", "2048-bit RSA"),
+    ("ecdsa:secp521r1", "secp521r1 ECDSA"),
 ])
 def test_status_on_initialised_directory(tmpdir, ca_key_specification, default_key_representation):
     # John is interested in finding out a bit more about what
@@ -86,12 +87,14 @@ def test_status_on_initialised_directory(tmpdir, ca_key_specification, default_k
     run_command("openssl", "req", "-new", "-newkey", "rsa:2048", "-nodes", "-keyout", "myserver3.key.pem",
                 "-subj", "/CN=myserver3", "-out", "myserver3.csr.pem")
     run_command('gimmecert', 'server', '--csr', 'myserver3.csr.pem', 'myserver3')
+    run_command('gimmecert', 'server', 'myserver4', '-k', 'ecdsa:secp256r1')
 
     run_command('gimmecert', 'client', 'myclient1', '-k', 'rsa:1024')
     run_command('gimmecert', 'client', 'myclient2')
     run_command("openssl", "req", "-new", "-newkey", "rsa:2048", "-nodes", "-keyout", "myclient3.key.pem",
                 "-subj", "/CN=myclient3", "-out", "myclient3.csr.pem")
     run_command('gimmecert', 'client', '--csr', 'myclient3.csr.pem', 'myclient3')
+    run_command('gimmecert', 'client', 'myclient4', '-k', 'ecdsa:secp192r1')
 
     # John switches to project directory.
     tmpdir.chdir()
@@ -149,6 +152,7 @@ def test_status_on_initialised_directory(tmpdir, ca_key_specification, default_k
     index_myserver1 = stdout_lines.index("CN=myserver1")  # Should not raise
     index_myserver2 = stdout_lines.index("CN=myserver2")  # Should not raise
     index_myserver3 = stdout_lines.index("CN=myserver3")  # Should not raise
+    index_myserver4 = stdout_lines.index("CN=myserver4")  # Should not raise
 
     assert stdout_lines[index_myserver1+1].startswith("    Validity: ")
     assert stdout_lines[index_myserver1+2] == "    DNS: myserver1"
@@ -168,6 +172,11 @@ def test_status_on_initialised_directory(tmpdir, ca_key_specification, default_k
     assert stdout_lines[index_myserver3+4] == "    CSR: .gimmecert/server/myserver3.csr.pem"
     assert stdout_lines[index_myserver3+5] == "    Certificate: .gimmecert/server/myserver3.cert.pem"
 
+    assert stdout_lines[index_myserver4+2] == "    DNS: myserver4"
+    assert stdout_lines[index_myserver4+3] == "    Key algorithm: secp256r1 ECDSA"
+    assert stdout_lines[index_myserver4+4] == "    Private key: .gimmecert/server/myserver4.key.pem"
+    assert stdout_lines[index_myserver4+5] == "    Certificate: .gimmecert/server/myserver4.cert.pem"
+
     # For client certificates, John can see that for each certificate
     # he can see its subject DN and validity. Information for each
     # client is followed by key algorithm and paths to private key and
@@ -175,6 +184,7 @@ def test_status_on_initialised_directory(tmpdir, ca_key_specification, default_k
     index_myclient1 = stdout_lines.index("CN=myclient1")  # Should not raise
     index_myclient2 = stdout_lines.index("CN=myclient2")  # Should not raise
     index_myclient3 = stdout_lines.index("CN=myclient3")  # Should not raise
+    index_myclient4 = stdout_lines.index("CN=myclient4")  # Should not raise
 
     assert stdout_lines[index_myclient1+1].startswith("    Validity: ")
     assert stdout_lines[index_myclient1+2] == "    Key algorithm: 1024-bit RSA"
@@ -190,3 +200,8 @@ def test_status_on_initialised_directory(tmpdir, ca_key_specification, default_k
     assert stdout_lines[index_myclient3+2] == "    Key algorithm: 2048-bit RSA"
     assert stdout_lines[index_myclient3+3] == "    CSR: .gimmecert/client/myclient3.csr.pem"
     assert stdout_lines[index_myclient3+4] == "    Certificate: .gimmecert/client/myclient3.cert.pem"
+
+    assert stdout_lines[index_myclient4+1].startswith("    Validity: ")
+    assert stdout_lines[index_myclient4+2] == "    Key algorithm: secp192r1 ECDSA"
+    assert stdout_lines[index_myclient4+3] == "    Private key: .gimmecert/client/myclient4.key.pem"
+    assert stdout_lines[index_myclient4+4] == "    Certificate: .gimmecert/client/myclient4.cert.pem"

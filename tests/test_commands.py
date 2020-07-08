@@ -24,6 +24,7 @@ import os
 import sys
 
 import cryptography.x509
+from cryptography.hazmat.primitives.asymmetric import ec
 
 import gimmecert.commands
 import gimmecert.crypto
@@ -631,6 +632,7 @@ def test_status_reports_uninitialised_directory(tmpdir):
 @pytest.mark.parametrize('ca_key_specification,ca_key_representation', [
     (('rsa', 1024), '1024-bit RSA'),
     (('rsa', 2048), '2048-bit RSA'),
+    (('ecdsa', ec.SECP521R1), 'secp521r1 ECDSA'),
 ])
 def test_status_reports_ca_hierarchy_information(tmpdir, ca_key_specification, ca_key_representation):
     stdout_stream = io.StringIO()
@@ -698,6 +700,9 @@ def test_status_reports_server_certificate_information(tmpdir):
     with freeze_time('2018-04-01 00:15:00'):
         gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver3', None, myserver3_csr_file.strpath, None)
 
+    with freeze_time('2018-05-01 00:15:00'):
+        gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver4', None, None, ("ecdsa", ec.SECP256R1))
+
     with freeze_time('2018-06-01 00:15:00'):
         status_code = gimmecert.commands.status(stdout_stream, stderr_stream, tmpdir.strpath)
 
@@ -713,6 +718,7 @@ def test_status_reports_server_certificate_information(tmpdir):
     index_myserver1 = stdout_lines.index("CN=myserver1")  # Should not raise
     index_myserver2 = stdout_lines.index("CN=myserver2")  # Should not raise
     index_myserver3 = stdout_lines.index("CN=myserver3")  # Should not raise
+    index_myserver4 = stdout_lines.index("CN=myserver4")  # Should not raise
 
     myserver1_validity = stdout_lines[index_myserver1 + 1]
     myserver1_dns = stdout_lines[index_myserver1 + 2]
@@ -732,6 +738,12 @@ def test_status_reports_server_certificate_information(tmpdir):
     myserver3_csr_path = stdout_lines[index_myserver3 + 4]
     myserver3_certificate_path = stdout_lines[index_myserver3 + 5]
 
+    myserver4_validity = stdout_lines[index_myserver4 + 1]
+    myserver4_dns = stdout_lines[index_myserver4 + 2]
+    myserver4_key_algorithm = stdout_lines[index_myserver4 + 3]
+    myserver4_private_key_path = stdout_lines[index_myserver4 + 4]
+    myserver4_certificate_path = stdout_lines[index_myserver4 + 5]
+
     assert myserver1_validity == "    Validity: 2018-02-01 00:00:00 UTC - 2019-01-01 00:15:00 UTC"
     assert myserver1_dns == "    DNS: myserver1"
     assert myserver1_key_algorithm == "    Key algorithm: 1024-bit RSA"
@@ -749,6 +761,12 @@ def test_status_reports_server_certificate_information(tmpdir):
     assert myserver3_key_algorithm == "    Key algorithm: 2048-bit RSA"
     assert myserver3_csr_path == "    CSR: .gimmecert/server/myserver3.csr.pem"
     assert myserver3_certificate_path == "    Certificate: .gimmecert/server/myserver3.cert.pem"
+
+    assert myserver4_validity == "    Validity: 2018-05-01 00:00:00 UTC - 2019-01-01 00:15:00 UTC"
+    assert myserver4_dns == "    DNS: myserver4"
+    assert myserver4_key_algorithm == "    Key algorithm: secp256r1 ECDSA"
+    assert myserver4_private_key_path == "    Private key: .gimmecert/server/myserver4.key.pem"
+    assert myserver4_certificate_path == "    Certificate: .gimmecert/server/myserver4.cert.pem"
 
 
 def test_status_reports_client_certificate_information(tmpdir):
@@ -772,6 +790,9 @@ def test_status_reports_client_certificate_information(tmpdir):
     with freeze_time('2018-04-01 00:15:00'):
         gimmecert.commands.client(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myclient3', myclient3_csr_file.strpath, None)
 
+    with freeze_time('2018-05-01 00:15:00'):
+        gimmecert.commands.client(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myclient4', None, ("ecdsa", ec.SECP384R1))
+
     with freeze_time('2018-06-01 00:15:00'):
         status_code = gimmecert.commands.status(stdout_stream, stderr_stream, tmpdir.strpath)
 
@@ -787,6 +808,7 @@ def test_status_reports_client_certificate_information(tmpdir):
     index_myclient1 = stdout_lines.index("CN=myclient1")  # Should not raise
     index_myclient2 = stdout_lines.index("CN=myclient2")  # Should not raise
     index_myclient3 = stdout_lines.index("CN=myclient3")  # Should not raise
+    index_myclient4 = stdout_lines.index("CN=myclient4")  # Should not raise
 
     myclient1_validity = stdout_lines[index_myclient1 + 1]
     myclient1_key_algorithm = stdout_lines[index_myclient1 + 2]
@@ -803,6 +825,11 @@ def test_status_reports_client_certificate_information(tmpdir):
     myclient3_csr_path = stdout_lines[index_myclient3 + 3]
     myclient3_certificate_path = stdout_lines[index_myclient3 + 4]
 
+    myclient4_validity = stdout_lines[index_myclient4 + 1]
+    myclient4_key_algorithm = stdout_lines[index_myclient4 + 2]
+    myclient4_private_key_path = stdout_lines[index_myclient4 + 3]
+    myclient4_certificate_path = stdout_lines[index_myclient4 + 4]
+
     assert myclient1_validity == "    Validity: 2018-02-01 00:00:00 UTC - 2019-01-01 00:15:00 UTC"
     assert myclient1_key_algorithm == "    Key algorithm: 1024-bit RSA"
     assert myclient1_private_key_path == "    Private key: .gimmecert/client/myclient1.key.pem"
@@ -817,6 +844,11 @@ def test_status_reports_client_certificate_information(tmpdir):
     assert myclient3_key_algorithm == "    Key algorithm: 2048-bit RSA"
     assert myclient3_csr_path == "    CSR: .gimmecert/client/myclient3.csr.pem"
     assert myclient3_certificate_path == "    Certificate: .gimmecert/client/myclient3.cert.pem"
+
+    assert myclient4_validity == "    Validity: 2018-05-01 00:00:00 UTC - 2019-01-01 00:15:00 UTC"
+    assert myclient4_key_algorithm == "    Key algorithm: secp384r1 ECDSA"
+    assert myclient4_private_key_path == "    Private key: .gimmecert/client/myclient4.key.pem"
+    assert myclient4_certificate_path == "    Certificate: .gimmecert/client/myclient4.cert.pem"
 
 
 def test_status_reports_no_server_certificates_were_issued(tmpdir):

@@ -542,7 +542,8 @@ def status(stdout, stderr, project_directory):
     ca_hierarchy = gimmecert.storage.read_ca_hierarchy(os.path.join(project_directory, '.gimmecert', 'ca'))
 
     # Derive key specification from the issuing CA certificate.
-    key_algorithm = gimmecert.crypto.KeyGenerator('rsa', ca_hierarchy[-1][1].public_key().key_size)
+    key_specification = gimmecert.crypto.key_specification_from_public_key(ca_hierarchy[-1][1].public_key())
+    key_algorithm = gimmecert.crypto.KeyGenerator(key_specification[0], key_specification[1])
     print("", file=stdout)  # Separator
     print("Default key algorithm: %s" % key_algorithm, file=stdout)
 
@@ -584,7 +585,7 @@ def status(stdout, stderr, project_directory):
             certificate = gimmecert.storage.read_certificate(os.path.join(project_directory, '.gimmecert', 'server', certificate_file))
             private_key_path = os.path.join(project_directory, '.gimmecert', 'server', certificate_file.replace('.cert.pem', '.key.pem'))
             csr_path = os.path.join(project_directory, '.gimmecert', 'server', certificate_file.replace('.cert.pem', '.csr.pem'))
-            key_algorithm = str(gimmecert.crypto.KeyGenerator("rsa", certificate.public_key().key_size))
+            key_algorithm = str(gimmecert.crypto.KeyGenerator(*gimmecert.crypto.key_specification_from_public_key(certificate.public_key())))
 
             # Separator.
             print("", file=stdout)
@@ -626,7 +627,7 @@ def status(stdout, stderr, project_directory):
             certificate = gimmecert.storage.read_certificate(os.path.join(project_directory, '.gimmecert', 'client', certificate_file))
             private_key_path = os.path.join(project_directory, '.gimmecert', 'client', certificate_file.replace('.cert.pem', '.key.pem'))
             csr_path = os.path.join(project_directory, '.gimmecert', 'client', certificate_file.replace('.cert.pem', '.csr.pem'))
-            key_algorithm = str(gimmecert.crypto.KeyGenerator("rsa", certificate.public_key().key_size))
+            key_algorithm = str(gimmecert.crypto.KeyGenerator(*gimmecert.crypto.key_specification_from_public_key(certificate.public_key())))
 
             # Separator.
             print("", file=stdout)
