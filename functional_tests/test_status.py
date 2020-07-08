@@ -21,6 +21,8 @@
 
 from .base import run_command
 
+import pytest
+
 
 def test_status_command_available_with_help():
     # John has used Gimmecert for issuing server and client
@@ -68,13 +70,16 @@ def test_status_on_uninitialised_directory(tmpdir):
     assert "CA hierarchy has not been initialised in current directory." in stdout
 
 
-def test_status_on_initialised_directory(tmpdir):
+@pytest.mark.parametrize("ca_key_specification, default_key_representation", [
+    ("rsa:2048", "2048-bit RSA"),
+])
+def test_status_on_initialised_directory(tmpdir, ca_key_specification, default_key_representation):
     # John is interested in finding out a bit more about what
     # certificates have been already issued in one of the projects he
     # had initialised before.
     tmpdir.chdir()
 
-    run_command('gimmecert', 'init', '-d', '3', '-b', 'My Project')
+    run_command('gimmecert', 'init', '-k', ca_key_specification, '-d', '3', '-b', 'My Project')
 
     run_command('gimmecert', 'server', 'myserver1', '-k', 'rsa:1024')
     run_command('gimmecert', 'server', 'myserver2', 'myservice.example.com', 'myotherservice.example.com')
@@ -114,7 +119,7 @@ def test_status_on_initialised_directory(tmpdir):
     # full subject DN, as well as not before and not after dates. In
     # addition, the final CA in chain is marked as end entity issuing
     # CA.
-    index_default_key_algorithm = stdout_lines.index("Default key algorithm: 2048-bit RSA")  # Should not raise
+    index_default_key_algorithm = stdout_lines.index("Default key algorithm: %s" % default_key_representation)  # Should not raise
     index_ca_1 = stdout_lines.index("CN=My Project Level 1 CA")  # Should not raise
     index_ca_2 = stdout_lines.index("CN=My Project Level 2 CA")  # Should not raise
     index_ca_3 = stdout_lines.index("CN=My Project Level 3 CA [END ENTITY ISSUING CA]")  # Should not raise
@@ -153,7 +158,7 @@ def test_status_on_initialised_directory(tmpdir):
 
     assert stdout_lines[index_myserver2+1].startswith("    Validity: ")
     assert stdout_lines[index_myserver2+2] == "    DNS: myserver2, myservice.example.com, myotherservice.example.com"
-    assert stdout_lines[index_myserver2+3] == "    Key algorithm: 2048-bit RSA"
+    assert stdout_lines[index_myserver2+3] == "    Key algorithm: %s" % default_key_representation
     assert stdout_lines[index_myserver2+4] == "    Private key: .gimmecert/server/myserver2.key.pem"
     assert stdout_lines[index_myserver2+5] == "    Certificate: .gimmecert/server/myserver2.cert.pem"
 
@@ -177,7 +182,7 @@ def test_status_on_initialised_directory(tmpdir):
     assert stdout_lines[index_myclient1+4] == "    Certificate: .gimmecert/client/myclient1.cert.pem"
 
     assert stdout_lines[index_myclient2+1].startswith("    Validity: ")
-    assert stdout_lines[index_myclient2+2] == "    Key algorithm: 2048-bit RSA"
+    assert stdout_lines[index_myclient2+2] == "    Key algorithm: %s" % default_key_representation
     assert stdout_lines[index_myclient2+3] == "    Private key: .gimmecert/client/myclient2.key.pem"
     assert stdout_lines[index_myclient2+4] == "    Certificate: .gimmecert/client/myclient2.cert.pem"
 
