@@ -55,9 +55,9 @@ def test_commands_report_csr_option_as_available():
     assert " -c " in stdout
 
 
-def test_client_certificate_issuance_by_passing_csr_as_file(tmpdir):
+def test_client_certificate_issuance_by_passing_csr_as_file_rsa(tmpdir):
     # John is working on a project where he has already generated
-    # client private key.
+    # client RSA private key.
     tmpdir.chdir()
     run_command("openssl", "genrsa", "-out", "myclient1.key.pem", "2048")
 
@@ -97,9 +97,9 @@ def test_client_certificate_issuance_by_passing_csr_as_file(tmpdir):
     assert certificate_public_key == public_key
 
 
-def test_server_certificate_issuance_by_passing_csr_as_file(tmpdir):
+def test_server_certificate_issuance_by_passing_csr_as_file_rsa(tmpdir):
     # John is working on a project where he has already generated
-    # server private key.
+    # server RSA private key.
     tmpdir.chdir()
     run_command("openssl", "genrsa", "-out", "myserver1.key.pem", "2048")
 
@@ -139,7 +139,7 @@ def test_server_certificate_issuance_by_passing_csr_as_file(tmpdir):
     assert certificate_public_key == public_key
 
 
-def test_renew_certificate_originally_issued_with_csr(tmpdir):
+def test_renew_certificate_originally_issued_with_csr_rsa(tmpdir):
     # In one of his past projects, John has initialised CA hierarchy
     # and issued server and client certificate using CSR.
     tmpdir.chdir()
@@ -213,7 +213,7 @@ def test_renew_certificate_originally_issued_with_csr(tmpdir):
     assert client_csr_public_key == client_certificate_public_key
 
 
-def test_renew_certificate_originally_issued_with_private_key_using_csr(tmpdir):
+def test_renew_certificate_originally_issued_with_private_key_using_csr_rsa(tmpdir):
     # John has an existing project where he has generated a server and
     # client private key with corresponding CSR.
     tmpdir.chdir()
@@ -317,7 +317,7 @@ def test_renew_certificate_originally_issued_with_private_key_using_csr(tmpdir):
     assert client_new_certificate_public_key == client_csr_public_key
 
 
-def test_renew_certificate_originally_issued_with_csr_using_private_key(tmpdir):
+def test_renew_certificate_originally_issued_with_csr_using_private_key_rsa(tmpdir):
     # John has an existing project where he has generated a server and
     # client private key with corresponding CSR.
     tmpdir.chdir()
