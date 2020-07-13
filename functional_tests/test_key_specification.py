@@ -363,41 +363,17 @@ def test_renew_command_key_specification_with_rsa(tmpdir):
 
 
 def test_initialisation_with_ecdsa_key_specification(tmpdir):
-    # John is looking into using ECDSA keys in his latest project. He
-    # is already aware that Gimmecert supports use of RSA keys, but he
-    # hasn't tried using it with ECDSA yet.
-
-    # He checks the help for the init command first to see if he can
-    # somehow request ECDSA keys to be used instead of RSA.
-    stdout, _, _ = run_command('gimmecert', 'init', '-h')
-
-    # John noticies there is an option to provide a custom key
-    # specification to the tool, and that he can request ECDSA keys to
-    # be used with a specific curve.
-    assert "--key-specification" in stdout
-    assert " -k" in stdout
-    assert "rsa:BIT_LENGTH" in stdout
-    assert "ecdsa:CURVE_NAME" in stdout
-
-    # John can see a number of curves listed as supported.
-    assert "curves: " in stdout
-    assert "secp192r1" in stdout
-    assert "secp224r1" in stdout
-    assert "secp256k1" in stdout
-    assert "secp256r1" in stdout
-    assert "secp384r1" in stdout
-    assert "secp521r1" in stdout
-
-    # John switches to his project directory.
+    # John wnats to initialise a CA hierarchy using ECDSA keys. He
+    # switches to his project directory.
     tmpdir.chdir()
 
-    # After a short deliberation, he opts to use the secp256r1 curve,
-    # and initialises his CA hierarchy.
+    # He decides to use the secp256r1 curve, and initialises his CA
+    # hierarchy by passing-in the key specification.
     stdout, stderr, exit_code = run_command('gimmecert', 'init', '--key-specification', 'ecdsa:secp256r1')
 
     # Command finishes execution with success, and John notices that
-    # the tool has informed him of what the private key algorithm is
-    # in use for the CA hierarchy.
+    # the tool has informed him about the private key algorithm in use
+    # for the CA hierarchy.
     assert exit_code == 0
     assert stderr == ""
     assert "CA hierarchy initialised using secp256r1 ECDSA keys." in stdout
@@ -407,7 +383,7 @@ def test_initialisation_with_ecdsa_key_specification(tmpdir):
     stdout, stderr, exit_code = run_command('openssl', 'ec', '-noout', '-text', '-in', '.gimmecert/ca/level1.key.pem')
 
     assert exit_code == 0
-    assert stderr == "read EC key\n"  # OpenSSL print this out to stderr no matter what.
+    assert stderr == "read EC key\n"  # OpenSSL prints this out to stderr no matter what.
 
     # He notices that although he requested secp256r1, the output from
     # OpenSSL tool uses its older name from RFC3279 -
@@ -428,9 +404,9 @@ def test_initialisation_with_ecdsa_key_specification(tmpdir):
 
 def test_server_command_default_key_specification_with_ecdsa(tmpdir):
     # John is setting-up a project to test some functionality
-    # revolving around X.509 certificates. He has used RSA extensively
-    # before, but now he wants to switch to using ECDSA private keys
-    # instead.
+    # revolving around the use of X.509 certificates. He has used RSA
+    # extensively before, but now he wants to switch to using ECDSA
+    # private keys instead.
 
     # He switches to his project directory, and initialises the CA
     # hierarchy, requesting that secp256r1 ECDSA keys should be used.
@@ -455,7 +431,7 @@ def test_server_command_default_key_specification_with_ecdsa(tmpdir):
 
 def test_server_command_key_specification_with_ecdsa(tmpdir):
     # John is setting-up a project where he needs to test performance
-    # when using different ECDSA private key sizes.
+    # using different curves for ECDSA keys.
 
     # He switches to his project directory, and initialises the CA
     # hierarchy, requesting that secp192r1 ECDSA keys should be used.
@@ -464,38 +440,11 @@ def test_server_command_key_specification_with_ecdsa(tmpdir):
 
     # Very soon he realizes that he needs to test performance using
     # different elliptic curve algorithms for proper comparison. He
-    # starts off by having a look at the help for the server command
-    # to see if there is an option that will satisfy his needs.
-    stdout, stderr, exit_code = run_command("gimmecert", "server", "-h")
-
-    # John notices the option for passing-in a key specification, and
-    # that he can request ECDSA keys to be used with a specific curve.
-    assert " --key-specification" in stdout
-    assert " -k" in stdout
-    assert "rsa:BIT_LENGTH" in stdout
-    assert "ecdsa:CURVE_NAME" in stdout
-
-    # John can see a number of curves listed as supported.
-    assert "curves: " in stdout
-    assert "secp192r1" in stdout
-    assert "secp224r1" in stdout
-    assert "secp256k1" in stdout
-    assert "secp256r1" in stdout
-    assert "secp384r1" in stdout
-    assert "secp521r1" in stdout
-
-    # John goes ahead and tries to issue a server certificate using
-    # key specification option.
-    stdout, stderr, exit_code = run_command("gimmecert", "server", "--key-specification", "ecdsa:secp224r11", "myserver1")
-
-    # Unfortunately, the command fails due to John's typo.
-    assert exit_code != 0
-    assert "invalid key_specification" in stderr
-
-    # John tries again, fixing his typo.
+    # decides to start off with secp224r1, and issues a new server
+    # certificate, passing-in the necessary key specification.
     stdout, stderr, exit_code = run_command("gimmecert", "server", "--key-specification", "ecdsa:secp224r1", "myserver1")
 
-    # This time around he succeeds.
+    # The process finishes with success.
     assert exit_code == 0
     assert stderr == ""
 
@@ -510,9 +459,9 @@ def test_server_command_key_specification_with_ecdsa(tmpdir):
 
 def test_client_command_default_key_specification_with_ecdsa(tmpdir):
     # John is setting-up a project to test some functionality
-    # revolving around X.509 certificates. He has used RSA extensively
-    # before, but now he wants to switch to using ECDSA private keys
-    # instead.
+    # revolving around the use of X.509 certificates. He has used RSA
+    # extensively before, but now he wants to switch to using ECDSA
+    # private keys instead.
 
     # He switches to his project directory, and initialises the CA
     # hierarchy, requesting that secp256r1 ECDSA keys should be used.
@@ -546,38 +495,11 @@ def test_client_command_key_specification_with_ecdsa(tmpdir):
 
     # Very soon he realizes that he needs to test performance using
     # different elliptic curve algorithms for proper comparison. He
-    # starts off by having a look at the help for the client command
-    # to see if there is an option that will satisfy his needs.
-    stdout, stderr, exit_code = run_command("gimmecert", "client", "-h")
-
-    # John notices the option for passing-in a key specification, and
-    # that he can request ECDSA keys to be used with a specific curve.
-    assert " --key-specification" in stdout
-    assert " -k" in stdout
-    assert "rsa:BIT_LENGTH" in stdout
-    assert "ecdsa:CURVE_NAME" in stdout
-
-    # John can see a number of curves listed as supported.
-    assert "curves: " in stdout
-    assert "secp192r1" in stdout
-    assert "secp224r1" in stdout
-    assert "secp256k1" in stdout
-    assert "secp256r1" in stdout
-    assert "secp384r1" in stdout
-    assert "secp521r1" in stdout
-
-    # John goes ahead and tries to issue a client certificate using
-    # key specification option.
-    stdout, stderr, exit_code = run_command("gimmecert", "client", "--key-specification", "ecdsa:secp224r11", "myclient1")
-
-    # Unfortunately, the command fails due to John's typo.
-    assert exit_code != 0
-    assert "invalid key_specification" in stderr
-
-    # John tries again, fixing his typo.
+    # decides to start off with secp224r1, and issues a new server
+    # certificate, passing-in the necessary key specification.
     stdout, stderr, exit_code = run_command("gimmecert", "client", "--key-specification", "ecdsa:secp224r1", "myclient1")
 
-    # This time around he succeeds.
+    # The process finishes with success.
     assert exit_code == 0
     assert stderr == ""
 
