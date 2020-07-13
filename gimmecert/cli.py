@@ -79,6 +79,16 @@ Examples:
 """
 
 
+class ArgumentHelp:
+    """
+    Convenience class for storing help strings for common arguments.
+    """
+
+    key_specification_format = '''Specification/parameters to use for private key generation. \
+                                  For RSA keys, use format rsa:BIT_LENGTH. For ECDSA keys, use format ecdsa:CURVE_NAME. \
+                                  Supported curves: secp192r1, secp224r1, secp256k1, secp256r1, secp384r1, secp521r1.'''
+
+
 def key_specification(specification):
     """
     Verifies and parses the passed-in key specification. This is a
@@ -126,10 +136,7 @@ def setup_init_subcommand_parser(parser, subparsers):
     subparser.add_argument('--ca-base-name', '-b', help="Base name to use for CA naming. Default is to use the working directory base name.")
     subparser.add_argument('--ca-hierarchy-depth', '-d', type=int, help="Depth of CA hierarchy to generate. Default is 1", default=1)
     subparser.add_argument('--key-specification', '-k', type=key_specification,
-                           help='''Default specification/parameters to use for private key generation. \
-                           For RSA keys, use format rsa:BIT_LENGTH. For ECDSA keys, use format ecdsa:CURVE_NAME. \
-                           Supported curves: secp192r1, secp224r1, secp256k1, secp256r1, secp384r1, secp521r1. \
-                           Default is rsa:2048.''', default="rsa:2048")
+                           help=ArgumentHelp.key_specification_format + " Default is rsa:2048.", default="rsa:2048")
 
     def init_wrapper(args):
         project_directory = os.getcwd()
@@ -163,10 +170,7 @@ def setup_server_subcommand_parser(parser, subparsers):
     subparser.add_argument('--csr', '-c', type=str, default=None, help='''Do not generate server private key locally, and use the passed-in \
     certificate signing request (CSR) instead. Use dash (-) to read from standard input. Only the public key is taken from the CSR.''')
     subparser.add_argument('--key-specification', '-k', type=key_specification,
-                           help='''Specification/parameters to use for private key generation. \
-                           For RSA keys, use format rsa:BIT_LENGTH. For ECDSA keys, use format ecdsa:CURVE_NAME. \
-                           Supported curves: secp192r1, secp224r1, secp256k1, secp256r1, secp384r1, secp521r1. \
-                           Default is rsa:2048. Default is to use same algorithm/parameters as used by CA hierarchy.''', default=None)
+                           help=ArgumentHelp.key_specification_format + " Default is to use same algorithm/parameters as used by CA hierarchy.", default=None)
 
     def server_wrapper(args):
         project_directory = os.getcwd()
@@ -185,10 +189,7 @@ def setup_client_subcommand_parser(parser, subparsers):
     subparser.add_argument('--csr', '-c', type=str, default=None, help='''Do not generate client private key locally, and use the passed-in \
     certificate signing request (CSR) instead. Use dash (-) to read from standard input. Only the public key is taken from the CSR.''')
     subparser.add_argument('--key-specification', '-k', type=key_specification,
-                           help='''Specification/parameters to use for private key generation. \
-                           For RSA keys, use format rsa:BIT_LENGTH. For ECDSA keys, use format ecdsa:CURVE_NAME. \
-                           Supported curves: secp192r1, secp224r1, secp256k1, secp256r1, secp384r1, secp521r1. \
-                           Default is rsa:2048. Default is to use same algorithm/parameters as used by CA hierarchy.''', default=None)
+                           help=ArgumentHelp.key_specification_format + " Default is to use same algorithm/parameters as used by CA hierarchy.", default=None)
 
     def client_wrapper(args):
         project_directory = os.getcwd()
@@ -231,8 +232,7 @@ def setup_renew_subcommand_parser(parser, subparsers):
     If private key exists, it will be removed. Mutually exclusive with the --new-private-key option. Only the public key is taken from the CSR.''')
 
     subparser.add_argument('--key-specification', '-k', type=key_specification,
-                           help='''Specification/parameters to use for private key generation. \
-    For RSA keys, use format rsa:BIT_LENGTH. Default is to use same specification as used for current certificate.''', default=None)
+                           help=ArgumentHelp.key_specification_format + " Default is to use same specification as used for current certificate.", default=None)
 
     def renew_wrapper(args):
         # This is a workaround for having the key specification option
