@@ -130,26 +130,8 @@ def test_commands_report_key_specification_option_as_available():
 
 
 def test_initialisation_with_rsa_private_key_specification(tmpdir):
-    # John is looking into improving the security of one of his
-    # projects. Amongst other things, John is interested in using
-    # stronger private keys for his TLS services - which he wants to
-    # try out in his test envioronment first.
-
-    # John knows that the Gimmecert tool uses 2048-bit RSA keys for
-    # the CA hierarchy, but what he would really like to do is specify
-    # himself what kind of private key should be generated
-    # instead. He checks-out the help for the init command first.
-    stdout, _, _ = run_command('gimmecert', 'init', '-h')
-
-    # John noticies there is an option to provide a custom key
-    # specification to the tool, that he can specify the length of
-    # the RSA private keys, and that the default is "rsa:2048".
-    assert "--key-specification" in stdout
-    assert " -k" in stdout
-    assert "rsa:BIT_LENGTH" in stdout
-    assert "Default is rsa:2048" in stdout
-
-    # John switches to his project directory.
+    # John wants to initialise CA hierarchy using stronger RSA
+    # keys. He switches to his project directory.
     tmpdir.chdir()
 
     # He initalises the CA hierarchy, requesting to use 4096-bit RSA
@@ -182,11 +164,11 @@ def test_initialisation_with_rsa_private_key_specification(tmpdir):
 
 
 def test_server_command_default_key_specification_with_rsa(tmpdir):
-    # John is setting-up a project to test some functionality
-    # revolving around X.509 certificates. Since he does not care much
-    # about the strength of private keys for it, he wants to use
-    # 1024-bit RSA keys for both CA hierarchy and server certificates
-    # to speed-up the key generation process.
+    # John needs to perform some quick tests revolving around the use
+    # of X.509 certificates, but he does not care about the generated
+    # private key strength. He primarily needs to deal with
+    # certificate validation. For this reason, he wants to increase
+    # the test speed by generating smaller RSA private keys.
 
     # He switches to his project directory, and initialises the CA
     # hierarchy, requesting that 1024-bit RSA keys should be used.
@@ -204,42 +186,23 @@ def test_server_command_default_key_specification_with_rsa(tmpdir):
     # key.
     stdout, _, _ = run_command('openssl', 'rsa', '-noout', '-text', '-in', '.gimmecert/server/myserver1.key.pem')
 
-    # And indeed, the generated private key uses the same size as the
+    # He can see that the generated private key uses the same size as the
     # one he specified for the CA hierarchy.
     assert "Private-Key: (1024 bit)" in stdout
 
 
 def test_server_command_key_specification_with_rsa(tmpdir):
-    # John is setting-up a project where he needs to test performance
-    # when using different RSA private key sizes.
-
-    # He switches to his project directory, and initialises the CA
-    # hierarchy, requesting that 3072-bit RSA keys should be used.
+    # John is working on a project where he has already initialised CA
+    # hierarchy using strong RSA keys. However, now he has a need to
+    # issue a couple of weaker RSA keys for performance testing.
     tmpdir.chdir()
     run_command("gimmecert", "init", "--key-specification", "rsa:3072")
 
-    # Very soon he realizes that he needs to test performance using
-    # smaller RSA key sizes for proper comparison. He starts off by
-    # having a look at the help for the server command to see if there
-    # is an option that will satisfy his needs.
-    stdout, stderr, exit_code = run_command("gimmecert", "server", "-h")
-
-    # John notices the option for passing-in a key specification.
-    assert " --key-specification" in stdout
-    assert " -k" in stdout
-
-    # John goes ahead and tries to issue a server certificate using
-    # key specification option.
-    stdout, stderr, exit_code = run_command("gimmecert", "server", "--key-specification", "rsas:2048", "myserver1")
-
-    # Unfortunately, the command fails due to John's typo.
-    assert exit_code != 0
-    assert "invalid key_specification" in stderr
-
-    # John tries again, fixing his typo.
+    # John goes ahead and issues a server certificate using key
+    # specification option.
     stdout, stderr, exit_code = run_command("gimmecert", "server", "--key-specification", "rsa:2048", "myserver1")
 
-    # This time around he succeeds.
+    # The run finishes without any errors.
     assert exit_code == 0
     assert stderr == ""
 
@@ -248,16 +211,16 @@ def test_server_command_key_specification_with_rsa(tmpdir):
     stdout, _, _ = run_command('openssl', 'rsa', '-noout', '-text', '-in', '.gimmecert/server/myserver1.key.pem')
 
     # He nods with his head, observing that the generated private key
-    # uses the same key size as he has specified.
+    # uses the same key size as he has requested.
     assert "Private-Key: (2048 bit)" in stdout
 
 
 def test_client_command_default_key_specification_with_rsa(tmpdir):
-    # John is setting-up a project to test some functionality
-    # revolving around X.509 certificates. Since he does not care much
-    # about the strength of private keys for it, he wants to use
-    # 1024-bit RSA keys for both CA hierarchy and client certificates
-    # to speed-up the key generation process.
+    # John needs to perform some quick tests revolving around the use
+    # of X.509 certificates, but he does not care about the generated
+    # private key strength. He primarily needs to deal with
+    # certificate validation. For this reason, he wants to increase
+    # the test speed by generating smaller RSA private keys.
 
     # He switches to his project directory, and initialises the CA
     # hierarchy, requesting that 1024-bit RSA keys should be used.
@@ -275,42 +238,23 @@ def test_client_command_default_key_specification_with_rsa(tmpdir):
     # key.
     stdout, _, _ = run_command('openssl', 'rsa', '-noout', '-text', '-in', '.gimmecert/client/myclient1.key.pem')
 
-    # And indeed, the generated private key uses the same size as the
+    # He can see that the generated private key uses the same size as the
     # one he specified for the CA hierarchy.
     assert "Private-Key: (1024 bit)" in stdout
 
 
 def test_client_command_key_specification_with_rsa(tmpdir):
-    # John is setting-up a project where he needs to test performance
-    # when using different RSA private key sizes.
-
-    # He switches to his project directory, and initialises the CA
-    # hierarchy, requesting that 1024-bit RSA keys should be used.
+    # John is working on a project where he has already initialised CA
+    # hierarchy using strong RSA keys. However, now he has a need to
+    # issue a couple of weaker RSA keys for performance testing.
     tmpdir.chdir()
-    run_command("gimmecert", "init", "--key-specification", "rsa:1024")
+    run_command("gimmecert", "init", "--key-specification", "rsa:3072")
 
-    # Very soon he realizes that he needs to test performance using
-    # smaller RSA key sizes for proper comparison. He starts off by
-    # having a look at the help for the client command to see if there
-    # is an option that will satisfy his needs.
-    stdout, stderr, exit_code = run_command("gimmecert", "client", "-h")
-
-    # John notices the option for passing-in a key specification.
-    assert " --key-specification" in stdout
-    assert " -k" in stdout
-
-    # John goes ahead and tries to issue a client certificate using
-    # key specification option.
-    stdout, stderr, exit_code = run_command("gimmecert", "client", "--key-specification", "rsas:2048", "myclient1")
-
-    # Unfortunately, the command fails due to John's typo.
-    assert exit_code != 0
-    assert "invalid key_specification" in stderr
-
-    # John tries again, fixing his typo.
+    # John goes ahead and issues a client certificate using key
+    # specification option.
     stdout, stderr, exit_code = run_command("gimmecert", "client", "--key-specification", "rsa:2048", "myclient1")
 
-    # This time around he succeeds.
+    # The run finishes without any errors.
     assert exit_code == 0
     assert stderr == ""
 
@@ -343,26 +287,9 @@ def test_renew_command_key_specification_with_rsa(tmpdir):
     run_command("gimmecert", "client", "--csr", "myclient2.csr.pem", "myclient2")
 
     # After some testing he realises that he needs to perform some
-    # tests using a different RSA key size. John has a look at the
-    # renew command options to see if he can request new private keys
-    # to be generated with different key sizes.
-    stdout, stderr, exit_code = run_command("gimmecert", "renew", "-h")
+    # tests using a different RSA key size.
 
-    # John notices the option for passing-in custom key specification.
-    assert " --key-specification" in stdout
-    assert " -k" in stdout
-
-    # He tries to renew the server certificate, specifying the desired
-    # RSA key size.
-    stdout, stderr, exit_code = run_command("gimmecert", "renew", "server", "--key-specification", "rsa:1024", "myserver1")
-
-    # Gimmecert informs him that the key specification option can only
-    # be used when requesting a new private key to be generated as
-    # well.
-    assert exit_code != 0
-    assert "argument --key-specification/-k: must be used with --new-private-key/-p" in stderr
-
-    # John updates his command to include the additional option.
+    # He renews the server certificate first.
     stdout, stderr, exit_code = run_command("gimmecert", "renew", "server", "--new-private-key", "--key-specification", "rsa:1024", "-p", "myserver1")
 
     # Command suceeds.
@@ -396,8 +323,8 @@ def test_renew_command_key_specification_with_rsa(tmpdir):
     assert exit_code == 0
     assert stderr == ""
 
-    # John is unsure if the same key specification has been used,
-    # however. So he goes ahead and has a look at the server key.
+    # John is unsure if the same key specification has been used. So
+    # he goes ahead and has a look at the server key.
     stdout, _, _ = run_command('openssl', 'rsa', '-noout', '-text', '-in', '.gimmecert/server/myserver1.key.pem')
 
     # The renew command has used the same key specification for the
