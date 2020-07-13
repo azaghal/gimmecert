@@ -247,33 +247,41 @@ def test_server_errors_out_if_certificate_already_issued(gctmpdir):
     assert gctmpdir.join('.gimmecert', 'server', 'myserver.cert.pem').read() == certificate
 
 
-def test_init_command_stdout_and_stderr_for_single_ca(tmpdir):
+@pytest.mark.parametrize("key_specification, key_specification_representation", [
+    [("rsa", 2048), "2048-bit RSA"],
+    [("ecdsa", ec.SECP192R1), "secp192r1 ECDSA"],
+])
+def test_init_command_stdout_and_stderr_for_single_ca(tmpdir, key_specification, key_specification_representation):
     stdout_stream = io.StringIO()
     stderr_stream = io.StringIO()
 
-    gimmecert.commands.init(stdout_stream, stderr_stream, tmpdir.strpath, "myproject", 1, ("rsa", 2048))
+    gimmecert.commands.init(stdout_stream, stderr_stream, tmpdir.strpath, "myproject", 1, key_specification)
 
     stdout = stdout_stream.getvalue()
     stderr = stderr_stream.getvalue()
 
     assert stderr == ""
-    assert "CA hierarchy initialised using 2048-bit RSA keys" in stdout
+    assert "CA hierarchy initialised using %s keys" % key_specification_representation in stdout
     assert ".gimmecert/ca/level1.cert.pem" in stdout
     assert ".gimmecert/ca/level1.key.pem" in stdout
     assert ".gimmecert/ca/chain-full.cert.pem" in stdout
 
 
-def test_init_command_stdout_and_stderr_for_multiple_cas_with_rsa_1024(tmpdir):
+@pytest.mark.parametrize("key_specification, key_specification_representation", [
+    [("rsa", 1024), "1024-bit RSA"],
+    [("ecdsa", ec.SECP192R1), "secp192r1 ECDSA"],
+])
+def test_init_command_stdout_and_stderr_for_multiple_cas_with_key_specification(tmpdir, key_specification, key_specification_representation):
     stdout_stream = io.StringIO()
     stderr_stream = io.StringIO()
 
-    gimmecert.commands.init(stdout_stream, stderr_stream, tmpdir.strpath, "myproject", 3, ("rsa", 1024))
+    gimmecert.commands.init(stdout_stream, stderr_stream, tmpdir.strpath, "myproject", 3, key_specification)
 
     stdout = stdout_stream.getvalue()
     stderr = stderr_stream.getvalue()
 
     assert stderr == ""
-    assert "CA hierarchy initialised using 1024-bit RSA keys" in stdout
+    assert "CA hierarchy initialised using %s keys" % key_specification_representation in stdout
     assert ".gimmecert/ca/level1.cert.pem" in stdout
     assert ".gimmecert/ca/level1.key.pem" in stdout
     assert ".gimmecert/ca/level2.cert.pem" in stdout
