@@ -510,3 +510,99 @@ def test_client_command_key_specification_with_ecdsa(tmpdir):
     # He nods with his head, observing that the generated private key
     # uses the same algorithm as he has specified.
     assert "ASN1 OID: secp224r1" in stdout
+
+
+def test_renew_command_key_specification_with_ecdsa(tmpdir):
+    # John has set-up a project where he is using secp224r1 ECDSA keys
+    # by default. He has issued a couple of certificates, with some
+    # using externally-generated private keys.
+    tmpdir.chdir()
+
+    run_command("openssl", "ecparam", "-genkey", "-noout", "-out", "myserver2.key.pem", "-name", "secp256r1")
+    run_command("openssl", "req", "-new", "-key", "myserver2.key.pem", "-subj", "/CN=myserver2", "-out", "myserver2.csr.pem")
+    run_command("openssl", "ecparam", "-genkey", "-noout", "-out", "myclient2.key.pem", "-name", "secp256r1")
+    run_command("openssl", "req", "-new", "-key", "myclient2.key.pem", "-subj", "/CN=myclient2", "-out", "myclient2.csr.pem")
+
+    run_command("gimmecert", "init", "--key-specification", "ecdsa:secp224r1")
+
+    run_command("gimmecert", "server", "myserver1")
+    run_command("gimmecert", "client", "myclient1")
+
+    run_command("gimmecert", "server", "--csr", "myserver2.csr.pem", "myserver2")
+    run_command("gimmecert", "client", "--csr", "myclient2.csr.pem", "myclient2")
+
+    # After some testing he realises that he needs to perform some
+    # tests using a different elliptic curve algorithm.
+
+    # He renews the server certificate first.
+    stdout, stderr, exit_code = run_command("gimmecert", "renew", "server", "--new-private-key", "--key-specification", "ecdsa:secp521r1", "-p", "myserver1")
+
+    # Command suceeds.
+    assert exit_code == 0
+    assert stderr == ""
+
+    # He checks the details about the generated private key, and
+    # disovers that Gimmecert generated the key according to his
+    # wishes.
+    stdout, _, _ = run_command('openssl', 'ec', '-noout', '-text', '-in', '.gimmecert/server/myserver1.key.pem')
+    assert "ASN1 OID: secp521r1" in stdout
+
+    # John goes ahead and performs a similar operation for his client
+    # entity.
+    stdout, stderr, exit_code = run_command("gimmecert", "renew", "client", "-k", "ecdsa:secp521r1", "-p", "myclient1")
+    assert exit_code == 0
+    assert stderr == ""
+
+    # And once again, Gimmecert has created the key with correct size.
+    stdout, stderr, _ = run_command("openssl", "ec", "-noout", "-text", "-in", ".gimmecert/client/myclient1.key.pem")
+    assert "ASN1 OID: secp521r1" in stdout, stderr
+
+    # After some further testing, John decides to renew the
+    # certificates that have been issued using a CSR. He requests new
+    # private keys to be generated as well.
+    stdout, stderr, exit_code = run_command("gimmecert", "renew", "server", "-p", "myserver1")
+    assert exit_code == 0
+    assert stderr == ""
+
+    stdout, stderr, exit_code = run_command("gimmecert", "renew", "client", "-p", "myclient1")
+    assert exit_code == 0
+    assert stderr == ""
+
+    # John is unsure if the same key specification has been used, so
+    # he goes ahead and has a look at the server key.
+    stdout, _, _ = run_command("openssl", "ec", "-noout", "-text", "-in", ".gimmecert/server/myserver1.key.pem")
+
+    # The renew command has used the same key specification for the
+    # new private key as for the old private key.
+    assert "ASN1 OID: secp521r1" in stdout
+
+    # He performs the same check on the client key.
+    stdout, _, _ = run_command("openssl", "ec", "-noout", "-text", "-in", ".gimmecert/client/myclient1.key.pem")
+
+    # The renew command has used the same key specification for the
+    # new private key as for the old private key.
+    assert "ASN1 OID: secp521r1" in stdout
+
+    # After using his manually generated private keys for a while,
+    # John accidentally deletes them from his managed machine. Instead
+    # of redoing the whole process with CSRs, he decides to simply
+    # regenerate the private keys and certificates and copy them over.
+    run_command("gimmecert", "renew", "server", "--new-private-key", "myserver2")
+    run_command("gimmecert", "renew", "client", "--new-private-key", "myclient2")
+
+    # John realizes that the original private keys he generated used
+    # secp256r1, while the CA hierarchy uses secp224r1. He decides to
+    # check if the generated key ended-up using CA hierarchy defaults,
+    # or the same elliptic curve he used when generating the keys
+    # manually.
+    #
+    # He checks the server private key, and everything seems good -
+    # same elliptic curve (although listed under alternative name) is
+    # used as in case of the old private key.
+    stdout, stderr, _ = run_command("openssl", "ec", "-noout", "-text", "-in", ".gimmecert/server/myserver2.key.pem")
+    assert "ASN1 OID: prime256v1" in stdout
+
+    # Then he has a look at the client private key, and that one is
+    # also using the same elliptic curve as before.
+    stdout, _, _ = run_command("openssl", "ec", "-noout", "-text", "-in", ".gimmecert/client/myclient2.key.pem")
+    assert "ASN1 OID: prime256v1" in stdout
