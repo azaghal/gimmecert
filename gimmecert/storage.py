@@ -56,7 +56,8 @@ def write_private_key(private_key, path):
     The private key is written without any encryption.
 
     :param private_key: Private key that should be written.
-    :type private_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey
+    :type private_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey or
+                       cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey
 
     :param path: File path where the key should be written.
     :type path: str
@@ -138,7 +139,8 @@ def read_ca_hierarchy(ca_directory):
     :type ca_directory: str
 
     :returns: List of private key/certificate pairs, starting with the level 1 CA and moving down the chain to leaf CA.
-    :rtype: list[(cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey, cryptography.x509.Certificate)]
+    :rtype: list[(cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey or
+                  cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey, cryptography.x509.Certificate)]
     """
 
     ca_hierarchy = []
@@ -162,7 +164,8 @@ def read_private_key(private_key_path):
     :type private_key_path: str
 
     :returns: Private key object read from the specified file.
-    :rtype: cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey
+    :rtype: cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey or
+            cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey
     """
 
     with open(private_key_path, 'rb') as private_key_file:

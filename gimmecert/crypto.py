@@ -75,7 +75,8 @@ class KeyGenerator:
         instance creation).
 
         :returns: Private key.
-        :rtype: cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey or cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey
+        :rtype: cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey or
+                cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey
         """
 
         if self._algorithm == "rsa":
@@ -166,10 +167,12 @@ def issue_certificate(issuer_dn, subject_dn, signing_key, public_key, not_before
     :type subject_dn: cryptography.x509.Name
 
     :param signing_key: Private key belonging to entity associated with passed-in issuer_dn. Used for signing the certificate data.
-    :type signing_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey
+    :type signing_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey or
+                       cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey
 
     :param public_key: Public key belonging to entity associated with passed-in subject_dn. Used as part of certificate to denote its owner.
-    :type public_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPublicKey
+    :type public_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPublicKey or
+                      cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePublicKey
 
     :param not_before: Beginning of certifiate validity.
     :type datetime.datetime.:
@@ -216,7 +219,8 @@ def generate_ca_hierarchy(base_name, depth, key_generator):
     :type base_name: str
 
     :param key_generator: Callable for generating private keys.
-    :type key_generator: callable[[], cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey]
+    :type key_generator: callable[[], cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey or
+                                      cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey]
 
     :returns: List of CA private key and certificate pairs, starting with the level 1 (root) CA, and ending with the leaf CA.
     :rtype: list[(cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey or
@@ -269,10 +273,12 @@ def issue_server_certificate(name, public_key, issuer_private_key, issuer_certif
     :type name: str
 
     :param public_key: Public key of the server end entity.
-    :type public_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPublicKey
+    :type public_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPublicKey or
+                      cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePublicKey
 
     :param issuer_private_key: Private key of the issuer to use for signing the server certificate structure.
-    :type issuer_private_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey
+    :type issuer_private_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey or
+                              cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey
 
     :param issuer_certificate: Certificate of certificate issuer. Naming and validity constraints will be applied based on its content.
     :type issuer_certificate: cryptography.x509.Certificate
@@ -336,10 +342,12 @@ def issue_client_certificate(name, public_key, issuer_private_key, issuer_certif
     :type name: str
 
     :param public_key: Public key of the server end entity.
-    :type public_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPublicKey
+    :type public_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPublicKey or
+                      cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePublicKey
 
     :param issuer_private_key: Private key of the issuer to use for signing the client certificate structure.
-    :type issuer_private_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey
+    :type issuer_private_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey or
+                              cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey
 
     :param issuer_certificate: Certificate of certificate issuer. Naming and validity constraints will be applied based on its content.
     :type issuer_certificate: cryptography.x509.Certificate
@@ -388,10 +396,12 @@ def renew_certificate(old_certificate, public_key, issuer_private_key, issuer_ce
     :type old_certificate: cryptography.x509.Certificate
 
     :param public_key: Public key to use in resulting certificate. Allows replacement of public key in new certificate.
-    :type public_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPublicKey
+    :type public_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPublicKey or
+                      cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePublicKey
 
     :param issuer_private_key: Private key of the issuer to use for signing the certificate structure.
-    :type issuer_private_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey
+    :type issuer_private_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey or
+                              cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey
 
     :param issuer_certificate: Certificate of certificate issuer. Naming and validity constraints will be applied based on its content.
     :type issuer_certificate: cryptography.x509.Certificate
@@ -427,7 +437,8 @@ def generate_csr(name, private_key):
     :type name: str or cryptography.x509.Name
 
     :param private_key: Private key of end entity to use for signing the CSR.
-    :type private_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey
+    :type private_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey or
+                       cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey
 
     :returns: Certificate signing request with specified naming signed with passed-in private key.
     :rtype: cryptography.x509.CertificateSigningRequest
@@ -456,11 +467,12 @@ def key_specification_from_public_key(public_key):
     from the passed-in public key. Key specification can be used for
     generating the private keys via KeyGenerator instances.
 
-    :param public_key: Public
-    :type public_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPublicKey
+    :param public_key: Public key from which to derive the key specification.
+    :type public_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPublicKey or
+                      cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePublicKey
 
     :returns: Key algorithm and parameter(s) for generating same type of keys as the passed-in public key.
-    :rtype: tuple(str, int or cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve)
+    :rtype: tuple(str, int) or cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve)
 
     :raises ValueError: If algorithm/parameters could not be derived from the passed-in public key.
     """
