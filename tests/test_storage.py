@@ -28,6 +28,8 @@ import gimmecert.crypto
 import gimmecert.storage
 import gimmecert.utils
 
+import pytest
+
 
 def test_initialise_storage(tmpdir):
     tmpdir.chdir()
@@ -104,9 +106,13 @@ def test_is_initialised_returns_false_if_directory_is_not_initialised(tmpdir):
     assert gimmecert.storage.is_initialised(tmpdir.strpath) is False
 
 
-def test_read_ca_hierarchy_returns_list_of_ca_private_key_and_certificate_pairs_for_single_ca(tmpdir):
+@pytest.mark.parametrize("key_specification, private_key_instance_type", [
+    [("rsa", 1024), cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey],
+    [("ecdsa", cryptography.hazmat.primitives.asymmetric.ec.SECP192R1), cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey],
+])
+def test_read_ca_hierarchy_returns_list_of_ca_private_key_and_certificate_pairs_for_single_ca(tmpdir, key_specification, private_key_instance_type):
     tmpdir.chdir()
-    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, 'My Project', 1, ("rsa", 2048))
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, 'My Project', 1, key_specification)
 
     ca_hierarchy = gimmecert.storage.read_ca_hierarchy(tmpdir.join('.gimmecert', 'ca').strpath)
 
@@ -114,7 +120,7 @@ def test_read_ca_hierarchy_returns_list_of_ca_private_key_and_certificate_pairs_
 
     private_key, certificate = ca_hierarchy[0]
 
-    assert isinstance(private_key, cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey)
+    assert isinstance(private_key, private_key_instance_type)
     assert isinstance(certificate, cryptography.x509.Certificate)
 
 
@@ -144,9 +150,13 @@ def test_read_certificate_returns_certificate(tmpdir):
     assert my_certificate == certificate
 
 
-def test_read_ca_hierarchy_returns_list_of_ca_private_key_and_certificate_pairs_in_hierarchy_order_for_multiple_cas(tmpdir):
+@pytest.mark.parametrize("key_specification, private_key_instance_type", [
+    [("rsa", 1024), cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey],
+    [("ecdsa", cryptography.hazmat.primitives.asymmetric.ec.SECP192R1), cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey],
+])
+def test_read_ca_hierarchy_returns_list_of_ca_private_key_and_certificate_pairs_in_hierarchy_order_for_multiple_cas(tmpdir, key_specification, private_key_instance_type):
     tmpdir.chdir()
-    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, 'My Project', 4, ("rsa", 2048))
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, 'My Project', 4, key_specification)
 
     ca_hierarchy = gimmecert.storage.read_ca_hierarchy(tmpdir.join('.gimmecert', 'ca').strpath)
 
@@ -157,16 +167,16 @@ def test_read_ca_hierarchy_returns_list_of_ca_private_key_and_certificate_pairs_
     private_key_3, certificate_3 = ca_hierarchy[2]
     private_key_4, certificate_4 = ca_hierarchy[3]
 
-    assert isinstance(private_key_1, cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey)
+    assert isinstance(private_key_1, private_key_instance_type)
     assert isinstance(certificate_1, cryptography.x509.Certificate)
     assert certificate_1.subject == gimmecert.crypto.get_dn("My Project Level 1 CA")
-    assert isinstance(private_key_2, cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey)
+    assert isinstance(private_key_2, private_key_instance_type)
     assert isinstance(certificate_2, cryptography.x509.Certificate)
     assert certificate_2.subject == gimmecert.crypto.get_dn("My Project Level 2 CA")
-    assert isinstance(private_key_3, cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey)
+    assert isinstance(private_key_3, private_key_instance_type)
     assert isinstance(certificate_3, cryptography.x509.Certificate)
     assert certificate_3.subject == gimmecert.crypto.get_dn("My Project Level 3 CA")
-    assert isinstance(private_key_4, cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey)
+    assert isinstance(private_key_4, private_key_instance_type)
     assert isinstance(certificate_4, cryptography.x509.Certificate)
     assert certificate_4.subject == gimmecert.crypto.get_dn("My Project Level 4 CA")
 
