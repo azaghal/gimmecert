@@ -32,12 +32,6 @@ import pytest
 from freezegun import freeze_time
 
 
-def test_generate_private_key_returns_private_key():
-    private_key = gimmecert.crypto.generate_private_key()
-
-    assert isinstance(private_key, cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey)
-
-
 def test_get_dn():
     dn = gimmecert.crypto.get_dn('My test')
     assert isinstance(dn, cryptography.x509.Name)

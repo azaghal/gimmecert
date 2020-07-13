@@ -97,26 +97,6 @@ class KeyGenerator:
         return private_key
 
 
-def generate_private_key():
-    """
-    Generates a 2048-bit RSA private key.
-
-    :returns: RSA private key.
-    :rtype: cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey
-    """
-
-    rsa_public_exponent = 65537
-    key_size = 2048
-
-    private_key = cryptography.hazmat.primitives.asymmetric.rsa.generate_private_key(
-        public_exponent=rsa_public_exponent,
-        key_size=key_size,
-        backend=cryptography.hazmat.backends.default_backend()
-    )
-
-    return private_key
-
-
 def get_dn(name):
     """
     Generates a DN (distinguished name) using the passed-in name. The
