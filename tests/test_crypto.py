@@ -119,14 +119,18 @@ def test_generate_ca_hierarchy_returns_list_with_1_element_for_depth_1():
     assert len(hierarchy) == depth
 
 
-def test_generate_ca_hierarchy_returns_list_of_private_key_certificate_pairs():
+@pytest.mark.parametrize("key_specification, private_key_instance_type", [
+    [("rsa", 1024), cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey],
+    [("ecdsa", cryptography.hazmat.primitives.asymmetric.ec.SECP192R1), cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey],
+])
+def test_generate_ca_hierarchy_returns_list_of_private_key_certificate_pairs(key_specification, private_key_instance_type):
     base_name = 'My Project'
     depth = 3
 
-    hierarchy = gimmecert.crypto.generate_ca_hierarchy(base_name, depth, gimmecert.crypto.KeyGenerator("rsa", 2048))
+    hierarchy = gimmecert.crypto.generate_ca_hierarchy(base_name, depth, gimmecert.crypto.KeyGenerator(*key_specification))
 
     for private_key, certificate in hierarchy:
-        assert isinstance(private_key, cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey)
+        assert isinstance(private_key, private_key_instance_type)
         assert isinstance(certificate, cryptography.x509.Certificate)
 
 
@@ -157,11 +161,15 @@ def test_generate_ca_hierarchy_issuer_dns_have_correct_value():
     assert level3_certificate.issuer == cryptography.x509.Name(gimmecert.crypto.get_dn('My Project Level 2 CA'))
 
 
-def test_generate_ca_hierarchy_private_keys_match_with_public_keys_in_certificates():
+@pytest.mark.parametrize("key_specification", [
+    ("rsa", 2048),
+    ("ecdsa", cryptography.hazmat.primitives.asymmetric.ec.SECP192R1)
+])
+def test_generate_ca_hierarchy_private_keys_match_with_public_keys_in_certificates(key_specification):
     base_name = 'My Project'
     depth = 3
 
-    hierarchy = gimmecert.crypto.generate_ca_hierarchy(base_name, depth, gimmecert.crypto.KeyGenerator("rsa", 2048))
+    hierarchy = gimmecert.crypto.generate_ca_hierarchy(base_name, depth, gimmecert.crypto.KeyGenerator(*key_specification))
 
     level1_private_key, level1_certificate = hierarchy[0]
     level2_private_key, level2_certificate = hierarchy[1]
@@ -172,11 +180,15 @@ def test_generate_ca_hierarchy_private_keys_match_with_public_keys_in_certificat
     assert level3_private_key.public_key().public_numbers() == level3_certificate.public_key().public_numbers()
 
 
-def test_generate_ca_hierarchy_cas_have_differing_keys():
+@pytest.mark.parametrize("key_specification", [
+    ("rsa", 2048),
+    ("ecdsa", cryptography.hazmat.primitives.asymmetric.ec.SECP192R1)
+])
+def test_generate_ca_hierarchy_cas_have_differing_keys(key_specification):
     base_name = 'My Project'
     depth = 3
 
-    hierarchy = gimmecert.crypto.generate_ca_hierarchy(base_name, depth, gimmecert.crypto.KeyGenerator("rsa", 2048))
+    hierarchy = gimmecert.crypto.generate_ca_hierarchy(base_name, depth, gimmecert.crypto.KeyGenerator(*key_specification))
 
     level1_private_key, _ = hierarchy[0]
     level2_private_key, _ = hierarchy[1]
@@ -325,11 +337,15 @@ def test_issue_server_certificate_has_correct_issuer_and_subject():
     assert certificate.subject == gimmecert.crypto.get_dn('myserver')
 
 
-def test_issue_server_certificate_has_correct_public_key():
+@pytest.mark.parametrize("key_specification", [
+    ("rsa", 2048),
+    ("ecdsa", cryptography.hazmat.primitives.asymmetric.ec.SECP192R1)
+])
+def test_issue_server_certificate_has_correct_public_key(key_specification):
     ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1, gimmecert.crypto.KeyGenerator("rsa", 2048))
     issuer_private_key, issuer_certificate = ca_hierarchy[0]
 
-    private_key = gimmecert.crypto.KeyGenerator('rsa', 2048)()
+    private_key = gimmecert.crypto.KeyGenerator(*key_specification)()
 
     certificate = gimmecert.crypto.issue_server_certificate('myserver', private_key.public_key(), issuer_private_key, issuer_certificate)
 
@@ -457,11 +473,15 @@ def test_issue_client_certificate_sets_correct_extensions():
     assert certificate.extensions.get_extension_for_class(cryptography.x509.ExtendedKeyUsage).value == expected_extended_key_usage
 
 
-def test_issue_client_certificate_has_correct_public_key():
+@pytest.mark.parametrize("key_specification", [
+    ("rsa", 2048),
+    ("ecdsa", cryptography.hazmat.primitives.asymmetric.ec.SECP192R1)
+])
+def test_issue_client_certificate_has_correct_public_key(key_specification):
     ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1, gimmecert.crypto.KeyGenerator("rsa", 2048))
     issuer_private_key, issuer_certificate = ca_hierarchy[0]
 
-    private_key = gimmecert.crypto.KeyGenerator('rsa', 2048)()
+    private_key = gimmecert.crypto.KeyGenerator(*key_specification)()
 
     certificate = gimmecert.crypto.issue_client_certificate('myclient', private_key.public_key(), issuer_private_key, issuer_certificate)
 
@@ -520,13 +540,17 @@ def test_renew_certificate_returns_certificate():
     assert isinstance(new_certificate, cryptography.x509.Certificate)
 
 
-def test_renew_certificate_has_correct_content():
+@pytest.mark.parametrize("key_specification", [
+    ("rsa", 2048),
+    ("ecdsa", cryptography.hazmat.primitives.asymmetric.ec.SECP192R1)
+])
+def test_renew_certificate_has_correct_content(key_specification):
     ca_hierarchy = gimmecert.crypto.generate_ca_hierarchy('My Project', 1, gimmecert.crypto.KeyGenerator("rsa", 2048))
     issuer_private_key, issuer_certificate = ca_hierarchy[0]
 
-    private_key = gimmecert.crypto.KeyGenerator('rsa', 2048)()
+    private_key = gimmecert.crypto.KeyGenerator(*key_specification)()
     old_certificate = gimmecert.crypto.issue_server_certificate('myserver', private_key.public_key(), issuer_private_key, issuer_certificate)
-    public_key = gimmecert.crypto.KeyGenerator('rsa', 2048)().public_key()
+    public_key = gimmecert.crypto.KeyGenerator(*key_specification)().public_key()
 
     new_certificate = gimmecert.crypto.renew_certificate(old_certificate, public_key, issuer_private_key, issuer_certificate)
 
