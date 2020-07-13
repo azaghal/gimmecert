@@ -42,10 +42,14 @@ def test_initialise_storage(tmpdir):
     assert os.path.exists(tmpdir.join('.gimmecert', 'client').strpath)
 
 
-def test_write_private_key(tmpdir):
+@pytest.mark.parametrize("key_specification, key_type_representation", [
+    [("rsa", 2048), "RSA"],
+    [("ecdsa", cryptography.hazmat.primitives.asymmetric.ec.SECP192R1), "EC"],
+])
+def test_write_private_key(tmpdir, key_specification, key_type_representation):
     tmpdir.chdir()
 
-    private_key = gimmecert.crypto.KeyGenerator('rsa', 2048)()
+    private_key = gimmecert.crypto.KeyGenerator(*key_specification)()
     key_path = tmpdir.join('test.key.pem').strpath
 
     gimmecert.storage.write_private_key(private_key, key_path)
@@ -54,8 +58,8 @@ def test_write_private_key(tmpdir):
 
     with open(key_path, 'r') as key_file:
         content = key_file.read()
-        assert 'BEGIN RSA PRIVATE KEY' in content
-        assert 'END RSA PRIVATE KEY' in content
+        assert 'BEGIN %s PRIVATE KEY' % key_type_representation in content
+        assert 'END %s PRIVATE KEY' % key_type_representation in content
 
 
 def test_write_certificate(tmpdir):
@@ -124,14 +128,18 @@ def test_read_ca_hierarchy_returns_list_of_ca_private_key_and_certificate_pairs_
     assert isinstance(certificate, cryptography.x509.Certificate)
 
 
-def test_read_private_key_returns_private_key(tmpdir):
+@pytest.mark.parametrize("key_specification, private_key_instance_type", [
+    [("rsa", 1024), cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey],
+    [("ecdsa", cryptography.hazmat.primitives.asymmetric.ec.SECP192R1), cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey],
+])
+def test_read_private_key_returns_private_key(tmpdir, key_specification, private_key_instance_type):
     private_key_path = tmpdir.join('private.key.pem').strpath
-    private_key = gimmecert.crypto.KeyGenerator('rsa', 2048)()
+    private_key = gimmecert.crypto.KeyGenerator(*key_specification)()
     gimmecert.storage.write_private_key(private_key, private_key_path)
 
     my_private_key = gimmecert.storage.read_private_key(private_key_path)
 
-    assert isinstance(my_private_key, cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey)
+    assert isinstance(my_private_key, private_key_instance_type)
     assert my_private_key.public_key().public_numbers() == private_key.public_key().public_numbers()  # Can't compare private keys directly.
 
 
@@ -154,7 +162,8 @@ def test_read_certificate_returns_certificate(tmpdir):
     [("rsa", 1024), cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey],
     [("ecdsa", cryptography.hazmat.primitives.asymmetric.ec.SECP192R1), cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey],
 ])
-def test_read_ca_hierarchy_returns_list_of_ca_private_key_and_certificate_pairs_in_hierarchy_order_for_multiple_cas(tmpdir, key_specification, private_key_instance_type):
+def test_read_ca_hierarchy_returns_list_of_ca_private_key_and_certificate_pairs_in_hierarchy_order_for_multiple_cas(tmpdir, key_specification,
+                                                                                                                    private_key_instance_type):
     tmpdir.chdir()
     gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, 'My Project', 4, key_specification)
 
