@@ -578,7 +578,7 @@ def test_main_does_not_exit_if_it_calls_function_that_returns_success(tmpdir):
 
 
 @mock.patch('sys.argv', ['gimmecert', 'testcommand'])
-def test_main_exits_if_it_calls_function_that_returns_success(tmpdir):
+def test_main_exits_if_it_calls_function_that_returns_failure(tmpdir):
     # This should ensure we don't accidentally create artifacts
     # outside of test directory.
     tmpdir.chdir()
