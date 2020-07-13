@@ -22,6 +22,113 @@
 from .base import run_command
 
 
+def test_commands_report_key_specification_option_as_available():
+    # John is looking into improving the security of one of his
+    # projects. One of the items he has on the list is to try out
+    # stronger private keys, while comparing the performance results
+    # against the use of weaker keys. Before he goes into production,
+    # he wants to try things out in his test environment.
+    #
+    # John knows that the Gimmecert by default does not prompt the
+    # user to specify desired key size. What he would really like to
+    # do, however, is to explicitly specify himself what kind of
+    # private keys should be generated instead.
+
+    # He starts off by checking  the help for the init command first.
+    stdout, _, _ = run_command('gimmecert', 'init', '-h')
+
+    # John notices that there is an option to provide a custom key
+    # specification, and that the default is 2048-bit RSA.
+    assert "--key-specification" in stdout
+    assert " -k" in stdout
+    assert "Default is rsa:2048" in stdout
+
+    # The option allows him to pick between RSA and ECDSA. For RSA he
+    # can specify a custom key size, while for ECDSA he can pick
+    # between one of the listed named curves.
+    assert "rsa:BIT_LENGTH" in stdout
+    assert "ecdsa:CURVE_NAME" in stdout
+    assert "curves: " in stdout
+    assert "secp192r1" in stdout
+    assert "secp224r1" in stdout
+    assert "secp256k1" in stdout
+    assert "secp256r1" in stdout
+    assert "secp384r1" in stdout
+    assert "secp521r1" in stdout
+
+    # Next, he decides to have a look at the server command.
+    stdout, stderr, exit_code = run_command("gimmecert", "server", "-h")
+
+    # John notices the option for passing-in a key specification, and
+    # that the default is to use same key specification as used by the
+    # CA hierarchy.
+    assert " --key-specification" in stdout
+    assert " -k" in stdout
+    assert "use same" in stdout
+    assert "as used by CA hierarchy" in stdout
+
+    # The option allows him to pick between RSA and ECDSA. For RSA he
+    # can specify a custom key size, while for ECDSA he can pick
+    # between one of the listed named curves.
+    assert "rsa:BIT_LENGTH" in stdout
+    assert "ecdsa:CURVE_NAME" in stdout
+    assert "curves: " in stdout
+    assert "secp192r1" in stdout
+    assert "secp224r1" in stdout
+    assert "secp256k1" in stdout
+    assert "secp256r1" in stdout
+    assert "secp384r1" in stdout
+    assert "secp521r1" in stdout
+
+    # John then has a look at the client command.
+    stdout, stderr, exit_code = run_command("gimmecert", "client", "-h")
+
+    # John notices the option for passing-in a key specification, and
+    # that the default is to use same key specification as used by the
+    # CA hierarchy.
+    assert " --key-specification" in stdout
+    assert " -k" in stdout
+    assert "use same" in stdout
+    assert "as used by CA hierarchy" in stdout
+
+    # The option allows him to pick between RSA and ECDSA. For RSA he
+    # can specify a custom key size, while for ECDSA he can pick
+    # between one of the listed named curves.
+    assert "rsa:BIT_LENGTH" in stdout
+    assert "ecdsa:CURVE_NAME" in stdout
+    assert "curves: " in stdout
+    assert "secp192r1" in stdout
+    assert "secp224r1" in stdout
+    assert "secp256k1" in stdout
+    assert "secp256r1" in stdout
+    assert "secp384r1" in stdout
+    assert "secp521r1" in stdout
+
+    # Finally, he reviews the renew command.
+    stdout, stderr, exit_code = run_command("gimmecert", "renew", "-h")
+
+    # John notices the option for passing-in a key specification, and
+    # that the default is to use same key specification as currently
+    # in use by the currently issued certificate.
+    assert " --key-specification" in stdout
+    assert " -k" in stdout
+    assert "use same" in stdout
+    assert "as used for current certificate" in stdout
+
+    # The option allows him to pick between RSA and ECDSA. For RSA he
+    # can specify a custom key size, while for ECDSA he can pick
+    # between one of the listed named curves.
+    assert "rsa:BIT_LENGTH" in stdout
+    assert "ecdsa:CURVE_NAME" in stdout
+    assert "curves: " in stdout
+    assert "secp192r1" in stdout
+    assert "secp224r1" in stdout
+    assert "secp256k1" in stdout
+    assert "secp256r1" in stdout
+    assert "secp384r1" in stdout
+    assert "secp521r1" in stdout
+
+
 def test_initialisation_with_rsa_private_key_specification(tmpdir):
     # John is looking into improving the security of one of his
     # projects. Amongst other things, John is interested in using
