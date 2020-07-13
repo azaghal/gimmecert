@@ -43,7 +43,7 @@ def test_initialise_storage(tmpdir):
 def test_write_private_key(tmpdir):
     tmpdir.chdir()
 
-    private_key = gimmecert.crypto.generate_private_key()
+    private_key = gimmecert.crypto.KeyGenerator('rsa', 2048)()
     key_path = tmpdir.join('test.key.pem').strpath
 
     gimmecert.storage.write_private_key(private_key, key_path)
@@ -61,8 +61,8 @@ def test_write_certificate(tmpdir):
 
     issuer_dn = gimmecert.crypto.get_dn('My test 1')
     subject_dn = gimmecert.crypto.get_dn('My test 2')
-    issuer_private_key = gimmecert.crypto.generate_private_key()
-    subject_private_key = gimmecert.crypto.generate_private_key()
+    issuer_private_key = gimmecert.crypto.KeyGenerator('rsa', 2048)()
+    subject_private_key = gimmecert.crypto.KeyGenerator('rsa', 2048)()
     not_before, not_after = gimmecert.crypto.get_validity_range()
     certificate = gimmecert.crypto.issue_certificate(issuer_dn, subject_dn, issuer_private_key, subject_private_key.public_key(), not_before, not_after)
 
@@ -120,7 +120,7 @@ def test_read_ca_hierarchy_returns_list_of_ca_private_key_and_certificate_pairs_
 
 def test_read_private_key_returns_private_key(tmpdir):
     private_key_path = tmpdir.join('private.key.pem').strpath
-    private_key = gimmecert.crypto.generate_private_key()
+    private_key = gimmecert.crypto.KeyGenerator('rsa', 2048)()
     gimmecert.storage.write_private_key(private_key, private_key_path)
 
     my_private_key = gimmecert.storage.read_private_key(private_key_path)
@@ -134,7 +134,7 @@ def test_read_certificate_returns_certificate(tmpdir):
     dn = gimmecert.crypto.get_dn('mycertificate')
     not_before, not_after = gimmecert.crypto.get_validity_range()
 
-    private_key = gimmecert.crypto.generate_private_key()
+    private_key = gimmecert.crypto.KeyGenerator('rsa', 2048)()
     certificate = gimmecert.crypto.issue_certificate(dn, dn, private_key, private_key.public_key(), not_before, not_after)
     gimmecert.storage.write_certificate(certificate, certificate_path)
 
@@ -174,7 +174,7 @@ def test_read_ca_hierarchy_returns_list_of_ca_private_key_and_certificate_pairs_
 def test_write_csr(tmpdir):
     csr_file = tmpdir.join('test.csr.pem')
 
-    private_key = gimmecert.crypto.generate_private_key()
+    private_key = gimmecert.crypto.KeyGenerator('rsa', 2048)()
     csr = gimmecert.crypto.generate_csr('test', private_key)
 
     gimmecert.storage.write_csr(csr, csr_file.strpath)
@@ -189,7 +189,7 @@ def test_write_csr(tmpdir):
 def test_read_csr(tmpdir):
     csr_file = tmpdir.join('mycsr.csr.pem')
 
-    private_key = gimmecert.crypto.generate_private_key()
+    private_key = gimmecert.crypto.KeyGenerator('rsa', 2048)()
     original_csr = gimmecert.crypto.generate_csr('mycsr', private_key)
 
     gimmecert.storage.write_csr(original_csr, csr_file.strpath)

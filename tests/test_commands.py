@@ -684,7 +684,7 @@ def test_status_reports_server_certificate_information(tmpdir):
     stderr_stream = io.StringIO()
 
     myserver3_csr_file = tmpdir.join('server3.csr.pem')
-    myserver3_private_key = gimmecert.crypto.generate_private_key()
+    myserver3_private_key = gimmecert.crypto.KeyGenerator('rsa', 2048)()
     myserver3_csr = gimmecert.crypto.generate_csr('blah', myserver3_private_key)
     gimmecert.storage.write_csr(myserver3_csr, myserver3_csr_file.strpath)
 
@@ -774,7 +774,7 @@ def test_status_reports_client_certificate_information(tmpdir):
     stderr_stream = io.StringIO()
 
     myclient3_csr_file = tmpdir.join('client3.csr.pem')
-    myclient3_private_key = gimmecert.crypto.generate_private_key()
+    myclient3_private_key = gimmecert.crypto.KeyGenerator('rsa', 2048)()
     myclient3_csr = gimmecert.crypto.generate_csr('blah', myclient3_private_key)
     gimmecert.storage.write_csr(myclient3_csr, myclient3_csr_file.strpath)
 
@@ -944,7 +944,7 @@ def test_client_reports_success_and_paths_to_generated_artifacts_with_csr(gctmpd
     stdout_stream = io.StringIO()
     stderr_stream = io.StringIO()
 
-    private_key = gimmecert.crypto.generate_private_key()
+    private_key = gimmecert.crypto.KeyGenerator('rsa', 2048)()
     custom_csr = gimmecert.crypto.generate_csr('blah', private_key)
     gimmecert.storage.write_csr(custom_csr, custom_csr_file.strpath)
 
@@ -966,7 +966,7 @@ def test_client_outputs_passed_in_csr_to_file_without_private_key(gctmpdir):
     csr_file = gctmpdir.join('.gimmecert', 'client', 'myclient.csr.pem')
     custom_csr_file = gctmpdir.join('mycustom.csr.pem')
 
-    private_key = gimmecert.crypto.generate_private_key()
+    private_key = gimmecert.crypto.KeyGenerator('rsa', 2048)()
     csr = gimmecert.crypto.generate_csr('mycustomcsr', private_key)
     gimmecert.storage.write_csr(csr, custom_csr_file.strpath)
     custom_csr_file_content = custom_csr_file.read()
@@ -1000,7 +1000,7 @@ def test_client_uses_correct_public_key_but_no_naming_with_csr(gctmpdir):
     custom_csr_file = gctmpdir.join('customcsr.pem')
     certificate_file = gctmpdir.join('.gimmecert', 'client', 'myclient.cert.pem')
 
-    private_key = gimmecert.crypto.generate_private_key()
+    private_key = gimmecert.crypto.KeyGenerator('rsa', 2048)()
     csr = gimmecert.crypto.generate_csr('mycustomcsr', private_key)
     gimmecert.storage.write_csr(csr, custom_csr_file.strpath)
 
@@ -1020,7 +1020,7 @@ def test_server_outputs_passed_in_csr_to_file_without_private_key(gctmpdir):
     csr_file = gctmpdir.join('.gimmecert', 'server', 'myserver.csr.pem')
     custom_csr_file = gctmpdir.join('mycustom.csr.pem')
 
-    private_key = gimmecert.crypto.generate_private_key()
+    private_key = gimmecert.crypto.KeyGenerator('rsa', 2048)()
     csr = gimmecert.crypto.generate_csr('mycustomcsr', private_key)
     gimmecert.storage.write_csr(csr, custom_csr_file.strpath)
     custom_csr_file_content = custom_csr_file.read()
@@ -1039,7 +1039,7 @@ def test_server_uses_correct_public_key_but_no_naming_with_csr(gctmpdir):
     custom_csr_file = gctmpdir.join('customcsr.pem')
     certificate_file = gctmpdir.join('.gimmecert', 'server', 'myserver.cert.pem')
 
-    private_key = gimmecert.crypto.generate_private_key()
+    private_key = gimmecert.crypto.KeyGenerator('rsa', 2048)()
     csr = gimmecert.crypto.generate_csr('mycustomcsr', private_key)
     gimmecert.storage.write_csr(csr, custom_csr_file.strpath)
 
@@ -1057,7 +1057,7 @@ def test_server_uses_correct_public_key_but_no_naming_with_csr(gctmpdir):
 def test_client_errors_out_if_certificate_already_issued_with_csr(gctmpdir):
     custom_csr_file = gctmpdir.join('mycustom.csr.pem')
 
-    private_key = gimmecert.crypto.generate_private_key()
+    private_key = gimmecert.crypto.KeyGenerator('rsa', 2048)()
     csr = gimmecert.crypto.generate_csr('mycustomcsr', private_key)
     gimmecert.storage.write_csr(csr, custom_csr_file.strpath)
 
@@ -1086,7 +1086,7 @@ def test_client_errors_out_if_certificate_already_issued_with_csr(gctmpdir):
 def test_server_errors_out_if_certificate_already_issued_with_csr(gctmpdir):
     custom_csr_file = gctmpdir.join('mycustom.csr.pem')
 
-    private_key = gimmecert.crypto.generate_private_key()
+    private_key = gimmecert.crypto.KeyGenerator('rsa', 2048)()
     csr = gimmecert.crypto.generate_csr('mycustomcsr', private_key)
     gimmecert.storage.write_csr(csr, custom_csr_file.strpath)
 
@@ -1118,7 +1118,7 @@ def test_renew_reports_success_and_paths_to_server_artifacts_with_csr(gctmpdir):
     stdout_stream = io.StringIO()
     stderr_stream = io.StringIO()
 
-    private_key = gimmecert.crypto.generate_private_key()
+    private_key = gimmecert.crypto.KeyGenerator('rsa', 2048)()
     csr = gimmecert.crypto.generate_csr("mytest", private_key)
     gimmecert.storage.write_csr(csr, csr_file.strpath)
 
@@ -1143,7 +1143,7 @@ def test_renew_reports_success_and_paths_to_client_artifacts_with_csr(gctmpdir):
     stdout_stream = io.StringIO()
     stderr_stream = io.StringIO()
 
-    private_key = gimmecert.crypto.generate_private_key()
+    private_key = gimmecert.crypto.KeyGenerator('rsa', 2048)()
     csr = gimmecert.crypto.generate_csr("mytest", private_key)
     gimmecert.storage.write_csr(csr, csr_file.strpath)
 
@@ -1168,7 +1168,7 @@ def test_renew_reports_success_and_paths_to_server_artifacts_with_csr_when_repla
     stdout_stream = io.StringIO()
     stderr_stream = io.StringIO()
 
-    private_key = gimmecert.crypto.generate_private_key()
+    private_key = gimmecert.crypto.KeyGenerator('rsa', 2048)()
     csr = gimmecert.crypto.generate_csr("mytest", private_key)
     gimmecert.storage.write_csr(csr, csr_file.strpath)
 
@@ -1195,7 +1195,7 @@ def test_renew_replaces_server_private_key_with_csr(gctmpdir):
     certificate_file = gctmpdir.join(".gimmecert", "server", "myserver.cert.pem")
     private_key_file = gctmpdir.join(".gimmecert", "server", "myserver.key.pem")
 
-    custom_csr_private_key = gimmecert.crypto.generate_private_key()
+    custom_csr_private_key = gimmecert.crypto.KeyGenerator('rsa', 2048)()
     custom_csr = gimmecert.crypto.generate_csr("mycustom", custom_csr_private_key)
     gimmecert.storage.write_csr(custom_csr, custom_csr_file.strpath)
     custom_csr_file_content = custom_csr_file.read()
@@ -1223,7 +1223,7 @@ def test_renew_replaces_server_private_key_with_csr(gctmpdir):
 def test_renew_raises_exception_if_both_new_private_key_generation_and_csr_are_passed_in(gctmpdir):
     custom_csr_file = gctmpdir.join("mycustom.csr.pem")
 
-    custom_csr_private_key = gimmecert.crypto.generate_private_key()
+    custom_csr_private_key = gimmecert.crypto.KeyGenerator('rsa', 2048)()
     custom_csr = gimmecert.crypto.generate_csr("mycustom", custom_csr_private_key)
     gimmecert.storage.write_csr(custom_csr, custom_csr_file.strpath)
 
@@ -1249,7 +1249,7 @@ def test_renew_reports_success_and_paths_to_server_artifacts_with_private_key_wh
     stdout_stream = io.StringIO()
     stderr_stream = io.StringIO()
 
-    custom_private_key = gimmecert.crypto.generate_private_key()
+    custom_private_key = gimmecert.crypto.KeyGenerator('rsa', 2048)()
     custom_csr = gimmecert.crypto.generate_csr("mytest", custom_private_key)
     gimmecert.storage.write_csr(custom_csr, custom_csr_file.strpath)
 
@@ -1346,7 +1346,7 @@ def test_renew_replaces_server_csr_with_private_key(gctmpdir):
     certificate_file = gctmpdir.join(".gimmecert", "server", "myserver.cert.pem")
     private_key_file = gctmpdir.join(".gimmecert", "server", "myserver.key.pem")
 
-    custom_csr_private_key = gimmecert.crypto.generate_private_key()
+    custom_csr_private_key = gimmecert.crypto.KeyGenerator('rsa', 2048)()
     custom_csr = gimmecert.crypto.generate_csr("mycustom", custom_csr_private_key)
     gimmecert.storage.write_csr(custom_csr, custom_csr_file.strpath)
 

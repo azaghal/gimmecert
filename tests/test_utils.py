@@ -33,7 +33,7 @@ import pytest
 
 def test_certificate_to_pem_returns_valid_pem():
     dn = gimmecert.crypto.get_dn('My test 1')
-    private_key = gimmecert.crypto.generate_private_key()
+    private_key = gimmecert.crypto.KeyGenerator('rsa', 2048)()
     not_before, not_after = gimmecert.crypto.get_validity_range()
     certificate = gimmecert.crypto.issue_certificate(dn, dn, private_key, private_key.public_key(), not_before, not_after)
 
@@ -76,7 +76,7 @@ def test_date_range_to_str():
 
 def test_get_dns_names_returns_empty_list_if_no_dns_names():
     issuer_private_key, issuer_certificate = gimmecert.crypto.generate_ca_hierarchy('My Test', 1, gimmecert.crypto.KeyGenerator("rsa", 2048))[0]
-    private_key = gimmecert.crypto.generate_private_key()
+    private_key = gimmecert.crypto.KeyGenerator('rsa', 2048)()
 
     certificate = gimmecert.crypto.issue_client_certificate(
         'myclient', private_key.public_key(),
@@ -92,7 +92,7 @@ def test_get_dns_names_returns_empty_list_if_no_dns_names():
 def test_get_dns_names_returns_list_of_dns_names():
 
     issuer_private_key, issuer_certificate = gimmecert.crypto.generate_ca_hierarchy('My Test', 1, gimmecert.crypto.KeyGenerator("rsa", 2048))[0]
-    private_key = gimmecert.crypto.generate_private_key()
+    private_key = gimmecert.crypto.KeyGenerator('rsa', 2048)()
 
     certificate = gimmecert.crypto.issue_server_certificate(
         'myserver', private_key.public_key(),

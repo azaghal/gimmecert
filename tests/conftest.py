@@ -65,7 +65,7 @@ def key_with_csr(tmpdir):
     csr_file = custom_csr_dir.join("%s.csr.pem" % name)
 
     # Generate private key and CSR, and output them.
-    private_key = gimmecert.crypto.generate_private_key()
+    private_key = gimmecert.crypto.KeyGenerator('rsa', 2048)()
     csr = gimmecert.crypto.generate_csr(name, private_key)
 
     gimmecert.storage.write_private_key(private_key, private_key_file.strpath)
@@ -130,14 +130,14 @@ def sample_project_directory(tmpdir):
     for i in range(1, per_type_count + 1):
         # Used in generated samples.
         name = "server-with-csr-%d" % i
-        private_key = gimmecert.crypto.generate_private_key()
+        private_key = gimmecert.crypto.KeyGenerator('rsa', 2048)()
         csr = gimmecert.crypto.generate_csr(name, private_key)
         gimmecert.storage.write_private_key(private_key, custom_csr_dir.join("%s.key.pem" % name).strpath)
         gimmecert.storage.write_csr(csr, custom_csr_dir.join("%s.csr.pem" % name).strpath)
 
         # Used in generated samples.
         name = "client-with-csr-%d" % i
-        private_key = gimmecert.crypto.generate_private_key()
+        private_key = gimmecert.crypto.KeyGenerator('rsa', 2048)()
         csr = gimmecert.crypto.generate_csr(name, private_key)
         gimmecert.storage.write_private_key(private_key, custom_csr_dir.join("%s.key.pem" % name).strpath)
         gimmecert.storage.write_csr(csr, custom_csr_dir.join("%s.csr.pem" % name).strpath)
