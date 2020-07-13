@@ -1489,62 +1489,104 @@ def test_renew_client_reads_csr_from_stdin(mock_read_input, sample_project_direc
     assert certificate.subject != key_with_csr.csr.subject
 
 
-def test_server_uses_same_private_key_algorithm_and_parameters_as_issuer_when_generating_private_key(tmpdir):
+@pytest.mark.parametrize("key_specification", [
+    ("rsa", 1024),
+    ("rsa", 2048),
+    ("ecdsa", ec.SECP192R1),
+    ("ecdsa", ec.SECP384R1),
+])
+def test_server_uses_same_private_key_algorithm_and_parameters_as_issuer_when_generating_private_key(tmpdir, key_specification):
 
     private_key_file = tmpdir.join('.gimmecert', 'server', 'myserver.key.pem')
 
-    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 1, ("rsa", 1024))
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 1, key_specification)
     gimmecert.commands.server(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myserver', None, None, None)
 
     private_key = gimmecert.storage.read_private_key(private_key_file.strpath)
+    public_key = private_key.public_key()
+    public_key_specification = gimmecert.crypto.key_specification_from_public_key(public_key)
 
-    assert private_key.key_size == 1024
+    assert public_key_specification == key_specification
 
 
-def test_server_uses_passed_in_private_key_algorithm_and_parameters_when_generating_private_key(gctmpdir):
+@pytest.mark.parametrize("key_specification", [
+    ("rsa", 1024),
+    ("rsa", 2048),
+    ("ecdsa", ec.SECP192R1),
+    ("ecdsa", ec.SECP384R1),
+])
+def test_server_uses_passed_in_private_key_algorithm_and_parameters_when_generating_private_key(gctmpdir, key_specification):
 
     private_key_file = gctmpdir.join('.gimmecert', 'server', 'myserver.key.pem')
 
-    gimmecert.commands.server(io.StringIO(), io.StringIO(), gctmpdir.strpath, 'myserver', None, None, ("rsa", 1024))
+    gimmecert.commands.server(io.StringIO(), io.StringIO(), gctmpdir.strpath, 'myserver', None, None, key_specification)
 
     private_key = gimmecert.storage.read_private_key(private_key_file.strpath)
+    public_key = private_key.public_key()
+    public_key_specification = gimmecert.crypto.key_specification_from_public_key(public_key)
 
-    assert private_key.key_size == 1024
+    assert public_key_specification == key_specification
 
 
-def test_client_uses_same_private_key_algorithm_and_parameters_as_issuer_when_generating_private_key(tmpdir):
+@pytest.mark.parametrize("key_specification", [
+    ("rsa", 1024),
+    ("rsa", 2048),
+    ("ecdsa", ec.SECP192R1),
+    ("ecdsa", ec.SECP384R1),
+])
+def test_client_uses_same_private_key_algorithm_and_parameters_as_issuer_when_generating_private_key(tmpdir, key_specification):
 
     private_key_file = tmpdir.join('.gimmecert', 'client', 'myclient.key.pem')
 
-    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 1, ("rsa", 1024))
+    gimmecert.commands.init(io.StringIO(), io.StringIO(), tmpdir.strpath, tmpdir.basename, 1, key_specification)
     gimmecert.commands.client(io.StringIO(), io.StringIO(), tmpdir.strpath, 'myclient', None, None)
 
     private_key = gimmecert.storage.read_private_key(private_key_file.strpath)
+    public_key = private_key.public_key()
+    public_key_specification = gimmecert.crypto.key_specification_from_public_key(public_key)
 
-    assert private_key.key_size == 1024
+    assert public_key_specification == key_specification
+    assert public_key_specification == key_specification
 
 
-def test_client_uses_passed_in_private_key_algorithm_and_parameters_when_generating_private_key(gctmpdir):
+@pytest.mark.parametrize("key_specification", [
+    ("rsa", 1024),
+    ("rsa", 2048),
+    ("ecdsa", ec.SECP192R1),
+    ("ecdsa", ec.SECP384R1),
+])
+def test_client_uses_passed_in_private_key_algorithm_and_parameters_when_generating_private_key(gctmpdir, key_specification):
 
     private_key_file = gctmpdir.join('.gimmecert', 'client', 'myclient.key.pem')
 
-    gimmecert.commands.client(io.StringIO(), io.StringIO(), gctmpdir.strpath, 'myclient', None, ("rsa", 1024))
+    gimmecert.commands.client(io.StringIO(), io.StringIO(), gctmpdir.strpath, 'myclient', None, key_specification)
 
     private_key = gimmecert.storage.read_private_key(private_key_file.strpath)
+    public_key = private_key.public_key()
+    public_key_specification = gimmecert.crypto.key_specification_from_public_key(public_key)
 
-    assert private_key.key_size == 1024
+    assert public_key_specification == key_specification
 
 
-def test_renew_generates_new_private_key_with_different_size_if_requested(gctmpdir):
+@pytest.mark.parametrize("key_specification", [
+    ("rsa", 1024),
+    ("rsa", 3072),
+    ("ecdsa", ec.SECP192R1),
+    ("ecdsa", ec.SECP384R1),
+])
+def test_renew_generates_new_private_key_with_passed_in_algorithm_if_requested(gctmpdir, key_specification):
     private_key_file = gctmpdir.join('.gimmecert', 'server', 'myserver.key.pem')
 
     # Should produce 2048-bit RSA key (default from hierarchy).
     gimmecert.commands.server(io.StringIO(), io.StringIO(), gctmpdir.strpath, 'myserver', None, None, None)
 
-    gimmecert.commands.renew(io.StringIO(), io.StringIO(), gctmpdir.strpath, 'server', 'myserver', True, None, None, ("rsa", 1024))
-    private_key_size_after_renewal = gimmecert.storage.read_private_key(private_key_file.strpath).key_size
+    gimmecert.commands.renew(io.StringIO(), io.StringIO(), gctmpdir.strpath, 'server', 'myserver', True, None, None, key_specification)
 
-    assert private_key_size_after_renewal == 1024
+    private_key = gimmecert.storage.read_private_key(private_key_file.strpath)
+    public_key = private_key.public_key()
+    public_key_specification = gimmecert.crypto.key_specification_from_public_key(public_key)
+
+    assert public_key_specification == key_specification
 
 
 @pytest.mark.parametrize("key_specification", [
