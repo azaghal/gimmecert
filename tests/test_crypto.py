@@ -653,18 +653,24 @@ def test_KeyGenerator_instance_returns_correct_private_key_using_passed_in_key_s
     assert public_key_specification == key_specification
 
 
-@pytest.mark.parametrize("key_generator, expected_bit_size", [
-    (gimmecert.crypto.KeyGenerator("rsa", 1024), 1024),
-    (gimmecert.crypto.KeyGenerator("rsa", 2048), 2048),
+@pytest.mark.parametrize("key_specification", [
+    ("rsa", 1024),
+    ("rsa", 2048),
+    ("ecdsa", cryptography.hazmat.primitives.asymmetric.ec.SECP192R1),
+    ("ecdsa", cryptography.hazmat.primitives.asymmetric.ec.SECP224R1),
 ])
-def test_generate_ca_hierarchy_uses_correct_rsa_bit_size(key_generator, expected_bit_size):
+def test_generate_ca_hierarchy_generates_private_keys_using_passed_in_key_generator(key_specification):
     base_name = "My Test"
     depth = 3
+    key_generator = gimmecert.crypto.KeyGenerator(*key_specification)
 
     hierarchy = gimmecert.crypto.generate_ca_hierarchy(base_name, depth, key_generator)
 
     for private_key, _ in hierarchy:
-        assert private_key.key_size == expected_bit_size
+        public_key = private_key.public_key()
+        public_key_specification = gimmecert.crypto.key_specification_from_public_key(public_key)
+
+        assert public_key_specification == key_specification
 
 
 @pytest.mark.parametrize("specification", [
