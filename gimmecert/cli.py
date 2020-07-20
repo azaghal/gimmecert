@@ -167,10 +167,13 @@ def setup_server_subcommand_parser(parser, subparsers):
     subparser = subparsers.add_parser('server', description='Issues server certificate.')
     subparser.add_argument('entity_name', help='Name of the server entity.')
     subparser.add_argument('dns_name', nargs='*', help='Additional DNS names to include in subject alternative name.')
-    subparser.add_argument('--csr', '-c', type=str, default=None, help='''Do not generate server private key locally, and use the passed-in \
+    key_specification_or_csr_group = subparser.add_mutually_exclusive_group()
+    key_specification_or_csr_group.add_argument('--csr', '-c', type=str, default=None,
+                                                help='''Do not generate server private key locally, and use the passed-in \
     certificate signing request (CSR) instead. Use dash (-) to read from standard input. Only the public key is taken from the CSR.''')
-    subparser.add_argument('--key-specification', '-k', type=key_specification,
-                           help=ArgumentHelp.key_specification_format + " Default is to use same algorithm/parameters as used by CA hierarchy.", default=None)
+    key_specification_or_csr_group.add_argument('--key-specification', '-k', type=key_specification, default=None,
+                                                help=ArgumentHelp.key_specification_format +
+                                                " Default is to use same algorithm/parameters as used by CA hierarchy.")
 
     def server_wrapper(args):
         project_directory = os.getcwd()
@@ -186,10 +189,13 @@ def setup_server_subcommand_parser(parser, subparsers):
 def setup_client_subcommand_parser(parser, subparsers):
     subparser = subparsers.add_parser('client', description='Issue client certificate.')
     subparser.add_argument('entity_name', help='Name of the client entity.')
-    subparser.add_argument('--csr', '-c', type=str, default=None, help='''Do not generate client private key locally, and use the passed-in \
+    key_specification_or_csr_group = subparser.add_mutually_exclusive_group()
+    key_specification_or_csr_group.add_argument('--csr', '-c', type=str, default=None,
+                                                help='''Do not generate client private key locally, and use the passed-in \
     certificate signing request (CSR) instead. Use dash (-) to read from standard input. Only the public key is taken from the CSR.''')
-    subparser.add_argument('--key-specification', '-k', type=key_specification,
-                           help=ArgumentHelp.key_specification_format + " Default is to use same algorithm/parameters as used by CA hierarchy.", default=None)
+    key_specification_or_csr_group.add_argument('--key-specification', '-k', type=key_specification, default=None,
+                                                help=ArgumentHelp.key_specification_format +
+                                                " Default is to use same algorithm/parameters as used by CA hierarchy.")
 
     def client_wrapper(args):
         project_directory = os.getcwd()

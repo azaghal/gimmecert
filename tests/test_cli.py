@@ -391,11 +391,17 @@ INVALID_CLI_INVOCATIONS = [
     ("gimmecert.cli.server", ["gimmecert", "server", "-k", "unsupported:algorithm", "myserver"]),
     ("gimmecert.cli.server", ["gimmecert", "server", "-k", "ecdsa:unsupported_curve", "myserver"]),
 
+    # server, both key specification and csr specified at the same time
+    ("gimmecert.cli.server", ["gimmecert", "server", "-k", "rsa:1024", "--csr", "myserver.csr.pem", "myserver"]),
+
     # client, invalid key specification
     ("gimmecert.cli.client", ["gimmecert", "client", "-k", "rsa", "myclient"]),
     ("gimmecert.cli.client", ["gimmecert", "client", "-k", "rsa:not_a_number", "myclient"]),
     ("gimmecert.cli.client", ["gimmecert", "client", "-k", "unsupported:algorithm", "myclient"]),
     ("gimmecert.cli.client", ["gimmecert", "client", "-k", "ecdsa:unsupported_curve", "myserver"]),
+
+    # client, both key specification and csr specified at the same time
+    ("gimmecert.cli.client", ["gimmecert", "client", "-k", "rsa:1024", "--csr", "myclient.csr.pem", "myclient"]),
 
     # renew, key specification without new private key option
     ("gimmecert.cli.renew", ["gimmecert", "renew", "-k", "rsa:1024", "server", "myserver"]),
@@ -404,6 +410,10 @@ INVALID_CLI_INVOCATIONS = [
     # renew, both new private key and csr specified at same time
     ("gimmecert.cli.renew", ["gimmecert", "renew", "server", "--new-private-key", "--csr", "myserver.csr.pem", "myserver"]),
     ("gimmecert.cli.renew", ["gimmecert", "renew", "client", "--new-private-key", "--csr", "myclient.csr.pem", "myclient"]),
+
+    # renew, both key specification and csr specified at the same time
+    ("gimmecert.cli.renew", ["gimmecert", "renew", "server", "--key-specification", "rsa:1024", "--csr", "myserver.csr.pem", "myserver"]),
+    ("gimmecert.cli.renew", ["gimmecert", "renew", "client", "--key-specification", "rsa:1024", "--csr", "myclient.csr.pem", "myclient"]),
 ]
 
 
