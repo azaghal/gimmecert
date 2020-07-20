@@ -45,6 +45,9 @@ Examples:
     # Initialise the local CA hierarchy and all the necessary directories.
     gimmecert init
 
+    # Initialise the local CA hierarchy while generating secp256r1 ECDSA keys.
+    gimmecert init --key-specification ecdsa:secp256r1
+
     # Issue a TLS server certificate with only the server name in DNS subject alternative name.
     gimmecert server myserver
 
@@ -54,14 +57,23 @@ Examples:
     # Issue a TLS server certificate by using public key from the CSR (naming/extensions are ignored).
     gimmecert server myserver --csr /tmp/myserver.csr.pem
 
+    # Issue a TLS server certificate while generating 3072-bit RSA key.
+    gimmecert server myserver --key-specification rsa:3072
+
     # Issue a TLS client certificate.
     gimmecert client myclient
 
     # Issue a TLS client certificate by using public key from the CSR (naming/extensions are ignored).
     gimmecert client myclient --csr /tmp/myclient.csr.pem
 
+    # Issue a TLS client certificate while generating 1024-bit RSA key.
+    gimmecert client myclient --key-specification rsa:1024
+
     # Renew a TLS server certificate, preserving naming and private key.
     gimmecert renew server myserver
+
+    # Renew a TLS server certificate, generating a new private key using specified key algorithm/parameters.
+    gimmecert renew server myserver --new-private-key --key-specification ecdsa:secp224r1
 
     # Renew a TLS server certificate, replacing the extra DNS names, but keeping the private key.
     gimmecert server myserver wrongdns.local
@@ -73,6 +85,9 @@ Examples:
 
     # Renew a TLS client certificate, preserving naming and private key.
     gimmecert renew client myclient
+
+    # Renew a TLS client certificate, generating a new private key using specified key algorithm/parameters.
+    gimmecert renew client myclient --new-private-key --key-specification ecdsa:secp521r1
 
     # Show information about CA hierarchy and issued certificates.
     gimmecert status
