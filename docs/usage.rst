@@ -349,16 +349,70 @@ certificates simply run the status command::
 
 The command will:
 
+- Show default key algorithm used by the CA hierarchy.
 - Show information about every CA in generated hierarchy (subject DN,
   validity, certificate paths, whether the CA is used for issuing end
   entity certificates).
 - Show information about all issued server certificates (subject DN,
-  DNS subject alternative names, validity, private key or CSR path,
-  certificate path).
+  DNS subject alternative names, key algorithm, validity, private key
+  or CSR path, certificate path).
 - Show information about all issued client certificates (subject DN,
-  validity, private key or CSR path, certificate path).
+  validity, key algorithm, private key or CSR path, certificate path).
 
 Validity of all certificates is shown in UTC.
 
 Command can also be used for checking if Gimmecert has been
 initialised in local directory or not.
+
+
+Key algorithm
+-------------
+
+Gimmecert by default generates 2048-bit RSA private keys for the
+entire CA hierarchy.
+
+The key algorithm and parameters can also be explicitly specified for
+every command that generates private keys: ``init``, ``server``,
+``client``, and ``renew``. This can be done using either the long form
+(``--key-specification``) or short form (``-k``) option, followed by
+the formatted key specification that designates the key algorithm and
+its associated generation parameters.
+
+To request an RSA key, use the format ``rsa:KEY_SIZE``. For ECDSA, the
+format is ``ecdsa:CURVE_NAME``. Minimal size for RSA keys is ``512``,
+while for ECDSA you can pick between one of the following elliptic
+curves:
+
+- secp192r1
+- secp224r1
+- secp256k1
+- secp256r1
+- secp384r1
+- secp521r1
+
+Key specification picked for the CA hierarchy is also by default used
+when generating private keys for end entities when no explicit key
+specification is provided. The sole exception to this rule is key
+generation during renewal. During renewals, if a new private key is
+requested, the current key algorithm and generation parameters of an
+entity are preserved.
+
+The ``--key-specification`` option is mutually exclusive with the
+``--csr`` option. In case of the ``renew`` command it can only be used
+together with the ``--new-private-key`` option.
+
+Here are some examples on key specification usage::
+
+  # Initialise CA hierarchy using 3072-bit RSA keys.
+  gimmecert init --key-specification rsa:3072
+
+  # Issue a server certificate using the default key specification of
+  # the CA hierarchy.
+  gimmecert server myserver
+
+  # Issue a client certificate using ECDSA key specification.
+  gimmecert client -k ecdsa:secp521r1 myclient
+
+  # Renew a server certificate while requesting a new, 1024-bit RSA,
+  # private key.
+  gimmecert renew myserver --new-private-key -k rsa:1024
