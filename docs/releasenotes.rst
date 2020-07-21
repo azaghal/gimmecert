@@ -5,6 +5,16 @@ Release notes
 NEXT RELEASE
 ------------
 
+This release adds support for picking the key algorithm and parameters
+used for generating the private keys, and support for using ECDSA
+keys.
+
+Resolved issues:
+
+- **Feature requests**:
+
+  - `GC-37: Ability to provide private key specification for key generation <https://projects.majic.rs/gimmecert/issues/GC-37>`_
+
 
 0.3.0
 -----
