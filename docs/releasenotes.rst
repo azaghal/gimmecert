@@ -2,8 +2,8 @@ Release notes
 =============
 
 
-NEXT RELEASE
-------------
+0.4.0
+-----
 
 This release adds support for picking the key algorithm and parameters
 used for generating the private keys, and support for using ECDSA
