@@ -11,6 +11,10 @@ keys.
 
 Resolved issues:
 
+- **User stories**:
+
+  - `GC-36: As a system integrator, I want to be able to generate and use ECDSA keys <https://projects.majic.rs/gimmecert/issues/GC-36>`_
+
 - **Feature requests**:
 
   - `GC-37: Ability to provide private key specification for key generation <https://projects.majic.rs/gimmecert/issues/GC-37>`_
