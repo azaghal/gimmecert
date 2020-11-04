@@ -2,8 +2,8 @@ Release notes
 =============
 
 
-NEXT RELEASE
-------------
+0.5.0
+-----
 
 This release adds support for Python 3.9, and updates the package
 requirements.
