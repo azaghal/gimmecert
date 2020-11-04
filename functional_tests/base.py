@@ -20,6 +20,7 @@
 
 
 import io
+import os
 import subprocess
 
 import pexpect
@@ -46,7 +47,23 @@ def run_command(command, *args):
     invocation = [command]
     invocation.extend(args)
 
-    process = subprocess.Popen(invocation, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    # @TODO: Workaround for masking the Python 3.5 deprecation warning
+    #        from the Cryptography package.
+    #
+    #        This is required in order to continue running functional
+    #        tests against Python 3.5 since we extensively take
+    #        advantage of checking the standard error output.
+    #
+    #        In case of unit tests it is a non-issue because Pytest
+    #        will wrap around the deprecation warning, showing them
+    #        only once (and thus preventing them from affecting the
+    #        actual test code). However, in case of subprocess
+    #        invocation, Pytest is unable to provide similar
+    #        capability.
+    env = os.environ
+    env["PYTHONWARNINGS"] = "ignore:Python 3.5 support will be dropped in the next release of cryptography. Please upgrade your Python."
+
+    process = subprocess.Popen(invocation, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
     stdout, stderr = process.communicate()
     stdout, stderr = stdout.decode(), stderr.decode()
 
@@ -84,6 +101,22 @@ def run_interactive_command(prompt_answers, command, *args):
 
     # Assume that all prompts/answers worked as expected.
     failure = None
+
+    # @TODO: Workaround for masking the Python 3.5 deprecation warning
+    #        from the Cryptography package.
+    #
+    #        This is required in order to continue running functional
+    #        tests against Python 3.5 since we extensively take
+    #        advantage of checking the standard error output.
+    #
+    #        In case of unit tests it is a non-issue because Pytest
+    #        will wrap around the deprecation warning, showing them
+    #        only once (and thus preventing them from affecting the
+    #        actual test code). However, in case of subprocess
+    #        invocation, Pytest is unable to provide similar
+    #        capability.
+    env = os.environ
+    env["PYTHONWARNINGS"] = "ignore:Python 3.5 support will be dropped in the next release of cryptography. Please upgrade your Python."
 
     # Spawn the process, use dedicated stream for capturin command
     # stdout/stderr.
