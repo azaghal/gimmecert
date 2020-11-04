@@ -33,6 +33,7 @@ Python versions:
 - *Python 3.6*
 - *Python 3.7*
 - *Python 3.8*
+- *Python 3.8*
 
 
 Why was this tool created?

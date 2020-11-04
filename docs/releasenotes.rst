@@ -5,10 +5,14 @@ Release notes
 NEXT RELEASE
 ------------
 
+This release adds support for Python 3.9, and updates the package
+requirements.
+
 Resolved issues:
 
 - **Tasks**:
 
+  - `GC-39: Support for Python 3.9 <https://projects.majic.rs/gimmecert/issues/GC-39>`_
   - `GC-40: Update all requirements <https://projects.majic.rs/gimmecert/issues/GC-40>`_
 
 

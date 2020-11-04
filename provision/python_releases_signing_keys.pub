@@ -1,3 +1,4 @@
+# Python 3.5, 3.6, and 3.7 archive signing key
 -----BEGIN PGP PUBLIC KEY BLOCK-----
 
 mQENBE0yGHgBCAClbIKFESe6Ae/wJv4c50K2C5BnyAVIbNObvl/maM7X0sTpi9cv
@@ -7714,7 +7715,7 @@ MnpJ5Se/0KVUMawISF8Rl806c6gPMkbEN8RKgDDuKH3W8iFPIcewrzenYcsMws+m
 =erwG
 -----END PGP PUBLIC KEY BLOCK-----
 
-# Python 3.8 archive signing key
+# Python 3.8 and 3.9 archive signing key
 -----BEGIN PGP PUBLIC KEY BLOCK-----
 
 mQINBFVRJ0kBEACko4KHmTBm01lcf4IsN4QxglIuf51lYqHs9B5nQbO6OSUivPXP

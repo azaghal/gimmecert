@@ -18,6 +18,7 @@
 # Gimmecert.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import sys
 
 from .base import run_command
 
@@ -42,7 +43,12 @@ def test_server_command_available_with_help():
     assert exit_code == 0
     assert stderr == ""
     assert stdout.startswith("usage: gimmecert server")
-    assert " entity_name [dns_name [dns_name ...]]" in stdout
+    # Help output for nargs="*" got changed in Python 3.9. See
+    # https://bugs.python.org/issue38438 for details.
+    if sys.version_info.major == 3 and sys.version_info.minor < 9:
+        assert " entity_name [dns_name [dns_name ...]]" in stdout
+    else:
+        assert " entity_name [dns_name ...]" in stdout
 
 
 def test_server_command_requires_initialised_hierarchy(tmpdir):
