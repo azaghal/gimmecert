@@ -27,7 +27,7 @@ README = open(os.path.join(os.path.dirname(__file__), 'README.rst')).read()
 python_requirements = ">=3.5,<3.9"
 
 install_requirements = [
-    'cryptography>=2.9,<2.10',
+    'cryptography>=3.2,<3.3',
     'python-dateutil>=2.8,<2.9',
 ]
 
