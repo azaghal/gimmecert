@@ -5,6 +5,12 @@ Release notes
 NEXT RELEASE
 ------------
 
+Resolved issues:
+
+- **Tasks**:
+
+  - `GC-40: Update all requirements <https://projects.majic.rs/gimmecert/issues/GC-40>`_
+
 
 0.4.0
 -----
