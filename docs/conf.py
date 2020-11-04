@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2018 Branko Majic
+# Copyright (C) 2020 Branko Majic
 #
 # This file is part of Gimmecert documentation.
 #
@@ -31,7 +31,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'Gimmecert'
-copyright = '2018, Branko Majic'
+copyright = '2020, Branko Majic'
 author = 'Branko Majic'
 
 # The short X.Y version

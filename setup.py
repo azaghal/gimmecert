@@ -32,7 +32,7 @@ install_requirements = [
 ]
 
 doc_requirements = [
-    'sphinx>=3.0,<3.1',
+    'sphinx>=3.3,<3.4',
 ]
 
 test_lint_requirements = [
